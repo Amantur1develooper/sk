@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load project_filters %}
+{% load humanize %}
+{% block page_title %}{{ project.name }} - Детали{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>{{ project.name }}</h2>
+    <a href="{% url 'projects:projects_list' %}" class="btn btn-secondary">← Назад к списку</a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5> Общая площадь ЖК:</h5>
+               
+                <h3> {{ project.calc_total_area|intcomma  }} м²</h3>
+            </div>
+        </div>
+    </div>
+    
+    
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Блоков</h5>
+                <h3>{{ blocks.count }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>План по смете</h5>
+                <h3>{{ total_planned|floatformat:0|intcomma }} сом</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Факт расходов</h5>
+                
+                <h3>{{total_allocated|intcomma }} сом</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Поступило</h5>
+                
+                <h3>{{project.total_received_amount|intcomma}} сом</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Должны потратить</h5>
+                
+                <h3>{{must_buy|intcomma}} сом</h3>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<h3>Блоки проекта</h3>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Название блока</th>
+                <th>Этажи</th>
+                <th>Общая площадь</th>
+                <th>Проданная площадь</th>
+                <th>Остаток площади</th>
+                <th>Поступило</th>
+                
+                
+                <th>Факт расходов</th>
+                <th>Касса</th>
+                <th>План по смете</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for block in blocks %}
+            <tr>
+                <td>{{ block.name }}</td>
+                <td>{{ block.floors|intcomma  }}</td>
+                <td>{{ block.total_area|intcomma  }} м²</td>
+                <td>{{ block.sold_area_sum|intcomma  }} м²</td>
+               
+                <td>{{ block.not_sold_area_sum|intcomma  }} м²</td>
+                 <td> {{block.received_amount|intcomma}} сом</td>
+     
+             <td>
+    {{ block.get_allocated_sum|floatformat:0|intcomma  }} сом
+</td>
+<td>
+    {{block.not_sold_minus_allocated|floatformat:0|intcomma }} сом
+</td>
+        <td>
+    {% with planned=block.estimate_items.all|planned_sum %}
+    {{ planned|floatformat:0|intcomma  }} сом
+    {% endwith %}
+</td>
+                <td>
+                    <a href="{% url 'projects:block_detail' block.id %}" class="btn btn-sm btn-info">Детали</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- График распределения средств по блокам -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5>Распределение средств по блокам</h5>
+    </div>
+    <div class="card-body">
+        <canvas id="projectChart" width="400" height="200"></canvas>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('projectChart').getContext('2d');
+        const projectChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [{% for block in blocks %}'{{ block.name }}',{% endfor %}],
+                datasets: [
+                    {
+                        label: 'План по смете',
+                        data: [
+                            {% for block in blocks %}
+                                {% with planned=block.estimate_items.all|planned_sum2 %}
+                                    {{ planned }},
+                                {% endwith %}
+                            {% endfor %}
+                        ],
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Факт расходов',
+                        data: [
+                            {% for block in blocks %}
+                                {% with spent=block.estimate_items.all|spent_sum2 %}
+                                    {{ spent }},
+                                {% endwith %}
+                            {% endfor %}
+                        ],
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('ru-RU') + ' сом';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

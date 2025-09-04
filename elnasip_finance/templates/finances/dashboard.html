@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block page_title %}Дашборд{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Баланс Общага</h5>
+                <h2 class="card-text">{{ common_cash.balance|intcomma}} сом</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Общий приход</h5>
+                <h2 class="card-text">{{ total_income|intcomma }} сом</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Общий расход</h5>
+                <h2 class="card-text">{{ total_expense|intcomma }} сом</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Маржа</h5>
+                <h2 class="card-text">{{ margin|intcomma }} сом</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Проекты ({{ total_projects }})</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for project in projects %}
+                    <a href="{% url 'projects:project_detail' project.id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ project.name }}</h6>
+                            <small>{{ project.blocks.count }} блоков</small>
+                        </div>
+                        <p class="mb-1">Общая площадь: {{ project.total_area|intcomma }} м²</p>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Последние операции</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for operation in recent_operations %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                {% if operation.flow_type == 'income' %}
+
+                                <span class="text-success">+{{ operation.amount|intcomma }} сом</span>
+                                {% else %}
+                                <span class="text-danger">-{{ operation.amount|intcomma }} сом</span>
+                                {% endif %}
+                            </h6>
+                            <small>{{ operation.date|date:"d.m.Y H:i" }}</small>
+                        </div>
+                        <p class="mb-1">{{ operation }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

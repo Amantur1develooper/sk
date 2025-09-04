@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block page_title %}Сотрудники{% endblock %}
+
+{% block content %}<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет сотрудника</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .header { background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+        .stats { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .stat-card { background-color: #f8f9fa; padding: 15px; border-radius: 5px; width: 23%; text-align: center; }
+        .stat-value { font-size: 24px; font-weight: bold; }
+        .category { margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; }
+        .back-link { display: inline-block; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <a href="{% url 'employees:employees_list' %}" class="back-link">← Назад к списку сотрудников</a>
+    
+    <div class="header">
+        <h1>Личный кабинет сотрудника</h1>
+        <h2>{{ employee.full_name }}</h2>
+        <p>Должность: {{ employee.position }}</p>
+        <p>Дата приема: {{ employee.hire_date }}</p>
+        <p>Оклад: {{ employee.salary|intcomma  }} сом.</p>
+    </div>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-label">Общая сумма выплат</div>
+            <div class="stat-value">{{ total_earned|intcomma  }} сом.</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Количество выплат</div>
+            <div class="stat-value">{{ payment_count|intcomma  }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Средняя выплата</div>
+            <div class="stat-value">{{ average_payment|floatformat:2|intcomma }} сом.</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Банковские реквизиты</div>
+            <div class="stat-value">{{ employee.bank_details|truncatewords:5 }}</div>
+        </div>
+    </div>
+
+    <div class="payment-categories">
+        <h2>История выплат по категориям</h2>
+        
+        {% for category_name, category_data in payment_categories.items %}
+        <div class="category">
+            <h3>{{ category_name }} - Итого: {{ category_data.total|intcomma  }} сом.</h3>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Сумма</th>
+                        <th>Период</th>
+                        <th>Тип выплаты</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in category_data.payments %}
+                    <tr>
+                        <td>{{ payment.date|date:"d.m.Y H:i" }}</td>
+                        <td>{{ payment.amount|intcomma  }} сом.</td>
+                        <td>{{ payment.period|date:"F Y" }}</td>
+                        <td>{{ payment.get_payment_type_display }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% empty %}
+        <p>Нет данных о выплатах.</p>
+        {% endfor %}
+    </div>
+</body>
+</html>
+{% endblock content %}

@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block page_title %}Квартиры блока {{ blocks }}{% endblock %}
+
+{% block content %}
+{{block.unsold_apartments_count}}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Квартиры блока: {{ blocks }}</h2>
+    <div>
+        {% comment %} <a href="{% url 'block_detail' block.id %}" class="btn btn-secondary">← Назад к блоку</a> {% endcomment %}
+        {% comment %} <a href="{% url 'projects:add_apartment' block.id %}" class="btn btn-primary">+ Добавить квартиру</a> {% endcomment %}
+    </div>
+</div>
+
+<!-- Статистика по блоку -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Общая площадь</h5>
+                <h3>{{ area|intcomma  }} м²</h3>
+            </div>
+        </div>
+    </div>
+     <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Продано</h5>
+                
+                <h3>{{sold_areaM2|intcomma }}м²</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Забронировано</h5>
+                {% comment %} <h5>Свободная площадь</h5> {% endcomment %}
+                <h3>{{sold_area|intcomma }}м²</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Свободные</h5>
+                <h3>{{unsold_apartments_count|intcomma }}м²</h3>
+            </div>
+        </div>
+    </div>
+    
+   <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Общее кол кв
+                </h5>
+                <h3>{{obshie_col_apartments|intcomma }}</h3>
+            </div>
+        </div>
+    </div>
+     <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Кол проданных</h5>
+                <h3>{{col_sum_apartments|intcomma }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Кол забронированых</h5>
+                <h3>{{reserved_apartments_count|intcomma }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Кол свободных</h5>
+                <h3>{{unsold_apartments_count2|intcomma }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    
+   
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Фактические сделки</h5>
+                <h3>{{actual_deals_total|intcomma }} сом</h3>
+            </div>
+        </div>
+    </div>
+     <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Поступило</h5>
+                <h3>{{postipillo|intcomma}} сом</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Остаток поступлений</h5>
+                <h3>{{remaining_deals_total|intcomma }} сом</h3>
+            </div>
+        </div>
+    </div>
+     <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Планируемые сделки</h5>
+                <h3>{{planned_deals_total|intcomma }} сом</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Таблица с квартирами -->
+<div class="card">
+    <div class="card-header">
+        <h5>Список квартир</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>№ кв.</th>
+                        <th>Этаж</th>
+                        <th>Комнат</th>
+                        <th>Площадь</th>
+                        <th>Цена за м²</th>
+                        <th>Статус</th>
+                        <th>Сделка</th>
+                        <th>Клиент</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for apartment in apartments %}
+                    <tr>
+                        <td>{{ apartment.apartment_number|intcomma  }}</td>
+                        <td>{{ apartment.floor|intcomma  }}</td>
+  
+                        <td>{{ apartment.rooms|intcomma  }}</td>
+                        <td>{{ apartment.area|intcomma  }} м²</td>
+                        <td>{{ apartment.fact_price_per_m2|intcomma  }} сом</td>
+                        <td>
+                            {% if apartment.is_sold %}
+                            <span class="badge bg-success">Продано</span>
+                            {% elif apartment.is_reserved %}
+                            <span class="badge bg-warning">Бронь</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Свободно</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ apartment.deal_Fakt_deal_amount|intcomma  }} сом</td>
+                        <td>{{ apartment.client_name|default:"-" }}</td>
+                        <td>
+                            <a href="{% url 'projects:apartment_detail' apartment.id %}" class="btn btn-sm btn-info">Детали</a>
+                            <a href="{% url 'projects:add_payment' apartment.id %}" class="btn btn-sm btn-success">Платеж</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

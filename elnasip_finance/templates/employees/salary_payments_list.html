@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block page_title %}Выплаты зарплат{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Выплаты зарплат</h2>
+    <a href="{% url 'admin:employees_salarypayment_add' %}" class="btn btn-primary">+ Новая выплата</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Сотрудник</th>
+                <th>Тип выплаты</th>
+                <th>Сумма</th>
+                <th>Дата</th>
+                <th>За период</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+            <tr>
+                <td>{{ payment.employee.user.get_full_name }}</td>
+                <td>
+                    <span class="badge {% if payment.payment_type == 'salary' %}bg-success{% else %}bg-info{% endif %}">
+                        {{ payment.get_payment_type_display }}
+                    </span>
+                </td>
+                <td>{{ payment.amount }} сом</td>
+                <td>{{ payment.date|date:"d.m.Y H:i" }}</td>
+                <td>{{ payment.period|date:"F Y" }}</td>
+                <td>
+                    <a href="{% url 'admin:employees_salarypayment_change' payment.id %}" class="btn btn-sm btn-warning">Редактировать</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Фильтры по дате -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5>Фильтры</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">С даты</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ request.GET.start_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">По дату</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ request.GET.end_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="employee" class="form-label">Сотрудник</label>
+                <select class="form-select" id="employee" name="employee">
+                    <option value="">Все сотрудники</option>
+                    {% for employee in employees %}
+                    <option value="{{ employee.id }}" {% if request.GET.employee == employee.id|stringformat:"i" %}selected{% endif %}>
+                        {{ employee.user.get_full_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" class="btn btn-primary">Применить</button>
+                    <a href="{% url 'salary_payments_list' %}" class="btn btn-secondary">Сбросить</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

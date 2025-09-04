@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Добавить платеж для квартиры {{ apartment.apartment_number }}</h2>
+    <p><strong>Блок:</strong> {{ apartment.block.name }} | 
+       <strong>Этаж:</strong> {{ apartment.floor }} | 
+       <strong>Площадь:</strong> {{ apartment.area }} м²</p>
+
+    <div class="card shadow-sm p-4">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="{{ form.amount.id_for_label }}" class="form-label">Сумма платежа</label>
+                {{ form.amount }}
+                {% if form.amount.errors %}
+                    <div class="text-danger small">{{ form.amount.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.payment_date.id_for_label }}" class="form-label">Дата платежа</label>
+                {{ form.payment_date }}
+                {% if form.payment_date.errors %}
+                    <div class="text-danger small">{{ form.payment_date.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.comment.id_for_label }}" class="form-label">Комментарий</label>
+                {{ form.comment }}
+                {% if form.comment.errors %}
+                    <div class="text-danger small">{{ form.comment.errors }}</div>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="btn btn-primary">💾 Сохранить</button>
+            {% comment %} <a href="{% url 'apartment_detail' apartment.id %}" class="btn btn-secondary">⬅ Назад</a> {% endcomment %}
+        </form>
+    </div>
+</div>
+{% endblock %}

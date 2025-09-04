@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load project_filters %}
+{% load humanize %}
+{% block page_title %}{{ current_block.name }} - Детали Сметы{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>{{ current_block}}</h2>
+    <div>
+        {% comment %} <a href="{% url 'projects:project_detail' block.project.id %}" class="btn btn-secondary">← Назад к проекту</a> {% endcomment %}
+        <a href="{% url 'projects:apartment_list' current_block.id %}" class="btn btn-primary">Просмотреть квартиры</a>
+        <a href="{% url 'admin:projects_estimateitem_add' %}?block={{ block.id }}" class="btn btn-primary">+ Добавить позицию сметы</a>
+        
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card">
+       
+
+            <div class="card-body text-center">
+                <h5>Этажи</h5>
+                <h4>{{ current_block.floors|intcomma  }}</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Общая площадь</h5>
+                <h4>{{ current_block.total_area|intcomma  }} м²</h4>
+            </div>
+        </div>
+    </div>
+    
+  
+    <div class="col-md-2">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Проданная площадь</h5>
+   
+                <h4>{{current_block.sold_area_sum|intcomma }} м²</h4>
+            </div>
+        </div>
+    </div>
+     <div class="col-md-2">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Остаток площади</h5>
+                <h4>{{current_block.not_sold_area_sum|intcomma }} м²</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Факт сделок</h5>
+                <h4>{{fakt_prodaj|intcomma }} сом</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Планируемые продажи</h5>
+   
+                <h4>{{plan_prodaj|intcomma }} сом</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>План по смете</h5>
+                <h4>{{ total_planned2|floatformat:0|intcomma  }} сом</h4>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Факт расходов</h5>
+                {% comment %} <h4>{{ total_spent|floatformat:0 }} сом</h4> {% endcomment %}
+                    <h4>{{total_allocated|floatformat:0|intcomma  }} сом</h4>
+            </div>
+        </div>
+    </div>
+   
+    <div class="col-md-2">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>МАРЖА</h5>
+                {% comment %} <h4>{{ total_spent|floatformat:0 }} сом</h4> {% endcomment %}
+                    <h4>{{marja|floatformat:0|intcomma  }} СОМ</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4>Смета блока</h4>
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Категория</th>
+                <th>Наименование</th>
+                <th>Ед. изм.</th>
+                <th>Количество</th>
+                <th>Факт Количествa</th>
+                <th>Цена за ед.</th>
+                <th>Плановая сумма</th>
+                <th>Выделено средств</th>
+                {% comment %} <th>Факт расходов</th> {% endcomment %}
+                <th>Остаток от Плановой суммы</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in estimate_items %}
+            <tr>
+                <td>{{ item.category.name }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.unit|intcomma  }}</td>
+                <td>{{ item.quantity|intcomma  }}</td>
+                 <td>{{ item.fakt_quantity|intcomma  }}</td>
+                <td>{{ item.unit_price|intcomma  }} сом</td>
+                <td>{{ item.planned_amount|intcomma  }} сом</td>
+                <td>
+                    {{ item.get_allocated_sum|floatformat:0|intcomma  }} сом
+                </td>
+                {% comment %} <td>{{ item.spent_amount }} сом</td> {% endcomment %}
+                <td class="{% if item.margin > 0 %}text-success{% elif item.margin < 0 %}text-danger{% endif %}">
+                    {{ item.margin|intcomma  }} сом
+                </td>
+                <td>
+                    <a href="{% url 'admin:projects_estimateitem_change' item.id %}" class="btn btn-sm btn-warning">Редактировать</a>
+                    <a href="{% url 'admin:finances_expense_add' %}?estimate_item={{ item.id }}" class="btn btn-sm btn-danger">Добавить расход</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr class="table-primary">
+                <th colspan="6">Итого:</th>
+                <th>{{ total_planned|floatformat:0|intcomma  }} сом</th>
+                <th>{{ total_allocated|floatformat:0|intcomma  }} сом</th>
+               
+                <th class="{% if total_margin > 0 %}text-success{% elif total_margin < 0 %}text-danger{% endif %}">
+                    {{ total_margin|floatformat:0|intcomma  }} сом
+                </th>
+                <th></th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<!-- Круговой график распределения расходов по категориям -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5>Распределение расходов по категориям</h5>
+    </div>
+    <div class="card-body">
+        <canvas id="categoryChart" width="400" height="200"></canvas>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        const categoryChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: [{% for category in categories %}'{{ category.name }}',{% endfor %}],
+                datasets: [{
+                    data: [{% for category in categories %}{{ category.total_spent|default:0 }},{% endfor %}],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)',
+                        'rgba(153, 102, 255, 0.7)',
+                        'rgba(255, 159, 64, 0.7)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.raw.toLocaleString('ru-RU') + ' сом';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block page_title %}Сотрудники{% endblock %}
+
+{% block content %}<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список сотрудников</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; }
+        tr:hover { background-color: #f5f5f5; }
+        a { color: #337ab7; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>Список сотрудников</h1>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>ФИО</th>
+                <th>Должность</th>
+                <th>Дата приема</th>
+                <th>Оклад</th>
+                <th>Кол-во выплат</th>
+                <th>Последняя выплата</th>
+                <th>Действие</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for employee in employees %}
+            <tr>
+                <td>{{ employee.full_name }}</td>
+                <td>{{ employee.position }}</td>
+                <td>{{ employee.hire_date }}</td>
+                <td>{{ employee.salary }} руб.</td>
+                <td>{{ employee.payment_count }}</td>
+                <td>
+                    {% if employee.last_payment %}
+                        {{ employee.last_payment.date|date:"d.m.Y" }} - {{ employee.last_payment.amount }} руб.
+                    {% else %}
+                        Нет выплат
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'employees:employee_dashboard' employee.id %}">Просмотреть</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
+{% endblock content %}

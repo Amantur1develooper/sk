@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Отчеты{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Система отчетов</h2>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Движение денежных средств</h5>
+                <p class="card-text">Отчет по приходам и расходам в Общаге</p>
+                <a href="{% url 'reports:cash_flow_report' %}" class="btn btn-primary">Перейти к отчету</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Отчет по проектам</h5>
+                <p class="card-text">Сводные данные по объектам и блокам</p>
+                <a href="{% url 'reports:project_report' %}" class="btn btn-primary">Перейти к отчету</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Отчет по выделениям средств</h5>
+                <p class="card-text">Информация о выделенных средствах на сметы</p>
+                <a href="{% url 'reports:allocations_report' %}" class="btn btn-primary">Перейти к отчету</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Отчет по зарплатам</h5>
+                <p class="card-text">Данные о выплатах сотрудникам</p>
+                <a href="{% url 'reports:salary_report' %}" class="btn btn-primary">Перейти к отчету</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Отчет по продажам</h5>
+                <p class="card-text">Информация о проданных квартирах</p>
+                <a href="{% url 'reports:sales_report' %}" class="btn btn-primary">Перейти к отчету</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Отчет по движению денежных средств{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Отчет по движению денежных средств</h2>
+    <a href="{% url 'reports:reports_dashboard' %}" class="btn btn-secondary">← Назад к отчетам</a>
+</div>
+
+<!-- Фильтры -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Фильтры</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">С даты</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">По дату</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" class="btn btn-primary">Применить</button>
+                    <a href="{% url 'reports:cash_flow_report' %}" class="btn btn-secondary">Сбросить</a>
+                </div>
+            </div>
+            <div class="col-md-3 text-end">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" name="export" value="1" class="btn btn-success">
+                        Экспорт в Excel
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Итоги -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h5>Общий приход</h5>
+                <h3>{{ total_income }} сом</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-danger">
+            <div class="card-body text-center">
+                <h5>Общий расход</h5>
+                <h3>{{ total_expense }} сом</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h5>Баланс</h5>
+                <h3>{{ balance }} сом</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Таблица с данными -->
+<div class="card">
+    <div class="card-header">
+        <h5>Движение денежных средств</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Тип операции</th>
+                        <th>Сумма</th>
+                        <th>Описание</th>
+                        <th>Создано</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for flow in cash_flows %}
+                    <tr>
+                        <td>{{ flow.date|date:"d.m.Y H:i" }}</td>
+                        <td>
+                            {% if flow.flow_type == 'income' %}
+                            <span class="badge bg-success">Приход</span>
+                            {% else %}
+                            <span class="badge bg-danger">Расход</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ flow.amount }} сом</td>
+                        <td>{{ flow.description }}</td>
+                        <td>{{ flow.created_by.username }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block page_title %}Квартира {{ apartment.apartment_number }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Квартира {{ apartment.apartment_number }} ({{ apartment.block }})</h2>
+    <div>
+        <a href="{% url 'projects:apartment_list' apartment.block.id %}" class="btn btn-secondary">← Назад к списку</a>
+        <a href="{% url 'projects:sell_apartment' apartment.id %}" class="btn btn-secondary">← Продать</a>
+        <a href="{% url 'projects:add_payment' apartment.id %}" class="btn btn-primary">+ Добавить платеж</a>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Информация о квартире</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>Блок:</th>
+                        <td>{{ apartment.block }}</td>
+                    </tr>
+                    <tr>
+                        <th>Этаж:</th>
+                        <td>{{ apartment.floor|intcomma  }}</td>
+                    </tr>
+                    <tr>
+                        <th>Номер квартиры:</th>
+                        <td>{{ apartment.apartment_number  }}</td>
+                    </tr>
+                    <tr>
+                        <th>Комнат:</th>
+                        <td>{{ apartment.rooms }}</td>
+                    </tr>
+                    <tr>
+                        <th>Площадь:</th>
+                        <td>{{ apartment.area|intcomma  }} м²</td>
+                    </tr>
+                    <tr>
+                        <th>Проданная площадь:</th>
+                        <td>{{ apartment.sold_area|intcomma  }} м²</td>
+                    </tr>
+                    <tr>
+                        <th>Цена за м²:</th>
+                        <td>{{ apartment.price_per_m2|intcomma  }} сом</td>
+                    </tr>
+                    
+                    
+                    <tr>
+                        <th>Планируемая цена за м²:</th>
+                        <td>{{ apartment.planned_price_per_m2|default:"-"|intcomma  }}  сом</td>
+                    </tr>
+                    <tr>
+                        <th>Планируемая сделка:</th>
+                        <td>{{ apartment.planned_deal_amount|default:"-"|intcomma  }} сом</td>
+                    </tr>
+                     <tr>
+                        <th>Факт сделки сделка:</th>
+                        <td> {{apartment.deal_Fakt_deal_amount|default:"-"|intcomma  }} сом</td>
+                    </tr>
+                    <tr>
+                        <th>Поступление Сделки:</th>
+                        <td>{{ apartment.deal_amount|intcomma  }} сом</td>
+                    </tr>
+                    <tr>
+                        <th>Остаток сделки:</th>
+                        <td>{{ apartment.remaining_deal_amount|intcomma  }} сом</td>
+                    </tr>
+                    <tr>
+                        <th>Скидка:</th>
+                        <td>{{ apartment.discount|default:"-"|intcomma  }} сом</td>
+                    </tr>
+                    <tr>
+                        <th>Статус:</th>
+                        <td>
+                            {% if apartment.is_sold %}
+                            <span class="badge bg-success">Продано</span>
+                            {% elif apartment.is_reserved %}
+                            <span class="badge bg-warning">Бронь</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Свободно</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Клиент:</th>
+                        <td>{{ apartment.client_name|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Номер сделки:</th>
+                        <td>{{ apartment.deal_number|default:"-"|intcomma  }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>История платежей</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Сумма</th>
+                                <th>Комментарий</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td>{{ payment.payment_date|date:"d.m.Y H:i" }}</td>
+                                <td>{{ payment.amount|intcomma  }} сом</td>
+                                <td>{{ payment.comment|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-primary">
+                                <th>Итого:</th>
+                                <th>{{total_paid|intcomma }}</th>
+                                {% comment %} <th>{{ apartment.payments.aggregate(Sum('amount'))['amount__sum']|default:0 }} сом</th> {% endcomment %}
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

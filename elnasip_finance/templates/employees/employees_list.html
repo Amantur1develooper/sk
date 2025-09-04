@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block page_title %}Сотрудники{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Сотрудники</h2>
+    <a href="{% url 'admin:employees_employee_add' %}" class="btn btn-primary">+ Добавить сотрудника</a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ФИО</th>
+                <th>Должность</th>
+                <th>Дата приема</th>
+                <th>Оклад</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for employee in employees %}
+            <tr>
+                <td>{{ employee.full_name }}</td>
+                <td>{{ employee.position }}</td>
+                <td>{{ employee.hire_date|date:"d.m.Y" }}</td>
+                <td>{{ employee.salary|intcomma }} сом</td>
+                <td>
+                   
+                    <a href="{% url 'employees:employee_dashboard' employee.id %}">Просмотреть</a>
+
+                    <a href="{% url 'admin:employees_employee_change' employee.id %}" class="btn btn-sm btn-warning">Редактировать</a>
+                    <a href="{% url 'admin:employees_salarypayment_add' %}?employee={{ employee.id }}" class="btn btn-sm btn-success">Выплатить</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Статистика по ФОТ -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Общие расходы на ФОТ</h5>
+            </div>
+            <div class="card-body">
+                <h3>{{ total_salary|default:0|intcomma  }} сом</h3>
+                <p class="text-muted">Общая сумма выплат зарплат</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Средняя зарплата</h5>
+            </div>
+            <div class="card-body">
+                <h3>{{ avg_salary|default:0|intcomma  }} сом</h3>
+                <p class="text-muted">Средняя зарплата по компании</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

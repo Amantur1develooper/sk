@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block page_title %}Общаг - Детали{% endblock %}
+
+{% block content %}
+<h2>Общаг (Главная касса)</h2>
+<div class="card mb-4">
+    <div class="card-body">
+        <h3 class="card-title">Текущий баланс: {{ common_cash.balance|intcomma }} сом</h3>
+    </div>
+</div>
+<!-- 🔘 Кнопка -->
+<div class="mb-3">
+    <a href="{% url 'finances:create_allocation' %}" class="btn btn-primary">+ Выделить средства</a>
+    <a href="{% url 'projects:projects_list' %}" class="btn btn-secondary">← Назад к списку проектов</a>
+</div>
+<h3>Движение средств</h3>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Дата</th>
+            <th>Тип</th>
+            <th>Сумма</th>
+            <th>Описание</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for flow in cash_flows %}
+        <tr>
+            <td>{{ flow.date|date:"d.m.Y H:i" }}</td>
+            <td>
+                {% if flow.flow_type == 'income' %}
+                <span class="badge bg-success">Приход</span>
+                {% else %}
+                <span class="badge bg-danger">Расход</span>
+                {% endif %}
+            </td>
+            <td>{{ flow.amount|intcomma  }} сом</td>
+            <td>{{ flow.description }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

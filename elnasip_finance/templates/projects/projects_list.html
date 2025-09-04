@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Список проектов{% endblock %}
+{% load humanize %}
+{% block content %}
+<h2>Объекты (ЖК)</h2>
+
+<div class="row">
+    {% for project in projects %}
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ project.name }}</h5>
+                <p class="card-text">
+                    Общая площадь: {{ project.total_area|intcomma  }} м²<br>
+                    Блоков: {{ project.blocks.count }}
+                </p>
+                <a href="{% url 'projects:project_detail' project.id %}" class="btn btn-primary">Подробнее</a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
