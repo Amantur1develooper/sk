@@ -50,11 +50,11 @@ class Apartment(models.Model):
         if self.area and self.planned_price_per_m2:
             self.planned_deal_amount = self.area * self.planned_price_per_m2
         # Если квартира продана, применяем скидку к фактической сумме сделки
-        if self.is_sold and self.discount and self.deal_Fakt_deal_amount:
-        # Вычисляем сумму без скидки
-            original_amount = self.deal_Fakt_deal_amount / (1 - self.discount / 100)
-            self.deal_amount = original_amount
-            self.planned_deal_amount = 0
+        # if self.is_sold and self.discount and self.deal_Fakt_deal_amount:
+        # # Вычисляем сумму без скидки
+        #     original_amount = self.deal_Fakt_deal_amount / (1 - self.discount / 100)
+        #     self.deal_amount = original_amount
+        #     self.planned_deal_amount = 0
         if self.is_sold==True:
             self.planned_deal_amount = 0
         
