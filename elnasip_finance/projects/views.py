@@ -334,7 +334,8 @@ def sell_apartment(request, apartment_id):
             fact_price = form.cleaned_data['fact_price_per_m2']
             apartment.fact_price_per_m2 = fact_price
             # apartment.fact_price_per_m2 = fact_price
-            apartment.deal_Fakt_deal_amount = apartment.area * fact_price
+            apartment.deal_Fakt_deal_amount = (apartment.area * fact_price) - (form.cleaned_data.get('discount') or 0)
+            # apartment.deal_Fakt_deal_amount = full_price - 
         
             # apartment.save()  # 
             # apartment.is_sold = True

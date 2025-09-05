@@ -38,33 +38,36 @@ class ApartmentSaleForm(forms.ModelForm):
             }),
             'discount': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'Скидка в %',
+                'placeholder': 'Скидка в сомах',
                 'step': '0.01',
                 'min': '0',
-                'max': '100'
+               
             }),
             'client_name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'ФИО клиента'
             }),
-            'fact_price_per_m2':forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Цена за m²'
-            }),
+            'fact_price_per_m2': forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Цена за m²',
+                'step': '0.01',   # шаг (например, можно вводить дробные значения)
+            'min': '0'
+                }),
+
+            # 'fact_price_per_m2':forms.TextInput(attrs={
+            #     'class': 'form-control',
+            #     'placeholder': 'Цена за m²'
+            # }),
         }
         labels = {
             
             'deal_number': 'Номер сделки',
             'fact_price_per_m2':'Цена за m²',
-            'discount': 'Скидка (%)',
+            'discount': 'Скидка (сом)',
             'client_name': 'ФИО клиента',
         }
     
-    def clean_discount(self):
-        discount = self.cleaned_data.get('discount')
-        if discount is not None and (discount < 0 or discount > 100):
-            raise forms.ValidationError("Скидка должна быть между 0 и 100%")
-        return discount
+
 
    
     

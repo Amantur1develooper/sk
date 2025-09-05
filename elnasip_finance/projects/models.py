@@ -29,7 +29,11 @@ class Apartment(models.Model):
     client_name = models.CharField(max_length=200, blank=True, null=True, verbose_name="ФИО клиента")
     remaining_deal_amount = models.DecimalField(max_digits=15, blank=True, default=0, null=True, decimal_places=2, verbose_name="Остаток от сделки")
     is_reserved = models.BooleanField(default=False, verbose_name="Бронь")
-    discount = models.DecimalField(max_digits=10, decimal_places=2,default=0, blank=True, null=True, verbose_name="Скидка")
+    discount = models.DecimalField(max_digits=12, 
+    decimal_places=2, 
+    null=True, 
+    blank=True, 
+    verbose_name="Скидка (сом)", default=0, )
     planned_price_per_m2 = models.DecimalField(max_digits=10, default=0, decimal_places=2, blank=True, null=True, verbose_name="Планируемая цена m²(обезательно)")
     planned_deal_amount = models.DecimalField(max_digits=15, default=0, decimal_places=2, blank=True, null=True, verbose_name="Планируемая сделка")
     created_at = models.DateTimeField(auto_now_add=True)
