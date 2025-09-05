@@ -15,7 +15,7 @@ from django.db.models import Sum, Q
 
 class Apartment(models.Model):
     block = models.ForeignKey("Block", on_delete=models.CASCADE, related_name='apartments')
-    floor = models.IntegerField(verbose_name="Этаж")
+    floor = models.IntegerField(verbose_name="Этаж", default=1)
     is_sold = models.BooleanField(default=False, verbose_name="Продано")
     apartment_number = models.CharField(max_length=20, verbose_name="Номер квартиры(обезательно)")
     rooms = models.IntegerField(default=0,verbose_name="Количество комнат(обезательно)")

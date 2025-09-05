@@ -328,14 +328,18 @@ def sell_apartment(request, apartment_id):
         form = ApartmentSaleForm(request.POST, instance=apartment)
         if form.is_valid():
             # Помечаем квартиру как проданную
+            apartment = form.save(commit=False)  # берём объект, но пока не сохраняем
+        
             apartment.is_sold = True
-            apartment = form.save()
+            fact_price = form.cleaned_data['fact_price_per_m2']
+            apartment.fact_price_per_m2 = fact_price
+            # apartment.fact_price_per_m2 = fact_price
+            apartment.deal_Fakt_deal_amount = apartment.area * fact_price
+        
+            # apartment.save()  # 
+            # apartment.is_sold = True
             
-            # Если указана скидка, пересчитываем сумму сделки
-            # if apartment.discount and apartment.deal_Fakt_deal_amount:
-                # Вычисляем сумму без скидки
-                # original_amount = apartment.deal_Fakt_deal_amount / (1 - apartment.discount / 100)
-                # apartment.deal_amount = original_amount
+            
              
             apartment.remaining_deal_amount = apartment.deal_Fakt_deal_amount
             apartment.save()
@@ -352,3 +356,32 @@ def sell_apartment(request, apartment_id):
     }
     
     return render(request, 'projects/sell_apartment.html', context)
+
+
+# projects/views.py
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from .models import Block
+from .forms import ApartmentCreateForm
+
+@login_required
+def apartment_add(request, block_id):
+    block = get_object_or_404(Block, id=block_id)
+    blocks = Block.objects.get(id=block_id)
+
+    if request.method == "POST":
+        form = ApartmentCreateForm(request.POST)
+        if form.is_valid():
+            apt = form.save(commit=False)
+            apt.block = block            # <- автоматически привязываем блок
+            # остальные поля уже имеют default/null в вашей модели
+            apt.save()
+            messages.success(request, f"Квартира {apt.apartment_number} добавлена в {block}.")
+            return redirect("projects:apartment_list", block_id=block.id)
+    else:
+        form = ApartmentCreateForm()
+
+    return render(request, "projects/apartment_add.html", {"form": form,
+                                                           "block": block,
+                                                           'blocks':blocks})

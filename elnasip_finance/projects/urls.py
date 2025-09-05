@@ -12,4 +12,8 @@ urlpatterns = [
     path('block/<int:block_id>/add-apartment/', views.add_apartment, name='add_apartment'),
     path('apartment/<int:apartment_id>/add-payment/', views.add_payment, name='add_payment'),
     path('apartment/<int:apartment_id>/sell/', views.sell_apartment, name='sell_apartment'),
+    
+    path("blocks/<int:block_id>/apartments/add/", views.apartment_add, name="apartment_add"),
+    path("block/<int:block_id>/apartments/", views.apartment_list, name="apartment_list"),
+
 ]

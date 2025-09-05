@@ -51,12 +51,12 @@ class Allocation(models.Model):
     description = models.TextField(verbose_name="Назначение")
     date = models.DateTimeField(auto_now_add=True)
     
-    def save(self, *args, **kwargs):
+    # def save(self, *args, **kwargs):
         # При выделении средств уменьшаем баланс Общага
-        if not self.pk:  # Если это новая запись
-            self.common_cash.balance -= self.amount
-            self.common_cash.save()
-        super().save(*args, **kwargs)
+        # if not self.pk :  # Если это новая запись
+        #     self.common_cash.balance -= self.amount
+        #     self.common_cash.save()
+        # super().save(*args, **kwargs)
     
     def __str__(self):
         return f"Выделение {self.amount} на {self.estimate_item}, {self.description}"

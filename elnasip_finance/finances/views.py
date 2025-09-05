@@ -111,7 +111,8 @@ def create_allocation(request):
                 allocation.save()
                 
                 messages.success(request, f'Средства в размере {allocation.amount} сом успешно выделены!')
-                return redirect('allocations_list')
+                # return redirect('finances:allocations_list')
+                return redirect('finances:common_cash_detail')
                 
             except Exception as e:
                 messages.error(request, f'Ошибка при выделении средств: {str(e)}')

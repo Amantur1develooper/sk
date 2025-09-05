@@ -29,12 +29,9 @@ from .models import Apartment
 class ApartmentSaleForm(forms.ModelForm):
     class Meta:
         model = Apartment
-        fields = ['deal_Fakt_deal_amount', 'deal_number', 'discount', 'client_name','fact_price_per_m2']
+        fields = [ 'deal_number', 'discount', 'client_name','fact_price_per_m2']
         widgets = {
-            'deal_Fakt_deal_amount': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Фактическая сумма сделки'
-            }),
+            
             'deal_number': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Номер сделки'
@@ -56,7 +53,7 @@ class ApartmentSaleForm(forms.ModelForm):
             }),
         }
         labels = {
-            'deal_Fakt_deal_amount': 'Фактическая сумма сделки',
+            
             'deal_number': 'Номер сделки',
             'fact_price_per_m2':'Цена за m²',
             'discount': 'Скидка (%)',
@@ -69,11 +66,7 @@ class ApartmentSaleForm(forms.ModelForm):
             raise forms.ValidationError("Скидка должна быть между 0 и 100%")
         return discount
 
-    def clean_deal_Fakt_deal_amount(self):
-        deal_amount = self.cleaned_data.get('deal_Fakt_deal_amount')
-        if deal_amount is not None and deal_amount <= 0:
-            raise forms.ValidationError("Сумма сделки должна быть положительной")
-        return deal_amount
+   
     
     
     
@@ -122,3 +115,40 @@ def is_accountant_or_admin(user):
 #     }
     
 #     return render(request, 'projects/sell_apartment.html', context)
+
+
+# projects/forms.py
+
+
+class ApartmentCreateForm(forms.ModelForm):
+    class Meta:
+        model = Apartment
+        # показываем только обязательные поля
+        fields = ["apartment_number", "rooms", "area", "planned_price_per_m2",'floor']
+        widgets = {
+            "apartment_number": forms.TextInput(attrs={
+                "class": "form-control", "placeholder": "Напр. 45А"
+            }),
+            "rooms": forms.NumberInput(attrs={
+                "class": "form-control", "min": 0
+            }),
+            "area": forms.NumberInput(attrs={
+                "class": "form-control", "step": "0.01", "min": 0
+            }),
+            "planned_price_per_m2": forms.NumberInput(attrs={
+                "class": "form-control", "step": "0.01", "min": 0
+            }),
+            "floor": forms.NumberInput(attrs={"class": "form-control", "min": 1}),  # этаж
+   
+        }
+
+    def clean(self):
+        data = super().clean()
+        # простые проверки > 0
+        if data.get("rooms", 0) < 0:
+            self.add_error("rooms", "Количество комнат не может быть отрицательным")
+        if data.get("area", 0) <= 0:
+            self.add_error("area", "Площадь должна быть больше 0")
+        if data.get("planned_price_per_m2", 0) <= 0:
+            self.add_error("planned_price_per_m2", "Планируемая цена м² должна быть больше 0")
+        return data

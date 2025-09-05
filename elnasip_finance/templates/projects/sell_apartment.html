@@ -102,20 +102,7 @@
                                 {% endif %}
                                 <div class="form-text">Введите процент скидки (0-100)</div>
                             </div>
-                            
-                            <div class="mb-3">
-                                <label for="{{ form.deal_Fakt_deal_amount.id_for_label }}" class="form-label">
-                                    {{ form.deal_Fakt_deal_amount.label }}
-                                </label>
-                                {{ form.deal_Fakt_deal_amount }}
-                                {% if form.deal_Fakt_deal_amount.errors %}
-                                <div class="text-danger">
-                                    {% for error in form.deal_Fakt_deal_amount.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                                {% endif %}
-                            </div>
+                        
                              <div class="mb-3">
                                 <label for="{{ form.fact_price_per_m2.id_for_label }}" class="form-label">
                                     {{ form.fact_price_per_m2.label }}
