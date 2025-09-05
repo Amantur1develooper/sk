@@ -32,35 +32,37 @@
     <div class="col-md-3">
         <div class="card">
             <div class="card-body text-center">
-                <h5>План по смете</h5>
-                <h3>{{ total_planned|floatformat:0|intcomma }} сом</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5>Факт расходов</h5>
-                
-                <h3>{{total_allocated|intcomma }} сом</h3>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card">
-            <div class="card-body text-center">
                 <h5>Поступило</h5>
                 
                 <h3>{{project.total_received_amount|intcomma}} сом</h3>
             </div>
         </div>
     </div>
+ 
     <div class="col-md-3">
         <div class="card">
             <div class="card-body text-center">
                 <h5>Должны потратить</h5>
                 
                 <h3>{{must_buy|intcomma}} сом</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>План по смете</h5>
+                <h3>{{ total_planned|floatformat:0|intcomma }} сом</h3>
+            </div>
+        </div>
+       </div>
+    
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Факт расходов</h5>
+                
+                <h3>{{total_allocated|intcomma }} сом</h3>
             </div>
         </div>
     </div>
