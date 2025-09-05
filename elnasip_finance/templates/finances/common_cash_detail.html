@@ -9,6 +9,34 @@
         <h3 class="card-title">Текущий баланс: {{ common_cash.balance|intcomma }} сом</h3>
     </div>
 </div>
+
+<!-- 🔘 Форма фильтрации -->
+<form method="get" class="row g-3 mb-4">
+    <div class="col-md-3">
+        <label class="form-label">Блок</label>
+        <select name="block" class="form-select">
+            <option value="">Все</option>
+            {% for block in blocks %}
+                <option value="{{ block.id }}" {% if block.id|stringformat:"s" == selected_block %}selected{% endif %}>
+                    {{ block.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">С даты</label>
+        <input type="date" name="start_date" value="{{ start_date }}" class="form-control">
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">По дату</label>
+        <input type="date" name="end_date" value="{{ end_date }}" class="form-control">
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary me-2">Фильтровать</button>
+        <button type="submit" name="export" value="1" class="btn btn-success">Экспорт в Excel</button>
+    </div>
+</form>
+
 <!-- 🔘 Кнопка -->
 <div class="mb-3">
     <a href="{% url 'finances:create_allocation' %}" class="btn btn-primary">+ Выделить средства</a>
@@ -40,5 +68,18 @@
         </tr>
         {% endfor %}
     </tbody>
+
 </table>
+
+
+<!-- 🔹 Итоги -->
+<div class="card mt-3">
+    <div class="card-body">
+        <h5 class="card-title">Итоги по фильтру</h5>
+        <p><strong>Общий приход:</strong> {{ total_income|intcomma }} сом</p>
+        <p><strong>Общий расход:</strong> {{ total_expense|intcomma }} сом</p>
+        <p><strong>Разница:</strong> {{ net_balance|intcomma }} сом</p>
+    </div>
+</div>
+
 {% endblock %}

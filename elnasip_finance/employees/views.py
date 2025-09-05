@@ -94,3 +94,36 @@ def employee_list(request):
         employee.payment_count = SalaryPayment.objects.filter(employee=employee).count()
     
     return render(request, 'employees/employee_list2.html', {'employees': employees})
+
+
+
+from django.contrib.auth import authenticate, login, logout
+from django.shortcuts import render, redirect
+from django.contrib import messages
+
+
+def login_view(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+
+            # Если суперпользователь → кидаем в админку или спец. страницу
+            if user.is_superuser:
+                return redirect("admin:index")   # можно заменить на свою страницу
+            else:
+                return redirect("projects:projects_list")  # страница для простых пользователей
+        else:
+            messages.error(request, "Неверное имя пользователя или пароль")
+
+    return render(request, "auth/login.html")
+
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def logout_view(request):
+    logout(request)
+    return redirect("login")  # возвращаем на страницу входа

@@ -17,12 +17,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 # elnasip_finance/urls.py
+from employees.views import login_view, logout_view
 from django.contrib import admin
 from django.urls import path, include
 from finances.views import dashboard
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("login/", login_view, name="login"),
+    path("logout/", logout_view, name="logout"),
     path('', dashboard, name='dashboard'),
     path('finances/', include('finances.urls')),
     path('projects/', include('projects.urls')),

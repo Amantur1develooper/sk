@@ -4,6 +4,49 @@ from .models import CommonCash, CashFlow, Allocation, Expense, Sale
 from projects.models import Project, Block, EstimateItem
 from employees.models import Employee, SalaryPayment
 from django.db.models import Sum
+from django.db.models import Sum, Q
+
+@login_required
+def common_cash_detail(request):
+    common_cash = CommonCash.objects.first()
+    cash_flows = CashFlow.objects.all().order_by('-date')
+
+    # 🔹 фильтры
+    block_id = request.GET.get('block')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    if block_id:
+        cash_flows = cash_flows.filter(description__icontains=Block.objects.get(id=block_id).name)
+
+    if start_date:
+        cash_flows = cash_flows.filter(date__date__gte=parse_date(start_date))
+    if end_date:
+        cash_flows = cash_flows.filter(date__date__lte=parse_date(end_date))
+
+    # 🔹 итоги
+    total_income = cash_flows.filter(flow_type="income").aggregate(sum=Sum("amount"))["sum"] or 0
+    total_expense = cash_flows.filter(flow_type="expense").aggregate(sum=Sum("amount"))["sum"] or 0
+    net_balance = total_income - total_expense
+
+    # 🔹 экспорт в Excel
+    if 'export' in request.GET:
+        return export_cash_flows_to_excel(cash_flows)
+
+    blocks = Block.objects.all()
+
+    context = {
+        'common_cash': common_cash,
+        'cash_flows': cash_flows,
+        'blocks': blocks,
+        'selected_block': block_id,
+        'start_date': start_date,
+        'end_date': end_date,
+        'total_income': total_income,
+        'total_expense': total_expense,
+        'net_balance': net_balance,
+    }
+    return render(request, 'finances/common_cash_detail.html', context)
 
 @login_required
 def dashboard(request):
@@ -32,17 +75,120 @@ def dashboard(request):
         'recent_operations': recent_operations,
     }
     return render(request, 'finances/dashboard.html', context)
+import datetime
+from django.utils.dateparse import parse_date
+from django.http import HttpResponse
+import openpyxl
+from openpyxl.utils import get_column_letter
+from django.db.models import Q
+from projects.models import Block
+from .models import CommonCash, CashFlow
 
-@login_required
-def common_cash_detail(request):
-    common_cash = CommonCash.objects.first()
-    cash_flows = CashFlow.objects.all().order_by('-date')
+# @login_required
+# def common_cash_detail(request):
+#     common_cash = CommonCash.objects.first()
+#     cash_flows = CashFlow.objects.all().order_by('-date')
+
+#     # 🔹 фильтры
+#     block_id = request.GET.get('block')
+#     start_date = request.GET.get('start_date')
+#     end_date = request.GET.get('end_date')
+
+#     if block_id:
+#         cash_flows = cash_flows.filter(description__icontains=Block.objects.get(id=block_id).name)
+
+#     if start_date:
+#         cash_flows = cash_flows.filter(date__date__gte=parse_date(start_date))
+#     if end_date:
+#         cash_flows = cash_flows.filter(date__date__lte=parse_date(end_date))
+
+#     # 🔹 экспорт в Excel
+#     if 'export' in request.GET:
+#         return export_cash_flows_to_excel(cash_flows)
+
+#     blocks = Block.objects.all()
+
+#     context = {
+#         'common_cash': common_cash,
+#         'cash_flows': cash_flows,
+#         'blocks': blocks,
+#         'selected_block': block_id,
+#         'start_date': start_date,
+#         'end_date': end_date,
+#     }
+#     return render(request, 'finances/common_cash_detail.html', context)
+
+import openpyxl
+from io import BytesIO
+from django.http import HttpResponse
+
+def export_cash_flows_to_excel(cash_flows):
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Cash Flows"
+
+    # Заголовки
+    ws.append(["Дата", "Тип", "Сумма", "Описание"])
+
+    # Данные
+    for flow in cash_flows:
+        ws.append([
+            flow.date.strftime("%d.%m.%Y %H:%M"),
+            "Приход" if flow.flow_type == "income" else "Расход",
+            float(flow.amount),
+            flow.description,
+        ])
+
+    # Запись в память
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    # HTTP-ответ
+    response = HttpResponse(
+        buffer.getvalue(),
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    response['Content-Disposition'] = 'attachment; filename=cash_flows.xlsx'
+    return response
+
+# def export_cash_flows_to_excel(cash_flows):
+#     wb = openpyxl.Workbook()
+#     ws = wb.active
+#     ws.title = "Движение средств"
+
+#     headers = ["Дата", "Тип", "Сумма", "Описание"]
+#     ws.append(headers)
+
+#     for flow in cash_flows:
+#         ws.append([
+#             flow.date.strftime("%d.%m.%Y %H:%M"),
+#             "Приход" if flow.flow_type == "income" else "Расход",
+#             float(flow.amount),
+#             flow.description
+#         ])
+
+#     # ширина колонок
+#     for col_num, _ in enumerate(headers, 1):
+#         ws.column_dimensions[get_column_letter(col_num)].width = 20
+
+#     response = HttpResponse(
+#         content=openpyxl.writer.excel.save_virtual_workbook(wb),
+#         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+#     )
+#     response['Content-Disposition'] = 'attachment; filename="cash_flows.xlsx"'
+#     return response
+
+# @login_required
+# def common_cash_detail(request):
+#     common_cash = CommonCash.objects.first()
+#     cash_flows = CashFlow.objects.all().order_by('-date')
     
-    context = {
-        'common_cash': common_cash,
-        'cash_flows': cash_flows,
-    }
-    return render(request, 'finances/common_cash_detail.html', context)
+#     context = {
+#         'common_cash': common_cash,
+#         'cash_flows': cash_flows,
+#     }
+#     return render(request, 'finances/common_cash_detail.html', context)
 
 @login_required
 def allocations_list(request):

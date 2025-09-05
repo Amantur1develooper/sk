@@ -91,7 +91,7 @@
                         <span class="navbar-brand mb-0 h1">{% block page_title %}Система учета{% endblock %}</span>
                         <div>
                             <span class="me-3">Привет, {{ request.user.username }}</span>
-                            <a href="{% url 'admin:logout' %}" class="btn btn-outline-secondary btn-sm">Выйти</a>
+                            <a href="{% url 'logout' %}" class="btn btn-outline-secondary btn-sm">Выйти</a>
                         </div>
                     </div>
                 </nav>
