@@ -138,6 +138,8 @@
                         <th>Цена за м²</th>
                         <th>Статус</th>
                         <th>Сделка</th>
+                        <th>Поступило</th>
+                        <th>Остаток</th>
                         <th>Клиент</th>
                         <th>Действия</th>
                     </tr>
@@ -161,6 +163,9 @@
                             {% endif %}
                         </td>
                         <td>{{ apartment.deal_Fakt_deal_amount|intcomma  }} сом</td>
+                            <td>{{ apartment.deal_amount|intcomma  }} сом</td>
+                                <td>{{ apartment.remaining_deal_amount|intcomma  }} сом</td>
+                            
                         <td>{{ apartment.client_name|default:"-" }}</td>
                         <td>
                             <a href="{% url 'projects:apartment_detail' apartment.id %}" class="btn btn-sm btn-info">Детали</a>
