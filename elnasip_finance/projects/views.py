@@ -332,11 +332,13 @@ def sell_apartment(request, apartment_id):
             apartment = form.save()
             
             # Если указана скидка, пересчитываем сумму сделки
-            if apartment.discount and apartment.deal_Fakt_deal_amount:
+            # if apartment.discount and apartment.deal_Fakt_deal_amount:
                 # Вычисляем сумму без скидки
-                original_amount = apartment.deal_Fakt_deal_amount / (1 - apartment.discount / 100)
-                apartment.deal_amount = original_amount
-                apartment.save()
+                # original_amount = apartment.deal_Fakt_deal_amount / (1 - apartment.discount / 100)
+                # apartment.deal_amount = original_amount
+             
+            apartment.remaining_deal_amount = apartment.deal_Fakt_deal_amount
+            apartment.save()
             
             messages.success(request, f'Квартира {apartment.apartment_number} успешно продана!')
             return redirect('projects:apartment_list', apartment.block.id)
