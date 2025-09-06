@@ -426,7 +426,7 @@ from .models import Block, EstimateItem, CommonCash, Allocation
 from .forms import AllocationForm
 
 def allocation_create(request):
-    common_cash = get_object_or_404(CommonCash, pk=1)
+    common_cash = CommonCash.objects.first()
     blocks = Block.objects.all()
     block_id = request.GET.get("block")
 
