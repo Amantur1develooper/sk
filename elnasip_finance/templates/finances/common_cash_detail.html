@@ -10,8 +10,53 @@
     </div>
 </div>
 
+<form method="get" class="row g-2 mb-3">
+    <!-- Фильтр по типу операции -->
+    <div class="col-md-3">
+        <select name="flow_type" class="form-select">
+            <option value="">Все операции</option>
+            <option value="income" {% if request.GET.flow_type == 'income' %}selected{% endif %}>Приход</option>
+            <option value="expense" {% if request.GET.flow_type == 'expense' %}selected{% endif %}>Расход</option>
+        </select>
+    </div>
+
+    <!-- Фильтр по блоку -->
+    <div class="col-md-3">
+        <select name="block" class="form-select">
+            <option value="">Все блоки</option>
+            {% for block in blocks %}
+                <option value="{{ block.id }}" {% if request.GET.block == block.id|stringformat:"s" %}selected{% endif %}>
+                    {{ block.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Фильтр по дате -->
+    <div class="col-md-2">
+        <input type="date" name="start_date" value="{{ request.GET.start_date }}" class="form-control">
+    </div>
+    <div class="col-md-2">
+        <input type="date" name="end_date" value="{{ request.GET.end_date }}" class="form-control">
+    </div>
+
+    <!-- Кнопка -->
+  
+    <div class="col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary me-2">Фильтровать</button>
+        <button type="submit" name="export" value="1" class="btn btn-success">Экспорт в Excel</button>
+    </div>
+</form>
+
 <!-- 🔘 Форма фильтрации -->
-<form method="get" class="row g-3 mb-4">
+{% comment %} <form method="get" class="row g-3 mb-4">
+      <div class="col-md-3">
+        <select name="flow_type" class="form-select">
+            <option value="">Все операции</option>
+            <option value="income" {% if request.GET.flow_type == 'income' %}selected{% endif %}>Приход</option>
+            <option value="expense" {% if request.GET.flow_type == 'expense' %}selected{% endif %}>Расход</option>
+        </select>
+    </div>
     <div class="col-md-3">
         <label class="form-label">Блок</label>
         <select name="block" class="form-select">
@@ -35,7 +80,7 @@
         <button type="submit" class="btn btn-primary me-2">Фильтровать</button>
         <button type="submit" name="export" value="1" class="btn btn-success">Экспорт в Excel</button>
     </div>
-</form>
+</form> {% endcomment %}
 
 <!-- 🔘 Кнопка -->
 <div class="mb-3">
@@ -49,7 +94,9 @@
             <th>Дата</th>
             <th>Тип</th>
             <th>Сумма</th>
+            <th>Блок</th>
             <th>Описание</th>
+            <th>кто создал</th>
         </tr>
     </thead>
     <tbody>
@@ -63,8 +110,10 @@
                 <span class="badge bg-danger">Расход</span>
                 {% endif %}
             </td>
-            <td>{{ flow.amount|intcomma  }} сом</td>
+            <td>{{ flow.amount|intcomma }} сом</td>
+              <td>{{ flow.block }}</td>
             <td>{{ flow.description }}</td>
+            <td>{{flow.created_by}}</td>
         </tr>
         {% endfor %}
     </tbody>

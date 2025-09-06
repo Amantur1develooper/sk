@@ -22,6 +22,7 @@ class CashFlow(models.Model):
     flow_type = models.CharField(max_length=10, choices=FLOW_TYPES, verbose_name="Тип операции")
     amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Сумма")
     description = models.TextField(verbose_name="Описание")
+    block = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name="cash_flows")
     date = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     
@@ -99,6 +100,7 @@ class Sale(models.Model):
                     common_cash=common_cash,
                     flow_type='income',
                     amount=self.amount,
+                    block=self.block,
                     description=f"Поступление за квартиру в {self.block}",
                     created_by=User.objects.first()  # Замените на текущего пользователя
                 )
