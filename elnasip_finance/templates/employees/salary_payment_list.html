@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>📑 История выплат</h2>
+    <a href="{% url 'salary_payment_create' %}" class="btn btn-primary mb-3">➕ Новая выплата</a>
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Дата</th>
+                <th>Сотрудник</th>
+                <th>Тип</th>
+                <th>Сумма</th>
+                <th>Период</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+            <tr>
+                <td>{{ payment.date|date:"d.m.Y H:i" }}</td>
+                <td>{{ payment.employee.full_name }}</td>
+                <td>{{ payment.get_payment_type_display }}</td>
+                <td>{{ payment.amount }}</td>
+                <td>{{ payment.period|date:"F Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5">Нет выплат</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

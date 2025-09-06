@@ -31,5 +31,5 @@ urlpatterns = [
     path('projects/', include('projects.urls')),
     path('employees/', include('employees.urls')),
     path('reports/', include('reports.urls')),
-
+path("select2/", include("django_select2.urls")),
 ]

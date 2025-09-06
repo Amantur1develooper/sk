@@ -24,6 +24,7 @@ class CashFlow(models.Model):
     description = models.TextField(verbose_name="Описание")
     block = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name="cash_flows")
     date = models.DateTimeField(auto_now_add=True)
+    # is_zp = 
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     
     def save(self, *args, **kwargs):
@@ -31,7 +32,9 @@ class CashFlow(models.Model):
         if not self.pk:  # Если это новая запись
             if self.flow_type == 'income':
                 self.common_cash.balance += self.amount
-            elif "*!" in self.description:
+            elif 'Премия' in self.description:
+                 self.common_cash.balance -= self.amount
+            elif "Бонус" in self.description or "Аванс " in self.description or "Зарплата " in self.description:
                 pass
             else:
                 self.common_cash.balance -= self.amount
@@ -46,8 +49,8 @@ class CashFlow(models.Model):
         verbose_name_plural = "Движения денег"
 
 class Allocation(models.Model):
-    common_cash = models.ForeignKey(CommonCash, on_delete=models.CASCADE, related_name='allocations')
-    estimate_item = models.ForeignKey(EstimateItem, on_delete=models.CASCADE, related_name='allocations', verbose_name="Позиция сметы")
+    common_cash = models.ForeignKey(CommonCash, default=1, on_delete=models.CASCADE, related_name='allocations')
+    estimate_item = models.ForeignKey(EstimateItem, on_delete=models.CASCADE, null=True, blank=True, related_name='allocations', verbose_name="Позиция сметы")
     amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Сумма")
     description = models.TextField(verbose_name="Назначение")
     date = models.DateTimeField(auto_now_add=True)
@@ -102,7 +105,7 @@ class Sale(models.Model):
                     amount=self.amount,
                     block=self.block,
                     description=f"Поступление за квартиру в {self.block}",
-                    created_by=User.objects.first()  # Замените на текущего пользователя
+                    created_by=User.request.user  # Замените на текущего пользователя
                 )
         super().save(*args, **kwargs)
     

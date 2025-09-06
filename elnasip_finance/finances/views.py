@@ -59,6 +59,36 @@ def common_cash_detail(request):
     
     
     return render(request, 'finances/common_cash_detail.html', context)
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Block, EstimateItem, CommonCash, Allocation
+from .forms import AllocationForm
+
+def allocation_create(request):
+    common_cash = get_object_or_404(CommonCash, pk=1)
+    blocks = Block.objects.all()
+    block_id = request.GET.get("block")
+
+    form = None
+    if block_id:
+        estimate_items = EstimateItem.objects.filter(block_id=block_id)
+        if request.method == "POST":
+            form = AllocationForm(request.POST)
+            form.fields["estimate_item"].queryset = estimate_items
+            if form.is_valid():
+                allocation = form.save(commit=False)
+                allocation.save()
+                return redirect("finances:allocations_list")
+        else:
+            form = AllocationForm()
+            form.fields["estimate_item"].queryset = estimate_items
+
+    context = {
+        "common_cash": common_cash,
+        "blocks": blocks,
+        "block_id": int(block_id) if block_id else None,
+        "form": form,
+    }
+    return render(request, "finances/allocation_create.html", context)
 
 # @login_required
 # def common_cash_detail(request):
@@ -382,48 +412,249 @@ from .forms import AllocationForm
 from .models import CommonCash, CashFlow, Allocation
 from projects.models import EstimateItem
 
-@login_required
-@transaction.atomic
-def create_allocation(request):
-    common_cash = CommonCash.objects.first()
-    
-    if request.method == 'POST':
-        form = AllocationForm(request.POST)
-        if form.is_valid():
-            try:
-                # Создаем запись о выделении средств
+
+# views.py
+from projects.models import Block
+# finances/views.py (часть)
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .forms import AllocationForm
+from .models import CommonCash, CashFlow, Allocation
+from projects.models import Block, EstimateItem
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Block, EstimateItem, CommonCash, Allocation
+from .forms import AllocationForm
+
+def allocation_create(request):
+    common_cash = get_object_or_404(CommonCash, pk=1)
+    blocks = Block.objects.all()
+    block_id = request.GET.get("block")
+
+    form = None
+    if block_id:
+        estimate_items = EstimateItem.objects.filter(block_id=block_id)
+        print(f"Block ID: {block_id}, Found items: {estimate_items.count()}")  # Отладочный вывод
+        if request.method == "POST":
+            form = AllocationForm(request.POST)
+            form.fields["estimate_item"].queryset = estimate_items
+            if form.is_valid():
                 allocation = form.save(commit=False)
-                
-                # Проверяем достаточно ли средств в Общаге
-                if common_cash.balance < allocation.amount:
-                    messages.error(request, 'Недостаточно средств в Общаге')
-                    return render(request, 'finances/allocation_form.html', {'form': form})
-                
-                # Создаем запись о движении денег (расход)
+                # allocation = form.save(commit=False)
+
+                # if common_cash.balance < allocation.amount:
+                #     messages.error(request, 'Недостаточно средств в Общаге')
+                #     return render(request, 'finances/allocation_form.html', {'form': form, 'common_cash': common_cash, 'blocks': blocks, 'block_id': block_id})
+
+                # создаём CashFlow и привязываем block из estimate_item
                 cash_flow = CashFlow.objects.create(
                     common_cash=common_cash,
                     flow_type='expense',
                     amount=allocation.amount,
-                    block=allocation.estimate_item.block,  
+                    block=allocation.estimate_item.block,
                     description=f"Выделение средств: {allocation.description}",
                     created_by=request.user
                 )
-                
-                # Сохраняем выделение средств
+
                 allocation.common_cash = common_cash
                 allocation.save()
-                
+
                 messages.success(request, f'Средства в размере {allocation.amount} сом успешно выделены!')
-                # return redirect('finances:allocations_list')
-                return redirect('finances:common_cash_detail')
-                
-            except Exception as e:
-                messages.error(request, f'Ошибка при выделении средств: {str(e)}')
-    else:
-        form = AllocationForm()
     
+                return redirect("finances:common_cash_detail")
+        else:
+            form = AllocationForm()
+            form.fields["estimate_item"].queryset = estimate_items
+
     context = {
-        'form': form,
-        'common_cash': common_cash,
+        "common_cash": common_cash,
+        "blocks": blocks,
+        "block_id": int(block_id) if block_id else None,
+        "form": form,
     }
-    return render(request, 'finances/allocation_form.html', context)
+    return render(request, "finances/allocation_create.html", context)
+
+# def create_allocation(request):
+#     common_cash = CommonCash.objects.first()
+#     blocks = Block.objects.all()
+#     block_id = request.GET.get('block')  # фильтр по блоку в GET
+
+#     # На GET: инициализируем форму и подрезаем queryset позиций если выбран блок
+#     if request.method == 'GET':
+#         form = AllocationForm()
+#         if block_id:
+#             form.fields['estimate_item'].queryset = EstimateItem.objects.filter(block_id=block_id)
+#     else:
+#         # POST
+#         form = AllocationForm(request.POST)
+#         # важно: чтобы валидация прошла, убедимся, что в queryset есть выбранный элемент
+#         # оставим полный queryset (или можно подрезать как выше)
+#         form.fields['estimate_item'].queryset = EstimateItem.objects.select_related('block', 'category').all()
+
+#         if form.is_valid():
+#             try:
+#                 allocation = form.save(commit=False)
+
+#                 if common_cash.balance < allocation.amount:
+#                     messages.error(request, 'Недостаточно средств в Общаге')
+#                     return render(request, 'finances/allocation_form.html', {'form': form, 'common_cash': common_cash, 'blocks': blocks, 'block_id': block_id})
+
+#                 # создаём CashFlow и привязываем block из estimate_item
+#                 cash_flow = CashFlow.objects.create(
+#                     common_cash=common_cash,
+#                     flow_type='expense',
+#                     amount=allocation.amount,
+#                     block=allocation.estimate_item.block,
+#                     description=f"Выделение средств: {allocation.description}",
+#                     created_by=request.user
+#                 )
+
+#                 allocation.common_cash = common_cash
+#                 allocation.save()
+
+#                 messages.success(request, f'Средства в размере {allocation.amount} сом успешно выделены!')
+                
+#                 return redirect('finances:common_cash_detail')
+            
+#             except Exception as e:
+#                 messages.error(request, f'Ошибка при выделении средств: {str(e)}')
+
+#     return render(request, 'finances/allocation_form.html', {
+#         'form': form,
+#         'common_cash': common_cash,
+#         'blocks': blocks,
+#         'block_id': int(block_id) if block_id else None
+#     })
+
+# def create_allocation(request):
+#     common_cash = CommonCash.objects.first()
+#     block_id = request.GET.get("block")
+
+#     if request.method == 'POST':
+#         form = AllocationForm(request.POST)
+#         if form.is_valid():
+#             allocation = form.save(commit=False)
+
+#             if common_cash.balance < allocation.amount:
+#                 messages.error(request, 'Недостаточно средств в Общаге')
+#                 return render(request, 'finances/allocation_form.html', {'form': form, 'common_cash': common_cash})
+
+#             cash_flow = CashFlow.objects.create(
+#                 common_cash=common_cash,
+#                 flow_type='expense',
+#                 amount=allocation.amount,
+#                 block=allocation.estimate_item.block,
+#                 description=f"Выделение средств: {allocation.description}",
+#                 created_by=request.user
+#             )
+#             allocation.common_cash = common_cash
+#             allocation.save()
+#             messages.success(request, f'Средства в размере {allocation.amount} сом успешно выделены!')
+#             return redirect('finances:common_cash_detail')
+#     else:
+#         form = AllocationForm()
+
+#     # фильтруем estimate_item если выбран блок
+#     if block_id:
+#         form.fields['estimate_item'].queryset = form.fields['estimate_item'].queryset.filter(block_id=block_id)
+
+#     blocks = Block.objects.all()
+#     return render(request, 'finances/allocation_form.html', {
+#         'form': form,
+#         'common_cash': common_cash,
+#         'blocks': blocks,
+#         'block_id': int(block_id) if block_id else None
+#     })
+from django.http import JsonResponse
+
+# finances/views.py
+from django.http import JsonResponse
+from django.db.models import Q
+from projects.models import EstimateItem
+from django.http import JsonResponse
+from .models import EstimateItem
+
+def get_estimate_items(request):
+    block_id = request.GET.get("block_id")
+    items = EstimateItem.objects.filter(block_id=block_id).values("id", "name") if block_id else []
+    return JsonResponse(list(items), safe=False)
+
+def get_estimate_items3(request):
+    """
+    Возвращает JSON список позиций сметы.
+    Параметры GET:
+      - q: строка поиска (опционально)
+      - block_id: id блока (опционально)
+    """
+    q = request.GET.get('q', '').strip()
+    block_id = request.GET.get('block_id')
+
+    qs = EstimateItem.objects.select_related('block', 'category').all()
+
+    if block_id:
+        qs = qs.filter(block_id=block_id)
+
+    if q:
+        qs = qs.filter(
+            Q(name__icontains=q) |
+            Q(block__name__icontains=q) |
+            Q(category__name__icontains=q)
+        )
+
+    # лимитируем результат
+    items = []
+    for it in qs[:200]:
+        display = f"{it.block.name} — {it.category.name} — {it.name}"
+        items.append({'id': it.id, 'text': display})
+
+    return JsonResponse({'results': items})
+
+# def get_estimate_items(request):
+#     block_id = request.GET.get("block_id")
+#     items = EstimateItem.objects.filter(block_id=block_id).values("id", "name")
+#     return JsonResponse(list(items), safe=False)
+
+# @login_required
+# @transaction.atomic
+# def create_allocation(request):
+#     common_cash = CommonCash.objects.first()
+    
+#     if request.method == 'POST':
+#         form = AllocationForm(request.POST)
+#         if form.is_valid():
+#             try:
+#                 # Создаем запись о выделении средств
+#                 allocation = form.save(commit=False)
+                
+#                 # Проверяем достаточно ли средств в Общаге
+#                 if common_cash.balance < allocation.amount:
+#                     messages.error(request, 'Недостаточно средств в Общаге')
+#                     return render(request, 'finances/allocation_form.html', {'form': form})
+                
+#                 # Создаем запись о движении денег (расход)
+#                 cash_flow = CashFlow.objects.create(
+#                     common_cash=common_cash,
+#                     flow_type='expense',
+#                     amount=allocation.amount,
+#                     block=allocation.estimate_item.block,  
+#                     description=f"Выделение средств: {allocation.description}",
+#                     created_by=request.user
+#                 )
+                
+#                 # Сохраняем выделение средств
+#                 allocation.common_cash = common_cash
+#                 allocation.save()
+                
+#                 messages.success(request, f'Средства в размере {allocation.amount} сом успешно выделены!')
+#                 # return redirect('finances:allocations_list')
+#                 return redirect('finances:common_cash_detail')
+                
+#             except Exception as e:
+#                 messages.error(request, f'Ошибка при выделении средств: {str(e)}')
+#     else:
+#         form = AllocationForm()
+    
+#     context = {
+#         'form': form,
+#         'common_cash': common_cash,
+#     }
+#     return render(request, 'finances/allocation_form.html', context)

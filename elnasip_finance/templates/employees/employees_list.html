@@ -31,7 +31,7 @@
                     <a href="{% url 'employees:employee_dashboard' employee.id %}">Просмотреть</a>
 
                     <a href="{% url 'admin:employees_employee_change' employee.id %}" class="btn btn-sm btn-warning">Редактировать</a>
-                    <a href="{% url 'admin:employees_salarypayment_add' %}?employee={{ employee.id }}" class="btn btn-sm btn-success">Выплатить</a>
+                    <a href="{%  url 'employees:salary_payment_create_for_employee' employee.id %}" class="btn btn-sm btn-success">Выплатить</a>
                 </td>
             </tr>
             {% endfor %}

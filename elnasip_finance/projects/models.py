@@ -345,9 +345,12 @@ class EstimateItem(models.Model):
     def margin(self):
         return self.planned_amount - self.get_allocated_sum()
     
-        
+    
     def __str__(self):
-        return f"{self.name} ({self.block})"
+        return f"{self.block.name} — {self.category.name} — {self.name}"
+    
+    # def __str__(self):
+    #     return f"{self.name} ({self.block})"
     
     class Meta:
         verbose_name = "Позиция сметы"

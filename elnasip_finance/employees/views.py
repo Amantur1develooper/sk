@@ -127,3 +127,61 @@ from django.contrib.auth.decorators import login_required
 def logout_view(request):
     logout(request)
     return redirect("login")  # возвращаем на страницу входа
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
+# from .forms import SalaryPaymentForm
+# employees/views.py
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from .models import Employee, SalaryPayment
+from .forms import SalaryPaymentForEmployeeForm
+
+@login_required
+def salary_payment_create_for_employee(request, employee_id):
+    employee = get_object_or_404(Employee, id=employee_id)
+
+    if request.method == 'POST':
+        form = SalaryPaymentForEmployeeForm(request.POST)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.employee = employee
+            payment.save()  # здесь сработает твой SalaryPayment.save() — создаст CashFlow/Expense/Allocation
+            messages.success(request, f'Выплата {payment.get_payment_type_display()} ({payment.amount}) для {employee.full_name} создана.')
+            # редирект куда угодно — например на страницу сотрудника или список выплат сотрудника
+            return redirect('employees:employee_dashboard', employee_id=employee.id)
+    else:
+        # можно задать начальные значения (например, period = today)
+        form = SalaryPaymentForEmployeeForm(initial={'period': None})
+
+    return render(request, 'employees/salary_payment_form_for_employee.html', {
+        'form': form,
+        'employee': employee,
+    })
+
+# def salary_payment_create(request):
+#     if request.method == 'POST':
+#         form = SalaryPaymentForm(request.POST)
+#         if form.is_valid():
+#             payment = form.save()
+#             messages.success(request, f'✅ {payment.get_payment_type_display()} в размере {payment.amount} сом выплачена сотруднику {payment.employee.full_name}')
+#             return redirect('salary_payment_list')  # сделаем список выплат
+#     else:
+#         form = SalaryPaymentForm()
+
+#     return render(request, 'employees/salary_payment_form.html', {'form': form})
+
+
+from .models import SalaryPayment
+def salary_payment_list_for_employee(request, employee_id):
+    employee = get_object_or_404(Employee, id=employee_id)
+    payments = employee.payments.select_related('employee').order_by('-date')
+    return render(request, 'employees/salary_payment_list_for_employee.html', {
+        'employee': employee,
+        'payments': payments,
+    })
+
+def salary_payment_list(request):
+    payments = SalaryPayment.objects.select_related('employee').order_by('-date')
+    return render(request, 'employees/salary_payment_list.html', {'payments': payments})

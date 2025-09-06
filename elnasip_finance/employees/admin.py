@@ -12,9 +12,10 @@ admin.site.index_title = settings.ADMIN_INDEX_TITLE
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
-    list_display = [ 'full_name','position', 'hire_date', 'salary']
+    list_display = [ 'full_name','position', 'hire_date', 'salary','blocks']
     search_fields = [ 'full_name', 'position']
-    filter_horizontal = ['blocks'] 
+    list_filter = [ 'blocks']
+    # filter_horizontal = ['blocks'] 
     
     
 @admin.register(SalaryPayment)

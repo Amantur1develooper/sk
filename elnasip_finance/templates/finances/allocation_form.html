@@ -3,60 +3,99 @@
 {% block page_title %}Выделение средств из Общага{% endblock %}
 
 {% block content %}
+<!-- Select2 -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0/dist/js/select2.min.js"></script>
+
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h4>Выделение средств из Общага</h4>
-            </div>
-            <div class="card-body">
-                <div class="alert alert-info">
-                    Текущий баланс Общага: <strong>{{ common_cash.balance }} сом</strong>
-                </div>
-                
-                <form  method="post">
-                    {% csrf_token %}
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.estimate_item.id_for_label }}" class="form-label">
-                            {{ form.estimate_item.label }}
-                        </label>
-                        {{ form.estimate_item }}
-                        {% if form.estimate_item.help_text %}
-                        <div class="form-text">{{ form.estimate_item.help_text }}</div>
-                        {% endif %}
-                        {% for error in form.estimate_item.errors %}
-                        <div class="text-danger">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.amount.id_for_label }}" class="form-label">
-                            {{ form.amount.label }}
-                        </label>
-                        {{ form.amount }}
-                        {% for error in form.amount.errors %}
-                        <div class="text-danger">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label for="{{ form.description.id_for_label }}" class="form-label">
-                            {{ form.description.label }}
-                        </label>
-                        {{ form.description }}
-                        {% for error in form.description.errors %}
-                        <div class="text-danger">{{ error }}</div>
-                        {% endfor %}
-                    </div>
-                    
-                    <div class="d-grid gap-2">
-                        <button type="submit"  class="btn btn-primary">Выделить средства</button>
-                        <a href="{% url 'finances:allocations_list' %}" class="btn btn-secondary">Отмена</a>
-                    </div>
-                </form>
-            </div>
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h4>Выделение средств из Общага</h4>
+      </div>
+
+      <div class="card-body">
+        <div class="alert alert-info">
+          Текущий баланс Общага: <strong>{{ common_cash.balance }} сом</strong>
         </div>
+
+        <!-- 🔹 Фильтр по блоку -->
+        <div class="mb-3">
+          <label for="block" class="form-label">Фильтр по блоку</label>
+          <select name="block" id="block" class="form-select">
+            <option value="">Все блоки</option>
+            {% for block in blocks %}
+              <option value="{{ block.id }}" {% if block_id == block.id %}selected{% endif %}>
+                {{ block.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- 🔹 Основная форма -->
+        <form method="post">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label for="{{ form.estimate_item.id_for_label }}" class="form-label">
+              {{ form.estimate_item.label }}
+            </label>
+            {{ form.estimate_item }}
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.amount.id_for_label }}" class="form-label">
+              {{ form.amount.label }}
+            </label>
+            {{ form.amount }}
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.description.id_for_label }}" class="form-label">
+              {{ form.description.label }}
+            </label>
+            {{ form.description }}
+          </div>
+
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary">Выделить средства</button>
+            <a href="{% url 'finances:allocations_list' %}" class="btn btn-secondary">Отмена</a>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 </div>
+
+<!-- 🔹 JS -->
+<script>
+  $(document).ready(function () {
+    // select2 для поля estimate_item
+    $('#id_estimate_item').select2({
+      width: '100%',
+      placeholder: "Начните вводить позицию сметы...",
+      allowClear: true
+    });
+
+    // загрузка позиций сметы при выборе блока
+    $('#block').change(function () {
+      let blockId = $(this).val();
+
+      $.ajax({
+        url: "{% url 'finances:get_estimate_items' %}",
+        data: { block_id: blockId },
+        success: function (data) {
+          let $estimate = $('#id_estimate_item');
+          $estimate.empty();
+          $estimate.append('<option value="">---------</option>');
+          data.forEach(function (item) {
+            $estimate.append(`<option value="${item.id}">${item.name}</option>`);
+          });
+          $estimate.trigger('change'); // обновляем select2
+        }
+      });
+    });
+  });
+</script>
 {% endblock %}
