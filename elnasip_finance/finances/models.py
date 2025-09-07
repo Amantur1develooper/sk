@@ -1,3 +1,4 @@
+from urllib import request
 from django.db import models
 from projects.models import Project, Block, EstimateItem
 from django.contrib.auth.models import User
@@ -89,23 +90,28 @@ class Sale(models.Model):
     amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Сумма продажи")
     date = models.DateTimeField(auto_now_add=True)
     client_info = models.TextField(blank=True, verbose_name="Информация о клиенте")
+    created_by = models.ForeignKey(User,blank=True,null=True, on_delete=models.CASCADE)
+    
     
     def save(self, *args, **kwargs):
+        # user = kwargs.pop('user', None)  # ждём, что из views передадим
+        # super().save(*args, **kwargs)
         # При сохранении продажи обновляем проданную площадь и добавляем деньги в Общаг
-        if not self.pk:  # Если это новая запись
+        # if not self.pk:  # Если это новая запись
             # self.block.sold_area += self.area
-            self.block.save()
+            # self.block.save()
             # self.block.apartments.save()
             # Добавляем деньги в Общаг
-            common_cash = CommonCash.objects.first()
-            if common_cash:
-                CashFlow.objects.create(
+        common_cash = CommonCash.objects.first()
+        # print(user,'_____________________')
+        if common_cash:
+            CashFlow.objects.create(
                     common_cash=common_cash,
                     flow_type='income',
                     amount=self.amount,
                     block=self.block,
                     description=f"Поступление за квартиру в {self.block}",
-                    created_by=User.request.user  # Замените на текущего пользователя
+                    created_by= self.created_by  # Замените на текущего пользователя
                 )
         super().save(*args, **kwargs)
     

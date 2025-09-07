@@ -9,7 +9,7 @@
     <div>
         {% comment %} <a href="{% url 'projects:project_detail' block.project.id %}" class="btn btn-secondary">← Назад к проекту</a> {% endcomment %}
         <a href="{% url 'projects:apartment_list' current_block.id %}" class="btn btn-primary">Просмотреть квартиры</a>
-        <a href="{% url 'admin:projects_estimateitem_add' %}?block={{ block.id }}" class="btn btn-primary">+ Добавить позицию сметы</a>
+        <a href="{% url 'projects:add_estimate_item' current_block.id %}" class="btn btn-primary">+ Добавить позицию сметы</a>
         
     </div>
 </div>

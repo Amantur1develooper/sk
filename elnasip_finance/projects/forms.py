@@ -12,6 +12,13 @@ class ApartmentForm(forms.ModelForm):
         widgets = {
             'client_name': forms.TextInput(attrs={'placeholder': 'ФИО клиента'}),
         }
+from django import forms
+from .models import EstimateItem
+
+class EstimateItemForm(forms.ModelForm):
+    class Meta:
+        model = EstimateItem
+        exclude = ["block"]  # блок задаём во views
 
 class DealPaymentForm(forms.ModelForm):
     class Meta:

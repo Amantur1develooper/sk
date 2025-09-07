@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block content %}
+<h2>Добавить позицию сметы в блок: {{ block.name }}</h2>
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-success">Сохранить</button>
+</form>
+{% endblock %}
