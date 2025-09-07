@@ -53,7 +53,7 @@ class SalaryPayment(models.Model):
                 description=f"{self.get_payment_type_display()} для {self.employee.full_name} {self.employee.position}",
                 created_by=User.objects.first()
             )
-        
+
         # Создаем расходы в сметах связанных блоков
         if self.employee.blocks:  # так как ForeignKey
             self.create_expenses_in_blocks()

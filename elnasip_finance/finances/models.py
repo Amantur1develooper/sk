@@ -36,7 +36,7 @@ class CashFlow(models.Model):
             elif 'Премия' in self.description:
                  self.common_cash.balance -= self.amount
             elif "Бонус" in self.description or "Аванс " in self.description or "Зарплата " in self.description:
-                pass
+                self.common_cash.balance -= self.amount
             else:
                 self.common_cash.balance -= self.amount
             self.common_cash.save()
