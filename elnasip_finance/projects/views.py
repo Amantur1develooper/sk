@@ -353,14 +353,14 @@ def sell_apartment(request, apartment_id):
             #     client_info=apartment.client_name,
             #     created_by=request.user,   # <<< кто создал сделку
             # )
-            sale = Sale(
-    block=apartment.block,
-    area=apartment.area,
-    amount=apartment.deal_Fakt_deal_amount,
-    client_info=form.cleaned_data['client_name'],
-    created_by=request.user  # 👈 сохраняем кто продал
-)
-            sale.save(user=request.user)  # 👈 передаём пользователя дальше
+#             sale = Sale(
+#     block=apartment.block,
+#     area=apartment.area,
+#     amount=apartment.deal_Fakt_deal_amount,
+#     client_info=form.cleaned_data['client_name'],
+#     created_by=request.user  # 👈 сохраняем кто продал
+# )
+            # sale.save(user=request.user)  # 👈 передаём пользователя дальше
 
             messages.success(request, f'Квартира {apartment.apartment_number} успешно продана!')
             return redirect('projects:apartment_list', apartment.block.id)
@@ -418,7 +418,7 @@ def add_estimate_item(request, block_id):
             estimate_item = form.save(commit=False)
             estimate_item.block = block   # автоматически присваиваем
             estimate_item.save()
-            return redirect("block_detail", block_id=block.id)  # например на страницу блока
+            return redirect("projects:block_detail", block_id=block.id)  # например на страницу блока
     else:
         form = EstimateItemForm()
 
