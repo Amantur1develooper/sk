@@ -72,3 +72,36 @@ class AllocationForm(forms.ModelForm):
 #         self.fields['estimate_item'].queryset = EstimateItem.objects.select_related(
 #             'block', 'block__project', 'category'
 #         )
+
+from django import forms
+from .models import Loan, LoanPayment
+from django.utils import timezone
+
+class LoanForm(forms.ModelForm):
+    class Meta:
+        model = Loan
+        fields = ['loan_type', 'contractor', 'amount', 'issued_date', 'due_date', 'interest_rate', 'description']
+        widgets = {
+            'issued_date': forms.DateInput(attrs={'type': 'date'}),
+            'due_date': forms.DateInput(attrs={'type': 'date'}),
+            'description': forms.Textarea(attrs={'rows': 3}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Устанавливаем текущую дату по умолчанию
+        self.fields['issued_date'].initial = timezone.now().date()
+
+class LoanPaymentForm(forms.ModelForm):
+    class Meta:
+        model = LoanPayment
+        fields = ['amount', 'payment_date', 'comment']
+        widgets = {
+            'payment_date': forms.DateInput(attrs={'type': 'date'}),
+            'comment': forms.Textarea(attrs={'rows': 3}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Устанавливаем текущую дату по умолчанию
+        self.fields['payment_date'].initial = timezone.now().date()

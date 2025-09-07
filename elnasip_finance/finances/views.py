@@ -658,3 +658,104 @@ def get_estimate_items3(request):
 #         'common_cash': common_cash,
 #     }
 #     return render(request, 'finances/allocation_form.html', context)
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .forms import LoanForm, LoanPaymentForm
+from .models import Loan, LoanPayment
+
+@login_required
+def loans_list(request):
+    loans = Loan.objects.all().order_by('-issued_date')
+    
+    # Фильтрация по типу займа
+    loan_type = request.GET.get('type')
+    if loan_type in ['given', 'taken']:
+        loans = loans.filter(loan_type=loan_type)
+    
+    # Фильтрация по статусу
+    status = request.GET.get('status')
+    if status in ['active', 'repaid', 'overdue']:
+        loans = loans.filter(status=status)
+    
+    context = {
+        'loans': loans,
+        'current_type': loan_type,
+        'current_status': status,
+    }
+    return render(request, 'finances/loans_list.html', context)
+
+@login_required
+def loan_detail(request, loan_id):
+    loan = get_object_or_404(Loan, id=loan_id)
+    payments = loan.payments.all().order_by('-payment_date')
+    
+    context = {
+        'loan': loan,
+        'payments': payments,
+    }
+    return render(request, 'finances/loan_detail.html', context)
+
+@login_required
+def create_loan(request):
+    common_cash = CommonCash.objects.first()
+    
+    if request.method == 'POST':
+        form = LoanForm(request.POST)
+        if form.is_valid():
+            loan = form.save(commit=False)
+            loan.common_cash = common_cash
+            loan.created_by = request.user
+            
+            # Проверяем достаточно ли средств для выдачи займа
+            if loan.loan_type == 'given' and common_cash.balance < loan.amount:
+                messages.error(request, 'Недостаточно средств в Общаге для выдачи займа')
+                return render(request, 'finances/loan_form.html', {'form': form})
+            
+            loan.save()
+            messages.success(request, 'Займ успешно создан')
+            return redirect('finances:loans_list')
+    else:
+        form = LoanForm()
+    
+    context = {
+        'form': form,
+        'common_cash': common_cash,
+    }
+    return render(request, 'finances/loan_form.html', context)
+
+@login_required
+def add_loan_payment(request, loan_id):
+    loan = get_object_or_404(Loan, id=loan_id)
+    common_cash = loan.common_cash
+    
+    if request.method == 'POST':
+        form = LoanPaymentForm(request.POST)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.loan = loan
+            payment.created_by = request.user
+            
+            # Проверяем достаточно ли средств для возврата полученного займа
+            if loan.loan_type == 'taken' and common_cash.balance < payment.amount:
+                messages.error(request, 'Недостаточно средств в Общаге для возврата займа')
+                return render(request, 'finances/loan_payment_form.html', {'form': form, 'loan': loan})
+            
+            # Проверяем не превышает ли платеж остаток по займу
+            if payment.amount > loan.remaining_amount:
+                messages.error(request, f'Сумма платежа не может превышать остаток по займу: {loan.remaining_amount}')
+                return render(request, 'finances/loan_payment_form.html', {'form': form, 'loan': loan})
+            
+            payment.save()
+            messages.success(request, 'Платеж по займу успешно добавлен')
+            return redirect('finances:loan_detail', loan_id=loan.id)
+    else:
+        form = LoanPaymentForm()
+    
+    context = {
+        'form': form,
+        'loan': loan,
+    }
+    return render(request, 'finances/loan_payment_form.html', context)

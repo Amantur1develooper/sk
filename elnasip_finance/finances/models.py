@@ -2,6 +2,8 @@ from urllib import request
 from django.db import models
 from projects.models import Project, Block, EstimateItem
 from django.contrib.auth.models import User
+from django.db.models import Sum, Q
+
 
 class CommonCash(models.Model):
     balance = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name="Баланс")
@@ -121,3 +123,143 @@ class Sale(models.Model):
     class Meta:
         verbose_name = "Продажа"
         verbose_name_plural = "Продажи"
+        
+        
+        
+        
+class Loan(models.Model):
+    LOAN_TYPES = (
+        ('given', 'Выданный займ'),
+        ('taken', 'Полученный займ'),
+    )
+    
+    LOAN_STATUSES = (
+        ('active', 'Активный'),
+        ('repaid', 'Погашенный'),
+        ('overdue', 'Просроченный'),
+    )
+    
+    common_cash = models.ForeignKey(CommonCash, on_delete=models.CASCADE, related_name='loans')
+    loan_type = models.CharField(max_length=10, choices=LOAN_TYPES, verbose_name="Тип займа")
+    contractor = models.CharField(max_length=200, verbose_name="Контрагент")
+    amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Сумма займа")
+    issued_date = models.DateField(verbose_name="Дата выдачи")
+    due_date = models.DateField(verbose_name="Дата возврата")
+    interest_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name="Процентная ставка")
+    description = models.TextField(blank=True, verbose_name="Описание")
+    status = models.CharField(max_length=10, choices=LOAN_STATUSES, default='active', verbose_name="Статус")
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    
+    def save(self, *args, **kwargs):
+        is_new = not self.pk
+        
+        if is_new:
+            # При создании нового займа обновляем баланс Общага
+            if self.loan_type == 'given':
+                # Выдача займа - уменьшаем баланс
+                # self.common_cash.balance -= self.amount
+                # Создаем запись о расходе
+                CashFlow.objects.create(
+                    common_cash=self.common_cash,
+                    flow_type='expense',
+                    amount=self.amount,
+                    description=f"Выдача займа {self.contractor}",
+                    created_by=self.created_by
+                )
+            else:
+                # Получение займа - увеличиваем баланс
+                # self.common_cash.balance += self.amount
+                # Создаем запись о приходе
+                CashFlow.objects.create(
+                    common_cash=self.common_cash,
+                    flow_type='income',
+                    amount=self.amount,
+                    description=f"Получение займа от {self.contractor}",
+                    created_by=self.created_by
+                )
+            self.common_cash.save()
+        
+        super().save(*args, **kwargs)
+    
+    @property
+    def total_amount(self):
+        # Общая сумма к возврату (с учетом процентов)
+        return self.amount * (1 + self.interest_rate / 100)
+    
+    @property
+    def repaid_amount(self):
+        # Сумма уже возвращенных средств
+        return self.payments.aggregate(Sum('amount'))['amount__sum'] or 0
+    
+    @property
+    def remaining_amount(self):
+        # Остаток к возврату
+        return self.total_amount - self.repaid_amount
+    
+    @property
+    def is_overdue(self):
+        # Проверка просрочки
+        from django.utils import timezone
+        return self.status == 'active' and timezone.now().date() > self.due_date
+    
+    def __str__(self):
+        return f"{self.get_loan_type_display()} {self.amount} {self.contractor}"
+    
+    class Meta:
+        verbose_name = "Займ"
+        verbose_name_plural = "Займы"
+
+class LoanPayment(models.Model):
+    loan = models.ForeignKey(Loan, on_delete=models.CASCADE, related_name='payments')
+    amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Сумма платежа")
+    payment_date = models.DateField(verbose_name="Дата платежа")
+    comment = models.TextField(blank=True, verbose_name="Комментарий")
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    
+    def save(self, *args, **kwargs):
+        is_new = not self.pk
+        
+        super().save(*args, **kwargs)
+        
+        if is_new:
+            # Обновляем баланс Общага при возврате займа
+            common_cash = self.loan.common_cash
+            
+            if self.loan.loan_type == 'given':
+                # Возврат выданного займа - увеличиваем баланс
+                # common_cash.balance += self.amount
+                # Создаем запись о приходе
+                CashFlow.objects.create(
+                    common_cash=common_cash,
+                    flow_type='income',
+                    amount=self.amount,
+                    description=f"Возврат займа от {self.loan.contractor}",
+                    created_by=self.created_by
+                )
+            else:
+                # Возврат полученного займа - уменьшаем баланс
+                # common_cash.balance -= self.amount
+                # Создаем запись о расходе
+                CashFlow.objects.create(
+                    common_cash=common_cash,
+                    flow_type='expense',
+                    amount=self.amount,
+                    description=f"Возврат займа {self.loan.contractor}",
+                    created_by=self.created_by
+                )
+            
+            common_cash.save()
+            
+            # Проверяем, полностью ли погашен займ
+            if self.loan.remaining_amount <= 0:
+                self.loan.status = 'repaid'
+                self.loan.save()
+    
+    def __str__(self):
+        return f"Платеж {self.amount} по займу {self.loan}"
+    
+    class Meta:
+        verbose_name = "Платеж по займу"
+        verbose_name_plural = "Платежи по займам"

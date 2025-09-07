@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block page_title %}Займ: {{ loan.contractor }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Займ: {{ loan.contractor }}</h2>
+    <a href="{% url 'finances:loans_list' %}" class="btn btn-secondary">← Назад к списку</a>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Информация о займе</h5>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <tr>
+                        <th>Тип займа:</th>
+                        <td>
+                            {% if loan.loan_type == 'given' %}
+                            <span class="badge bg-danger">Выдан</span>
+                            {% else %}
+                            <span class="badge bg-success">Получен</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Контрагент:</th>
+                        <td>{{ loan.contractor }}</td>
+                    </tr>
+                    <tr>
+                        <th>Сумма займа:</th>
+                        <td>{{ loan.amount|intcomma }} сом</td>
+                    </tr>
+                    <tr>
+                        <th>Процентная ставка:</th>
+                        <td>{{ loan.interest_rate|intcomma  }}%</td>
+                    </tr>
+                    <tr>
+                        <th>Общая сумма к возврату:</th>
+                        <td>{{ loan.total_amount|intcomma  }} сом</td>
+                    </tr>
+                    <tr>
+                        <th>Дата выдачи:</th>
+                        <td>{{ loan.issued_date|date:"d.m.Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Дата возврата:</th>
+                        <td>{{ loan.due_date|date:"d.m.Y" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Статус:</th>
+                        <td>
+                            {% if loan.status == 'active' %}
+                                {% if loan.is_overdue %}
+                                <span class="badge bg-warning">Просрочен</span>
+                                {% else %}
+                                <span class="badge bg-info">Активен</span>
+                                {% endif %}
+                            {% elif loan.status == 'repaid' %}
+                                <span class="badge bg-success">Погашен</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Уже возвращено:</th>
+                        <td>{{ loan.repaid_amount|intcomma  }} сом</td>
+                    </tr>
+                    <tr>
+                        <th>Остаток к возврату:</th>
+                        <td>{{ loan.remaining_amount|intcomma  }} сом</td>
+                    </tr>
+                    <tr>
+                        <th>Описание:</th>
+                        <td>{{ loan.description|default:"-" }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Платежи по займу -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>Платежи по займу</h5>
+        {% if loan.status == 'active' %}
+        <a href="{% url 'finances:add_loan_payment' loan.id %}" class="btn btn-primary btn-sm">+ Добавить платеж</a>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Сумма</th>
+                        <th>Комментарий</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in payments %}
+                    <tr>
+                        <td>{{ payment.payment_date|date:"d.m.Y" }}</td>
+                        <td>{{ payment.amount|intcomma  }} сом</td>
+                        <td>{{ payment.comment|default:"-" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block page_title %}Создание займа{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>Создание займа</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    Текущий баланс Общага: <strong>{{ common_cash.balance }} сом</strong>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.loan_type.id_for_label }}" class="form-label">Тип займа</label>
+                        {{ form.loan_type }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.contractor.id_for_label }}" class="form-label">Контрагент</label>
+                        {{ form.contractor }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.amount.id_for_label }}" class="form-label">Сумма займа</label>
+                        {{ form.amount }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.issued_date.id_for_label }}" class="form-label">Дата выдачи</label>
+                            {{ form.issued_date }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.due_date.id_for_label }}" class="form-label">Дата возврата</label>
+                            {{ form.due_date }}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.interest_rate.id_for_label }}" class="form-label">Процентная ставка</label>
+                        {{ form.interest_rate }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Описание</label>
+                        {{ form.description }}
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Создать займ</button>
+                        <a href="{% url 'finances:loans_list' %}" class="btn btn-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

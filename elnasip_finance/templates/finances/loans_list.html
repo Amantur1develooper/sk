@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% block page_title %}Управление займами{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Управление займами</h2>
+    <a href="{% url 'finances:create_loan' %}" class="btn btn-primary">+ Новый займ</a>
+</div>
+
+<!-- Фильтры -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Фильтры</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>Тип займа:</label>
+                    <div>
+                        <a href="?type=given" class="btn btn-sm {% if current_type == 'given' %}btn-primary{% else %}btn-outline-primary{% endif %}">Выданные</a>
+                        <a href="?type=taken" class="btn btn-sm {% if current_type == 'taken' %}btn-primary{% else %}btn-outline-primary{% endif %}">Полученные</a>
+                        <a href="?" class="btn btn-sm btn-outline-secondary">Все</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>Статус:</label>
+                    <div>
+                        <a href="?status=active" class="btn btn-sm {% if current_status == 'active' %}btn-primary{% else %}btn-outline-primary{% endif %}">Активные</a>
+                        <a href="?status=repaid" class="btn btn-sm {% if current_status == 'repaid' %}btn-primary{% else %}btn-outline-primary{% endif %}">Погашенные</a>
+                        <a href="?" class="btn btn-sm btn-outline-secondary">Все</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Таблица с займами -->
+<div class="card">
+    <div class="card-header">
+        <h5>Список займов</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Тип</th>
+                        <th>Контрагент</th>
+                        <th>Сумма</th>
+                        <th>Дата выдачи</th>
+                        <th>Дата возврата</th>
+                        <th>Статус</th>
+                        <th>Остаток</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for loan in loans %}
+                    <tr>
+                        <td>
+                            {% if loan.loan_type == 'given' %}
+                            <span class="badge bg-danger">Выдан</span>
+                            {% else %}
+                            <span class="badge bg-success">Получен</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ loan.contractor }}</td>
+                        <td>{{ loan.amount|intcomma  }} сом</td>
+                        <td>{{ loan.issued_date|date:"d.m.Y" }}</td>
+                        <td>{{ loan.due_date|date:"d.m.Y" }}</td>
+                        <td>
+                            {% if loan.status == 'active' %}
+                                {% if loan.is_overdue %}
+                                <span class="badge bg-warning">Просрочен</span>
+                                {% else %}
+                                <span class="badge bg-info">Активен</span>
+                                {% endif %}
+                            {% elif loan.status == 'repaid' %}
+                                <span class="badge bg-success">Погашен</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ loan.remaining_amount|intcomma  }} сом</td>
+                        <td>
+                            <a href="{% url 'finances:loan_detail' loan.id %}" class="btn btn-sm btn-info">Детали</a>
+                            {% if loan.status == 'active' %}
+                            <a href="{% url 'finances:add_loan_payment' loan.id %}" class="btn btn-sm btn-success">Платеж</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
