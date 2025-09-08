@@ -29,7 +29,7 @@
         <div class="card">
             <div class="card-body text-center">
                 <h5>Общая площадь</h5>
-                <h4>{{ current_block.total_area|intcomma  }} м²</h4>
+                <h4>{{ current_block.total_area|floatformat:2|intcomma }} м²</h4>
             </div>
         </div>
     </div>
@@ -48,7 +48,7 @@
         <div class="card">
             <div class="card-body text-center">
                 <h5>Остаток площади</h5>
-                <h4>{{current_block.not_sold_area_sum|intcomma }} м²</h4>
+                <h4>{{current_block.not_sold_area_sum|floatformat:2|intcomma }} м²</h4>
             </div>
         </div>
     </div>
@@ -65,7 +65,7 @@
             <div class="card-body text-center">
                 <h5>Планируемые продажи</h5>
    
-                <h4>{{plan_prodaj|intcomma }} сом</h4>
+                <h4>{{plan_prodaj|floatformat:2|intcomma }} сом</h4>
             </div>
         </div>
     </div>
@@ -126,13 +126,13 @@
                 <td>{{ item.quantity|intcomma  }}</td>
                  <td>{{ item.fakt_quantity|intcomma  }}</td>
                 <td>{{ item.unit_price|intcomma  }} сом</td>
-                <td>{{ item.planned_amount|intcomma  }} сом</td>
+                <td>{{ item.planned_amount|floatformat:2|intcomma  }} сом</td>
                 <td>
                     {{ item.get_allocated_sum|floatformat:0|intcomma  }} сом
                 </td>
                 {% comment %} <td>{{ item.spent_amount }} сом</td> {% endcomment %}
                 <td class="{% if item.margin > 0 %}text-success{% elif item.margin < 0 %}text-danger{% endif %}">
-                    {{ item.margin|intcomma  }} сом
+                    {{ item.margin|floatformat:2|intcomma  }} сом
                 </td>
                 <td>
                     <a href="{% url 'admin:projects_estimateitem_change' item.id %}" class="btn btn-sm btn-warning">Редактировать</a>

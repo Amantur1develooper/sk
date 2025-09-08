@@ -9,7 +9,7 @@ def some_logic():
         from finances.models import Allocation 
 # from elnasip_finance.finances.models import Allocation
 # from finances.models import Allocation,CommonCash
-
+from decimal import Decimal, ROUND_HALF_UP
 from django.db import models
 from django.db.models import Sum, Q
 
