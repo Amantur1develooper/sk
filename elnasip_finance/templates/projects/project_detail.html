@@ -94,9 +94,9 @@
                 <td>{{ block.name }}</td>
                 <td>{{ block.floors|intcomma  }}</td>
                 <td>{{ block.total_area|intcomma  }} м²</td>
-                <td>{{ block.sold_area_sum|intcomma  }} м²</td>
+                <td>{{ block.sold_area_sum|floatformat:0|intcomma  }} м²</td>
                
-                <td>{{ block.not_sold_area_sum|intcomma  }} м²</td>
+                <td>{{ block.not_sold_area_sum|floatformat:0|intcomma  }} м²</td>
                  <td> {{block.received_amount|intcomma}} сом</td>
      
              <td>
