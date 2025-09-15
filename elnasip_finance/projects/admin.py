@@ -28,10 +28,10 @@ class EstimateItemAdmin(admin.ModelAdmin):
     
 @admin.register(Apartment)
 class ApartmentAdmin(admin.ModelAdmin):
-    list_display = ['apartment_number', 'block', 'floor', 'rooms', 'area', 'is_sold', 'is_reserved','remaining_deal_amount']
+    list_display = ['apartment_number', 'block', 'floor', 'rooms', 'area', 'is_sold', 'is_reserved','deal_amount','remaining_deal_amount']
     list_filter = ['block', 'floor', 'is_sold', 'is_reserved']
     search_fields = ['apartment_number', 'client_name']
-    readonly_fields = ['deal_amount', 'created_at', 'updated_at']
+    readonly_fields = [ 'created_at', 'updated_at']
 
 @admin.register(DealPayment)
 class DealPaymentAdmin(admin.ModelAdmin):
