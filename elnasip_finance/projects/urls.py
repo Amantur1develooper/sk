@@ -15,5 +15,6 @@ urlpatterns = [
     path("estimate-items/add/<int:block_id>/", views.add_estimate_item, name="add_estimate_item"),
     path("blocks/<int:block_id>/apartments/add/", views.apartment_add, name="apartment_add"),
     path("block/<int:block_id>/apartments/", views.apartment_list, name="apartment_list"),
-
+    # path("apartment/<int:apartment_id>/add_comments", views.apartment_detail, name="apartment_detail"),
+     path("apartment/<int:apartment_id>/reserve/", views.reserve_apartment, name="reserve_apartment"),
 ]

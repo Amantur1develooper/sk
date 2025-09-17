@@ -79,7 +79,29 @@ class ApartmentSaleForm(forms.ModelForm):
    
     
     
-    
+from django import forms
+from .models import ApartmentComment
+
+class ApartmentCommentForm(forms.ModelForm):
+    class Meta:
+        model = ApartmentComment
+        fields = ["text", "author"]
+        widgets = {
+            "text": forms.Textarea(attrs={
+                "class": "form-control",
+                "rows": 3,
+                "placeholder": "Напишите комментарий..."
+            }),
+            "author": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "Ваше имя"
+            }),
+        }
+        labels = {
+            "text": "Комментарий",
+            "author": "Автор",
+        }
+
     
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
@@ -89,6 +111,22 @@ from .forms import ApartmentSaleForm
 
 def is_accountant_or_admin(user):
     return user.groups.filter(name__in=['Бухгалтер', 'Администратор']).exists() or user.is_superuser
+from django import forms
+from .models import Apartment
+
+class ApartmentReservationForm(forms.ModelForm):
+    class Meta:
+        model = Apartment
+        fields = ["client_name"]  # при брони указываем только ФИО
+        widgets = {
+            "client_name": forms.TextInput(attrs={
+                "class": "form-control",
+                "placeholder": "ФИО клиента"
+            }),
+        }
+        labels = {
+            "client_name": "Кто бронирует"
+        }
 
 # @login_required
 # # @user_passes_test(is_accountant_or_admin, login_url='/accounts/login/')

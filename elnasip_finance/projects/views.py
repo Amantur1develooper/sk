@@ -216,7 +216,7 @@ def apartment_list(request, block_id):
     actual_deals_total = apartments.filter(block=block, is_sold=True).aggregate(Sum('deal_Fakt_deal_amount'))['deal_Fakt_deal_amount__sum']
         # return result if result else 0
     free_area = block.total_area - block.sold_area
-    reserved_apartments_count = block.apartments.filter(is_reserved=True).count()
+    reserved_apartments_count = block.apartments.filter(is_reserved=True, is_sold=False).count()
     unsold_apartments_count = block.apartments.filter(is_sold=False, is_reserved=False).aggregate(total=Sum('area'))['total'] or 0
     unsold_apartments_count2 = block.apartments.filter(is_sold=False, is_reserved=False).count() or 0
     planned_deals_total = apartments.filter(block=block, is_reserved=False, is_sold=False).aggregate(Sum('planned_deal_amount'))['planned_deal_amount__sum'] or 0
@@ -243,17 +243,64 @@ def apartment_list(request, block_id):
     }
     return render(request, 'projects/apartment_list.html', context)
 
+from .forms import ApartmentCommentForm
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from .models import Apartment
 @login_required
 def apartment_detail(request, apartment_id):
     apartment = get_object_or_404(Apartment, id=apartment_id)
     payments = apartment.payments.all().order_by('-payment_date')
     total_paid = payments.aggregate(total=Sum("amount"))["total"] or 0
+    comments = apartment.comments.order_by("-created_at")  # последние сверху
+    if request.method == "POST":
+        form = ApartmentCommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.apartment = apartment
+            comment.save()
+            messages.success(request, "Комментарий добавлен!")
+            return redirect("projects:apartment_detail", apartment_id=apartment.id)
+    else:
+        form = ApartmentCommentForm()
     context = {
         'apartment': apartment,
         'payments': payments,
-        'total_paid':total_paid
+        'total_paid':total_paid,
+        "form": form,
+        "comments": comments,
     }
     return render(request, 'projects/apartment_detail.html', context)
+
+
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from .models import Apartment
+from .forms import ApartmentReservationForm
+
+def reserve_apartment(request, apartment_id):
+    apartment = get_object_or_404(Apartment, id=apartment_id)
+
+    if apartment.is_reserved:
+        messages.warning(request, "Эта квартира уже забронирована!")
+        return redirect("projects:apartment_detail", apartment_id=apartment.id)
+
+    if request.method == "POST":
+        form = ApartmentReservationForm(request.POST, instance=apartment)
+        if form.is_valid():
+            apt = form.save(commit=False)
+            apt.is_reserved = True  # ставим галочку
+            apt.save()
+            messages.success(request, f"Квартира {apt.apartment_number} успешно забронирована на {apt.client_name}!")
+            return redirect("projects:apartment_detail", apartment_id=apartment.id)
+    else:
+        form = ApartmentReservationForm(instance=apartment)
+
+    return render(request, "projects/reserve_apartment.html", {
+        "apartment": apartment,
+        "form": form
+    })
+
 
 @login_required
 def add_apartment(request, block_id):
@@ -289,9 +336,10 @@ def add_payment(request, apartment_id):
             Sale.objects.create(
                  block = apartment.block,
                  area = 0,
+                 apartment = apartment,
                  amount = payment.amount,
                  client_info = f'{apartment.client_name}',
-                    created_by=request.user
+                 created_by = request.user
             )
             
             payment.apartment = apartment

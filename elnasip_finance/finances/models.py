@@ -27,7 +27,8 @@ class CashFlow(models.Model):
     description = models.TextField(verbose_name="Описание")
     block = models.ForeignKey(Block, on_delete=models.SET_NULL, null=True, blank=True, related_name="cash_flows")
     date = models.DateTimeField(auto_now_add=True)
-    # is_zp = 
+    apartment = models.ForeignKey("projects.Apartment", on_delete=models.SET_NULL, null=True, blank=True, related_name="cash_flows12", verbose_name="Квартира")
+
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     
     def save(self, *args, **kwargs):
@@ -88,6 +89,7 @@ class Expense(models.Model):
 
 class Sale(models.Model):
     block = models.ForeignKey(Block, on_delete=models.CASCADE, related_name='sales')
+    apartment = models.ForeignKey("projects.Apartment", on_delete=models.SET_NULL, null=True, blank=True, related_name="cash_flows", verbose_name="Квартира")
     area = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Площадь квартиры")
     amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Сумма продажи")
     date = models.DateTimeField(auto_now_add=True)
@@ -106,13 +108,16 @@ class Sale(models.Model):
             # Добавляем деньги в Общаг
         common_cash = CommonCash.objects.first()
         # print(user,'_____________________')
-        if common_cash:
+        if common_cash and not self.pk:
             CashFlow.objects.create(
                     common_cash=common_cash,
                     flow_type='income',
                     amount=self.amount,
                     block=self.block,
-                    description=f"Поступление за квартиру в {self.block}",
+                    apartment=self.apartment,
+                    description=f"Поступление за кв. {self.apartment.apartment_number if self.apartment else ''} в {self.block}",
+              
+                    # description=f"Поступление за квартиру в {self.block}",
                     created_by= self.created_by  # Замените на текущего пользователя
                 )
         super().save(*args, **kwargs)

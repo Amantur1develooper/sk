@@ -444,7 +444,7 @@ def allocation_create(request):
                 # if common_cash.balance < allocation.amount:
                 #     messages.error(request, 'Недостаточно средств в Общаге')
                 #     return render(request, 'finances/allocation_form.html', {'form': form, 'common_cash': common_cash, 'blocks': blocks, 'block_id': block_id})
-
+                            
                 # создаём CashFlow и привязываем block из estimate_item
                 cash_flow = CashFlow.objects.create(
                     common_cash=common_cash,

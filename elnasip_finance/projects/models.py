@@ -29,11 +29,7 @@ class Apartment(models.Model):
     client_name = models.CharField(max_length=200, blank=True, null=True, verbose_name="ФИО клиента")
     remaining_deal_amount = models.DecimalField(max_digits=15, blank=True, default=0, null=True, decimal_places=2, verbose_name="Остаток от сделки")
     is_reserved = models.BooleanField(default=False, verbose_name="Бронь")
-    discount = models.DecimalField(max_digits=12, 
-    decimal_places=2, 
-    null=True, 
-    blank=True, 
-    verbose_name="Скидка (сом)", default=0, )
+    discount = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True, verbose_name="Скидка (сом)", default=0, )
     planned_price_per_m2 = models.DecimalField(max_digits=10, default=0, decimal_places=2, blank=True, null=True, verbose_name="Планируемая цена m²(обезательно)")
     planned_deal_amount = models.DecimalField(max_digits=15, default=0, decimal_places=2, blank=True, null=True, verbose_name="Планируемая сделка")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -83,6 +79,16 @@ class Apartment(models.Model):
         verbose_name_plural = "Квартиры"
         ordering = ['block', 'floor', 'apartment_number']
 
+
+class ApartmentComment(models.Model):
+    apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, related_name="comments", verbose_name="Квартира")
+    text = models.TextField(verbose_name="Комментарий / Примечание")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата добавления")
+    author = models.CharField(max_length=150, blank=True, null=True, verbose_name="Автор")
+
+    def __str__(self):
+        return f"Комментарий к {self.apartment.apartment_number} — {self.text[:30]}"
+
 class DealPayment(models.Model):
     apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Сумма платежа")
@@ -106,28 +112,11 @@ class DealPayment(models.Model):
             apartment.sold_area = total_paid / apartment.fact_price_per_m2
             apartment.sold_area = min(apartment.sold_area, apartment.area)  # не больше общей площади
 
-        # Определяем статус "продана"
-        # if deal_amount > 0:
-        #     apartment.is_sold = True
-        # else:
-        #     apartment.is_sold = False
+
 
         apartment.save()
 
-    # def save(self, *args, **kwargs):
-    #     # При сохранении платежа обновляем информацию о квартире
-    #     super().save(*args, **kwargs)
-        
-    #     # Обновляем информацию о проданной площади и статусе квартиры
-    #     apartment = self.apartment
-    #     total_paid = apartment.payments.aggregate(Sum('amount'))['amount__sum'] or 0
-        
-    #     # Рассчитываем проданную площадь на основе оплаченной суммы
-    #     if apartment.price_per_m2 > 0:
-    #         apartment.sold_area = total_paid / apartment.price_per_m2
-    #         apartment.sold_area = min(apartment.sold_area, apartment.area)  # Не больше общей площади
-            
-    #        
+  
 
     def __str__(self):
         return f"Платеж {self.amount} для кв. {self.apartment.apartment_number}"
@@ -258,28 +247,8 @@ class Block(models.Model):
         result = self.apartments.aggregate(Sum('sold_area'))['sold_area__sum']
         return result if result else 0 #!!!
     
-    # @property
-    # def reserved_apartments_count(self):
-    #     return self.apartments.filter(is_reserved=True).count()
     
-    # @property
-    # def free_area(self):
-    #     return self.total_area - self.sold_area
     
-    # @property
-    # def planned_deals_total(self):
-    #     result = self.apartments.aggregate(Sum('planned_deal_amount'))['planned_deal_amount__sum']
-    #     return result if result else 0
-    
-    # @property
-    # def actual_deals_total(self):
-    #     result = self.apartments.aggregate(Sum('deal_amount'))['deal_amount__sum']
-    #     return result if result else 0
-    
-    # @property
-    # def remaining_deals_total(self):
-    #     result = self.apartments.aggregate(Sum('remaining_deal_amount'))['remaining_deal_amount__sum']
-    #     return result if result else 0
     
     @property
     def total_discount(self):

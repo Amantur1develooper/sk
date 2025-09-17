@@ -9,6 +9,8 @@
         <a href="{% url 'projects:apartment_list' apartment.block.id %}" class="btn btn-secondary">← Назад к списку</a>
         <a href="{% url 'projects:sell_apartment' apartment.id %}" class="btn btn-secondary">← Продать</a>
         <a href="{% url 'projects:add_payment' apartment.id %}" class="btn btn-primary">+ Добавить платеж</a>
+        <a href="{% url 'projects:reserve_apartment' apartment.id %}" class="btn btn-primary">Бронь</a>
+        
     </div>
 </div>
 
@@ -136,5 +138,33 @@
             </div>
         </div>
     </div>
+</div>
+<div class="container mt-4">
+
+
+    <h4>Комментарии</h4>
+
+    {% if comments %}
+        <ul class="list-group mb-4">
+            {% for comment in comments %}
+                <li class="list-group-item">
+                    <p>{{ comment.text|linebreaks }}</p>
+                    <small class="text-muted">
+                        {{ comment.author|default:"Аноним" }},
+                        {{ comment.created_at|date:"d.m.Y H:i" }}
+                    </small>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Комментариев пока нет.</p>
+    {% endif %}
+
+    <h4>Добавить комментарий</h4>
+    <form method="post" class="mb-4">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Добавить</button>
+    </form>
 </div>
 {% endblock %}
