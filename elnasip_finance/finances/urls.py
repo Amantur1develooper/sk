@@ -13,7 +13,10 @@ urlpatterns = [
     path("get-estimate-items/", views.get_estimate_items, name="get_estimate_items"),
     path('ajax/get-estimate-items/', views.get_estimate_items, name='get_estimate_items'),
 
-
+    path("cars/", views.car_list, name="car_list"),
+    path("cars/purchase/", views.car_purchase, name="car_purchase"),
+    path("cars/<int:pk>/sale/", views.car_sale, name="car_sale"),
+    
     path('loans/', views.loans_list, name='loans_list'),
     path('loans/create/', views.create_loan, name='create_loan'),
     path('loans/<int:loan_id>/', views.loan_detail, name='loan_detail'),

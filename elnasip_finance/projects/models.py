@@ -324,3 +324,5 @@ class EstimateItem(models.Model):
     class Meta:
         verbose_name = "Позиция сметы"
         verbose_name_plural = "Позиции смет"
+        
+        

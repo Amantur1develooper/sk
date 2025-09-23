@@ -1,3 +1,5 @@
+from django.utils import timezone
+
 from urllib import request
 from django.db import models
 from projects.models import Project, Block, EstimateItem
@@ -268,3 +270,57 @@ class LoanPayment(models.Model):
     class Meta:
         verbose_name = "Платеж по займу"
         verbose_name_plural = "Платежи по займам"
+        
+
+class WarehouseCar(models.Model):
+    STATUS_CHOICES = (
+        ('available', 'В наличии'),
+        ('sold', 'Продана'),
+    )
+
+    name = models.CharField(max_length=200, verbose_name="Марка/Модель")
+    vin_number = models.CharField(max_length=100, unique=True, verbose_name="VIN номер")
+    purchase_price = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Цена покупки")
+    sale_price = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True, verbose_name="Цена продажи")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available', verbose_name="Статус")
+    purchase_date = models.DateTimeField(auto_now_add=True, verbose_name="Дата покупки")
+    sale_date = models.DateTimeField(null=True, blank=True, verbose_name="Дата продажи")
+
+    common_cash = models.ForeignKey(CommonCash, on_delete=models.CASCADE, related_name="cars", verbose_name="Общаг")
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        super().save(*args, **kwargs)
+
+        # если новая машина — списываем деньги
+        if is_new:
+            CashFlow.objects.create(
+                common_cash=self.common_cash,
+                flow_type="expense",
+                amount=self.purchase_price,
+                description=f"Покупка машины {self.name} (VIN: {self.vin_number})",
+                created_by=self.created_by
+            )
+
+        # если продаем — деньги добавляем
+        elif self.status == 'sold' and self.sale_price :
+            self.sale_date = timezone.now()
+            if self.sale_date is None and getattr(self, "_mark_as_sold", False):
+                self.sale_date = timezone.now()
+            super().save(*args, **kwargs)
+            # self.save(update_fields=["sale_date"])
+            CashFlow.objects.create(
+                common_cash=self.common_cash,
+                flow_type="income",
+                amount=self.sale_price,
+                description=f"Продажа машины {self.name} (VIN: {self.vin_number})",
+                created_by=self.created_by
+            )
+
+    def __str__(self):
+        return f"{self.name} ({self.vin_number})"
+    
+    class Meta:
+        verbose_name = "Машина на складе"
+        verbose_name_plural = "Машины на складе"

@@ -105,3 +105,23 @@ class LoanPaymentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Устанавливаем текущую дату по умолчанию
         self.fields['payment_date'].initial = timezone.now().date()
+        
+        
+
+from .models import WarehouseCar
+
+class CarPurchaseForm(forms.ModelForm):
+    class Meta:
+        model = WarehouseCar
+        fields = ["name", "vin_number", "purchase_price"]
+
+class CarSaleForm(forms.ModelForm):
+    class Meta:
+        model = WarehouseCar
+        fields = ["sale_price"]
+
+    def clean_sale_price(self):
+        price = self.cleaned_data["sale_price"]
+        if price <= 0:
+            raise forms.ValidationError("Цена продажи должна быть больше 0")
+        return price

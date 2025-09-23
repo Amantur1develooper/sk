@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 from django.contrib import admin
-from .models import CommonCash, CashFlow, Allocation, Expense, Sale
+from .models import CommonCash, CashFlow, Allocation, Expense, Sale, WarehouseCar
 
 @admin.register(CommonCash)
 class CommonCashAdmin(admin.ModelAdmin):
@@ -31,3 +31,10 @@ class SaleAdmin(admin.ModelAdmin):
     list_display = ['block', 'area', 'amount', 'date']
     list_filter = ['block__project', 'block']
     search_fields = ['client_info']
+    
+    
+@admin.register(WarehouseCar)
+class WarehouseCarAdmin(admin.ModelAdmin):
+    list_display = ("name", "vin_number", "purchase_price", "sale_price", "status", "purchase_date", "sale_date")
+    list_filter = ("status",)
+    search_fields = ("name", "vin_number")

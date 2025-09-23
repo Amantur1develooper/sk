@@ -444,7 +444,7 @@ def allocation_create(request):
                 # if common_cash.balance < allocation.amount:
                 #     messages.error(request, 'Недостаточно средств в Общаге')
                 #     return render(request, 'finances/allocation_form.html', {'form': form, 'common_cash': common_cash, 'blocks': blocks, 'block_id': block_id})
-                            
+
                 # создаём CashFlow и привязываем block из estimate_item
                 cash_flow = CashFlow.objects.create(
                     common_cash=common_cash,
@@ -759,3 +759,50 @@ def add_loan_payment(request, loan_id):
         'loan': loan,
     }
     return render(request, 'finances/loan_payment_form.html', context)
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+
+
+from .models import WarehouseCar, CommonCash
+from .forms import CarPurchaseForm, CarSaleForm
+
+
+@login_required
+def car_list(request):
+    cars = WarehouseCar.objects.all()
+    return render(request, "finances/car_list.html", {"cars": cars})
+
+
+@login_required
+def car_purchase(request):
+    if request.method == "POST":
+        form = CarPurchaseForm(request.POST)
+        if form.is_valid():
+            car = form.save(commit=False)
+            car.common_cash = CommonCash.objects.first()
+            car.created_by = request.user
+            car.save()
+            return redirect("finances:car_list")
+    else:
+        form = CarPurchaseForm()
+    return render(request, "finances/car_purchase.html", {"form": form})
+
+
+@login_required
+def car_sale(request, pk):
+    car = get_object_or_404(WarehouseCar, pk=pk, status="available")
+    if request.method == "POST":
+        form = CarSaleForm(request.POST, instance=car)
+        if form.is_valid():
+            car = form.save(commit=False)
+            car.status = "sold"
+            car.sale_date = timezone.now()
+            car._mark_as_sold = True  # триггер для сохранения даты
+            car.save()
+            return redirect("finances:car_list")
+    else:
+        form = CarSaleForm(instance=car)
+    return render(request, "finances/car_sale.html", {"form": form, "car": car})
