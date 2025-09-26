@@ -144,7 +144,7 @@ def block_detail(request, block_id):
     estimate_items = block.estimate_items.all()
     apartments = block.apartments.all()
     
-    plan_prodaj = apartments.filter( is_sold=False ).aggregate(Sum('planned_deal_amount'))['planned_deal_amount__sum'] or 0
+    plan_prodaj = apartments.filter( is_sold=False ).aggregate(Sum('planned_deal_amount'))['planned_deal_amount__sum'] or 0 
     fakt_prodaj = apartments.filter( is_sold=True ).aggregate(Sum('deal_Fakt_deal_amount'))['deal_Fakt_deal_amount__sum'] or 0
     postupillo = block.received_amount
     # plan_prodaj = apartments.aggregate(total=Sum('planned_deal_amount'))['total'] or 0
@@ -153,12 +153,55 @@ def block_detail(request, block_id):
     total_allocated = sum(item.get_allocated_sum() for item in estimate_items)
     total_spent = sum(item.spent_amount for item in estimate_items)
     total_margin = total_planned - total_spent
-    total_planned2 = total_planned -total_allocated
+    total_planned2 = total_planned - total_allocated #+200
+     # исключаем категорию 21 "Дополнительные расходы не входящие в смету"
+    estimate_items_for_calc = estimate_items.exclude(category__name="21.Дополнительные расходы не входящие в смету")
+    # только категория 21
+    extra_items = estimate_items.filter(category__name="21.Дополнительные расходы не входящие в смету")
+    # extra_allocated = sum(item.get_allocated_sum() for item in extra_items)
+    extra_allocated = sum(item.get_allocated_sum() for item in extra_items)
+    extra_planned = sum(item.planned_amount for item in extra_items)
+    # extra_allocated = sum(item.get_allocated_sum() for item in extra_items)
+    extra_spent = sum(item.spent_amount for item in extra_items)
+    # считаем суммы только по оставшимся позициям
+    total_planned = sum(item.planned_amount for item in estimate_items_for_calc) 
+    # Сумма положительных planned_amount
+    total_planned_positive = sum(
+    item.planned_amount for item in estimate_items_for_calc if item.planned_amount > 0
+)
+
+# Сумма отрицательных planned_amount
+    total_planned_negative = sum(
+    item.planned_amount for item in estimate_items_for_calc if item.planned_amount < 0
+)
+    estimate_items_for_calc = estimate_items.exclude(category__name="21.Дополнительные расходы не входящие в смету")
+    normal_allocated = 0
+    over_allocated = 0
+
+    for item in estimate_items_for_calc:
+        planned = item.planned_amount or 0
+        allocated = item.get_allocated_sum() or 0
+
+        if allocated <= planned:
+        # всё ушло в нормальный расход
+            normal_allocated += allocated
+        else:
+        # часть в пределах плана, остальное — перерасход
+            normal_allocated += planned
+            over_allocated += allocated - planned
+
+    total_allocated = sum(item.get_allocated_sum() for item in estimate_items_for_calc)
+    total_allocated = normal_allocated
+    total_spent = sum(item.spent_amount for item in estimate_items_for_calc)
+    total_planned = total_planned_positive - total_allocated
     # 2920000 2238980
     print((plan_prodaj+fakt_prodaj))
-    marja = (plan_prodaj+fakt_prodaj)-total_planned2-total_allocated
+    # total_allocated = total_allocated - 200
+    # Планируемые продажи plan_prodaj Факт сделок fakt_prodaj 
+    # План по смете total_planned2 Факт расходов total_allocated
+    marja = (((plan_prodaj+fakt_prodaj)-total_planned-(total_allocated)) -extra_allocated)- over_allocated #-200
     # Группируем расходы по категориям для графика
- 
+    
     categories = []
     for category in EstimateCategory.objects.all():
         category_total = sum(item.spent_amount for item in estimate_items if item.category == category)
@@ -169,6 +212,8 @@ def block_detail(request, block_id):
             })
     
     context = {
+        "normal_allocated": normal_allocated,
+    "over_allocated": over_allocated,
         'current_block': block,
         'estimate_items': estimate_items,
         'total_planned': total_planned,
@@ -177,10 +222,17 @@ def block_detail(request, block_id):
         'fakt_prodaj':fakt_prodaj,
         'plan_prodaj':plan_prodaj,
         'marja':marja,
+        'total_planned_positive':total_planned_positive,
+        'total_planned_negative':total_planned_negative,
+        'extra_allocated':extra_allocated,
         'postupillo':postupillo,
         'total_spent': total_spent,
         'total_margin': total_margin,
         'categories': categories,
+        
+        "extra_planned": extra_planned,
+        
+        "extra_spent": extra_spent,
     }
     return render(request, 'projects/block_detail.html', context)
 # @login_required

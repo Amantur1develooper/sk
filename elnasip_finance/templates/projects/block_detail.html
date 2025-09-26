@@ -4,6 +4,16 @@
 {% block page_title %}{{ current_block.name }} - Детали Сметы{% endblock %}
 
 {% block content %}
+<h2>Смета по блоку: {{ block.name }}</h2>
+
+
+
+{% if extra_category %}
+  <h3>Итого по категории "{{ extra_category.name }}": </h3>
+{% else %}
+  <p>Категория "21.Дополнительные расходы не входящие в смету" не найдена.</p>
+{% endif %}
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>{{ current_block}}</h2>
     <div>
@@ -73,7 +83,8 @@
         <div class="card">
             <div class="card-body text-center">
                 <h5>План по смете</h5>
-                <h4>{{ total_planned2|floatformat:0|intcomma  }} сом</h4>
+                    {% comment %} {{total_planned_positive}} {% endcomment %}
+                <h4>{{ total_planned|floatformat:0|intcomma  }} сом</h4>
             </div>
         </div>
     </div>
@@ -83,7 +94,19 @@
             <div class="card-body text-center">
                 <h5>Факт расходов</h5>
                 {% comment %} <h4>{{ total_spent|floatformat:0 }} сом</h4> {% endcomment %}
-                    <h4>{{total_allocated|floatformat:0|intcomma  }} сом</h4>
+                    <h4>{{normal_allocated|floatformat:0|intcomma  }} сом</h4>
+            </div>
+        </div>
+       
+        
+    </div>
+     <div class="col-md-2">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Расходы вне сметы </h5>
+                
+                {% comment %} <h4>{{ total_spent|floatformat:0 }} сом</h4> {% endcomment %}
+                    <h4>{{ extra_allocated|intcomma  }} сом</h4>
             </div>
         </div>
     </div>
@@ -91,7 +114,17 @@
     <div class="col-md-2">
         <div class="card">
             <div class="card-body text-center">
-                <h5>МАРЖА</h5>
+                <h5>Расходы превышающие смету </h5>
+                
+                {% comment %} <h4>{{ total_spent|floatformat:0 }} сом</h4> {% endcomment %}
+                    <h4>{{over_allocated|floatformat:0|intcomma}}сом</h4>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>МАРЖА</h5>{{total_spent}}
                 {% comment %} <h4>{{ total_spent|floatformat:0 }} сом</h4> {% endcomment %}
                     <h4>{{marja|floatformat:0|intcomma  }} СОМ</h4>
             </div>
@@ -117,6 +150,7 @@
                 <th>Действия</th>
             </tr>
         </thead>
+        {{total_planned}}
         <tbody>
             {% for item in estimate_items %}
             <tr>
@@ -136,7 +170,7 @@
                 </td>
                 <td>
                     <a href="{% url 'admin:projects_estimateitem_change' item.id %}" class="btn btn-sm btn-warning">Редактировать</a>
-                    <a href="{% url 'admin:finances_expense_add' %}?estimate_item={{ item.id }}" class="btn btn-sm btn-danger">Добавить расход</a>
+                    {% comment %} <a href="{% url 'admin:finances_expense_add' %}?estimate_item={{ item.id }}" class="btn btn-sm btn-danger">Добавить расход</a> {% endcomment %}
                 </td>
             </tr>
             {% endfor %}

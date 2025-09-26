@@ -318,8 +318,7 @@ class EstimateItem(models.Model):
     def __str__(self):
         return f"{self.block.name} — {self.category.name} — {self.name}"
     
-    # def __str__(self):
-    #     return f"{self.name} ({self.block})"
+    
     
     class Meta:
         verbose_name = "Позиция сметы"
