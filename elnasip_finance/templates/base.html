@@ -57,8 +57,13 @@
     </a>
 </li>
 <li class="nav-item">
-    <a class="nav-link {% if 'finances' in request.path %}active{% endif %}" href="{% url 'finances:common_cash_detail' %}">
+    <a class="nav-link {% if 'common-cash' in request.path %}active{% endif %}" href="{% url 'finances:common_cash_detail' %}">
         Общаг
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link {% if 'loans' in request.path %}active{% endif %}" href="{% url 'finances:loans_list' %}">
+        Займы
     </a>
 </li>
 <li class="nav-item">
@@ -66,6 +71,8 @@
         Объекты
     </a>
 </li>
+
+
 <li class="nav-item">
     <a class="nav-link {% if 'employees' in request.path %}active{% endif %}" href="{% url 'employees:employees_list' %}">
         Сотрудники
@@ -96,7 +103,7 @@
                     <div class="container-fluid">
                         <span class="navbar-brand mb-0 h1">{% block page_title %}Система учета{% endblock %}</span>
                         <div>
-                            <span class="me-3">Привет, {{ request.user.username }}</span>
+                            <span class="me-3">Приветcтвуем, {{ request.user.username }}</span>
                             <a href="{% url 'logout' %}" class="btn btn-outline-secondary btn-sm">Выйти</a>
                         </div>
                     </div>

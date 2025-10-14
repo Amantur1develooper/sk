@@ -88,7 +88,7 @@
                         <td>
                             <a href="{% url 'finances:loan_detail' loan.id %}" class="btn btn-sm btn-info">Детали</a>
                             {% if loan.status == 'active' %}
-                            <a href="{% url 'finances:add_loan_payment' loan.id %}" class="btn btn-sm btn-success">Платеж</a>
+                            <a href="{% url 'finances:add_loan_payment' loan.id %}" class="btn btn-sm btn-success">Возврат средств</a>
                             {% endif %}
                         </td>
                     </tr>
