@@ -8,7 +8,7 @@
         <div class="card text-white bg-primary mb-3">
             <div class="card-body">
                 <h5 class="card-title">Баланс Общага</h5>
-                <h2 class="card-text">{{ common_cash.balance|intcomma}} сом</h2>
+                <h2 class="card-text">{{ common_cash.balance|floatformat:0|intcomma}} сом</h2>
             </div>
         </div>
     </div>
@@ -16,7 +16,7 @@
         <div class="card text-white bg-success mb-3">
             <div class="card-body">
                 <h5 class="card-title">Общий приход</h5>
-                <h2 class="card-text">{{ total_income|intcomma }} сом</h2>
+                <h2 class="card-text">{{ total_income|floatformat:0|intcomma }} сом</h2>
             </div>
         </div>
     </div>
@@ -24,7 +24,7 @@
         <div class="card text-white bg-danger mb-3">
             <div class="card-body">
                 <h5 class="card-title">Общий расход</h5>
-                <h2 class="card-text">{{ total_expense|intcomma }} сом</h2>
+                <h2 class="card-text">{{ total_expense|floatformat:0|intcomma }} сом</h2>
             </div>
         </div>
     </div>
@@ -32,7 +32,7 @@
         <div class="card text-white bg-info mb-3">
             <div class="card-body">
                 <h5 class="card-title">Остаток</h5>
-                <h2 class="card-text">{{ margin|intcomma }} сом</h2>
+                <h2 class="card-text">{{ margin|floatformat:0|intcomma }} сом</h2>
             </div>
         </div>
     </div>

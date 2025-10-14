@@ -39,7 +39,7 @@
         <div class="card">
             <div class="card-body text-center">
                 <h5>Общая площадь</h5>
-                <h4>{{ current_block.total_area|floatformat:2|intcomma }} м²</h4>
+                <h4>{{ current_block.total_area|floatformat:0|intcomma }} м²</h4>
             </div>
         </div>
     </div>
@@ -50,7 +50,7 @@
             <div class="card-body text-center">
                 <h5>Проданная площадь</h5>
    
-                <h4>{{current_block.sold_area_sum|floatformat:2|intcomma }} м²</h4>
+                <h4>{{current_block.sold_area_sum|floatformat:0|intcomma }} м²</h4>
             </div>
         </div>
     </div>
@@ -58,7 +58,7 @@
         <div class="card">
             <div class="card-body text-center">
                 <h5>Остаток площади</h5>
-                <h4>{{current_block.not_sold_area_sum|floatformat:2|intcomma }} м²</h4>
+                <h4>{{current_block.not_sold_area_sum|floatformat:0|intcomma }} м²</h4>
             </div>
         </div>
     </div>
@@ -66,7 +66,7 @@
         <div class="card">
             <div class="card-body text-center">
                 <h5>Факт сделок</h5>
-                <h4>{{fakt_prodaj|intcomma }} сом</h4>
+                <h4>{{fakt_prodaj|floatformat:0|intcomma }} сом</h4>
             </div>
         </div>
     </div>
@@ -75,7 +75,7 @@
             <div class="card-body text-center">
                 <h5>Планируемые продажи</h5>
    
-                <h4>{{plan_prodaj|floatformat:2|intcomma }} сом</h4>
+                <h4>{{plan_prodaj|floatformat:0|intcomma }} сом</h4>
             </div>
         </div>
     </div>
@@ -124,7 +124,7 @@
     <div class="col-md-2">
         <div class="card">
             <div class="card-body text-center">
-                <h5>МАРЖА</h5>{{total_spent}}
+                <h5>МАРЖА</h5>
                 {% comment %} <h4>{{ total_spent|floatformat:0 }} сом</h4> {% endcomment %}
                     <h4>{{marja|floatformat:0|intcomma  }} СОМ</h4>
             </div>
@@ -150,7 +150,7 @@
                 <th>Действия</th>
             </tr>
         </thead>
-        {{total_planned}}
+       
         <tbody>
             {% for item in estimate_items %}
             <tr>
@@ -160,13 +160,13 @@
                 <td>{{ item.quantity|intcomma  }}</td>
                  <td>{{ item.fakt_quantity|intcomma  }}</td>
                 <td>{{ item.unit_price|intcomma  }} сом</td>
-                <td>{{ item.planned_amount|floatformat:2|intcomma  }} сом</td>
+                <td>{{ item.planned_amount|floatformat:0|intcomma  }} сом</td>
                 <td>
                     {{ item.get_allocated_sum|floatformat:0|intcomma  }} сом
                 </td>
                 {% comment %} <td>{{ item.spent_amount }} сом</td> {% endcomment %}
                 <td class="{% if item.margin > 0 %}text-success{% elif item.margin < 0 %}text-danger{% endif %}">
-                    {{ item.margin|floatformat:2|intcomma  }} сом
+                    {{ item.margin|floatformat:0|intcomma  }} сом
                 </td>
                 <td>
                     <a href="{% url 'admin:projects_estimateitem_change' item.id %}" class="btn btn-sm btn-warning">Редактировать</a>
