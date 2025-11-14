@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 from django.contrib import admin
-from .models import Apartment, DealPayment, Project, Block, EstimateCategory, EstimateItem
+from .models import Apartment, DealPayment, Project, Block, EstimateCategory, EstimateItem, RentPayment
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
@@ -25,6 +25,13 @@ class EstimateItemAdmin(admin.ModelAdmin):
     list_display = ['name', 'block', 'category', 'quantity', 'unit_price', 'planned_amount', 'spent_amount', 'margin']
     list_filter = ['block__project', 'block', 'category']
     search_fields = ['name', 'block__name']
+    
+@admin.register(RentPayment)
+class RentPaymentAdmin(admin.ModelAdmin):
+    list_display = ['apartment', 'amount', 'payment_date', 'period_start', 'period_end']
+    list_filter = ['payment_date', 'apartment__block']
+    search_fields = ['apartment__apartment_number', 'apartment__tenant_name']
+    readonly_fields = ['created_at', 'updated_at']
     
 @admin.register(Apartment)
 class ApartmentAdmin(admin.ModelAdmin):

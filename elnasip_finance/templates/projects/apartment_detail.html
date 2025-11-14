@@ -5,12 +5,13 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>Квартира {{ apartment.apartment_number }} ({{ apartment.block }})</h2>
-    <div>
+    <div class="d-flex gap-2">
         <a href="{% url 'projects:apartment_list' apartment.block.id %}" class="btn btn-secondary">← Назад к списку</a>
-        <a href="{% url 'projects:sell_apartment' apartment.id %}" class="btn btn-secondary">← Продать</a>
-        <a href="{% url 'projects:add_payment' apartment.id %}" class="btn btn-primary">+ Добавить платеж</a>
-        <a href="{% url 'projects:reserve_apartment' apartment.id %}" class="btn btn-primary">Бронь</a>
-        
+        <a href="{% url 'projects:sell_apartment' apartment.id %}" class="btn btn-secondary">Продать</a>
+        <a href="{% url 'projects:rent_apartment' apartment.id %}" class="btn btn-info">Аренда</a>
+        <a href="{% url 'projects:add_payment' apartment.id %}" class="btn btn-primary">+ Платеж продажи</a>
+        <a href="{% url 'projects:add_rent_payment' apartment.id %}" class="btn btn-success">+ Арендный платеж</a>
+        <a href="{% url 'projects:reserve_apartment' apartment.id %}" class="btn btn-warning">Бронь</a>
     </div>
 </div>
 
@@ -22,17 +23,18 @@
             </div>
             <div class="card-body">
                 <table class="table">
+                    <!-- Базовая информация (из старого шаблона) -->
                     <tr>
                         <th>Блок:</th>
                         <td>{{ apartment.block }}</td>
                     </tr>
                     <tr>
                         <th>Этаж:</th>
-                        <td>{{ apartment.floor|intcomma  }}</td>
+                        <td>{{ apartment.floor|intcomma }}</td>
                     </tr>
                     <tr>
                         <th>Номер квартиры:</th>
-                        <td>{{ apartment.apartment_number  }}</td>
+                        <td>{{ apartment.apartment_number }}</td>
                     </tr>
                     <tr>
                         <th>Комнат:</th>
@@ -40,51 +42,49 @@
                     </tr>
                     <tr>
                         <th>Площадь:</th>
-                        <td>{{ apartment.area|intcomma  }} м²</td>
+                        <td>{{ apartment.area|intcomma }} м²</td>
                     </tr>
                     <tr>
                         <th>Проданная площадь:</th>
-                        <td>{{ apartment.sold_area|intcomma  }} м²</td>
+                        <td>{{ apartment.sold_area|intcomma }} м²</td>
                     </tr>
                     <tr>
-                        <th>Цена за м²:</th>
-                        <td>{{ apartment.fact_price_per_m2|intcomma  }} сом</td>
+                        <th>Цена за м² (факт):</th>
+                        <td>{{ apartment.fact_price_per_m2|intcomma }} сом</td>
                     </tr>
-                    
-                    
                     <tr>
                         <th>Планируемая цена за м²:</th>
-                        <td>{{ apartment.planned_price_per_m2|default:"-"|intcomma  }}  сом</td>
+                        <td>{{ apartment.planned_price_per_m2|default:"-"|intcomma }} сом</td>
                     </tr>
                     <tr>
                         <th>Планируемая сделка:</th>
-                        <td>{{ apartment.planned_deal_amount|default:"-"|intcomma  }} сом</td>
-                    </tr>
-                     <tr>
-                        <th>Факт сделки сделка:</th>
-                        <td> {{apartment.deal_Fakt_deal_amount|default:"-"|intcomma  }} сом</td>
+                        <td>{{ apartment.planned_deal_amount|default:"-"|intcomma }} сом</td>
                     </tr>
                     <tr>
-                        <th>Поступление Сделки:</th>
-                        <td>{{ apartment.deal_amount|intcomma  }} сом</td>
+                        <th>Факт сделки:</th>
+                        <td>{{ apartment.deal_Fakt_deal_amount|default:"-"|intcomma }} сом</td>
+                    </tr>
+                    <tr>
+                        <th>Поступление сделки:</th>
+                        <td>{{ apartment.deal_amount|intcomma }} сом</td>
                     </tr>
                     <tr>
                         <th>Остаток сделки:</th>
-                        <td>{{ apartment.remaining_deal_amount|intcomma  }} сом</td>
+                        <td>{{ apartment.remaining_deal_amount|intcomma }} сом</td>
                     </tr>
                     <tr>
                         <th>Скидка:</th>
-                        <td>{{ apartment.discount|default:"-"|intcomma  }} сом</td>
+                        <td>{{ apartment.discount|default:"-"|intcomma }} сом</td>
                     </tr>
                     <tr>
-                        <th>Статус:</th>
+                        <th>Статус (продажа/бронь):</th>
                         <td>
                             {% if apartment.is_sold %}
-                            <span class="badge bg-success">Продано</span>
+                                <span class="badge bg-success">Продано</span>
                             {% elif apartment.is_reserved %}
-                            <span class="badge bg-warning">Бронь</span>
+                                <span class="badge bg-warning">Бронь</span>
                             {% else %}
-                            <span class="badge bg-secondary">Свободно</span>
+                                <span class="badge bg-secondary">Свободно</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -94,44 +94,220 @@
                     </tr>
                     <tr>
                         <th>Номер сделки:</th>
-                        <td>{{ apartment.deal_number|default:"-"|intcomma  }}</td>
+                        <td>{{ apartment.deal_number|default:"-"|intcomma }}</td>
                     </tr>
+
+                    <!-- Блок аренды (новое) -->
+                    <tr>
+                        <th>Статус аренды:</th>
+                        <td>
+                            {% if apartment.is_rented %}
+                                {% if apartment.rent_status == 'active' %}
+                                    <span class="badge bg-success">Арендована</span>
+                                {% elif apartment.rent_status == 'expired' %}
+                                    <span class="badge bg-warning">Аренда истекла</span>
+                                {% else %}
+                                    <span class="badge bg-info">Аренда</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="badge bg-secondary">Не сдана</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% if apartment.is_rented %}
+                    <tr>
+                        <th>Цена аренды в месяц:</th>
+                        <td>{{ apartment.rent_price_per_month|intcomma }} сом</td>
+                    </tr>
+                    <tr>
+                        <th>Период аренды:</th>
+                        <td>
+                            {{ apartment.rent_start_date|date:"d.m.Y" }} –
+                            {{ apartment.rent_end_date|date:"d.m.Y" }}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Арендатор:</th>
+                        <td>{{ apartment.tenant_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Телефон арендатора:</th>
+                        <td>{{ apartment.tenant_phone|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Договор аренды:</th>
+                        <td>{{ apartment.tenant_contract|default:"-" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Общий доход от аренды:</th>
+                        <td>{{ apartment.total_rent_income|intcomma }} сом</td>
+                    </tr>
+                    {% endif %}
                 </table>
             </div>
         </div>
     </div>
-    
+
+    <!-- Платежи по продаже -->
     <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <h5>История платежей</h5>
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Платежи по продаже</h5>
+                <a href="{% url 'projects:add_payment' apartment.id %}" class="btn btn-primary btn-sm">+ Добавить</a>
             </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table class="table table-striped">
                         <thead>
-                            <tr>
-                                <th>Дата</th>
-                                <th>Сумма</th>
-                                <th>Комментарий</th>
-                            </tr>
+                        <tr>
+                            <th>Дата</th>
+                            <th>Сумма</th>
+                            <th>Комментарий</th>
+                            {% if user.is_superuser %}
+                                <th>Действия</th>
+                            {% endif %}
+                        </tr>
                         </thead>
                         <tbody>
-                            {% for payment in payments %}
+                        {% for payment in payments %}
                             <tr>
                                 <td>{{ payment.payment_date|date:"d.m.Y H:i" }}</td>
-                                <td>{{ payment.amount|intcomma  }} сом</td>
-                                <td>{{ payment.comment|default:"-" }}</td>
+                                <td>{{ payment.amount|intcomma }} сом</td>
+                                <td>
+                                    {{ payment.comment|default:"-" }}
+                                    {% if payment.updated_by %}
+                                        <br>
+                                        <small class="text-muted">
+                                            Изменено: {{ payment.updated_at|date:"d.m.Y H:i" }}
+                                            {% if payment.updated_by != payment.created_by %}
+                                                ({{ payment.updated_by.username }})
+                                            {% endif %}
+                                        </small>
+                                    {% endif %}
+                                </td>
+                                {% if user.is_superuser %}
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            {% comment %} <a href="{% url 'projects:edit_payment' payment.id %}" class="btn btn-warning" title="Редактировать">✏️</a> {% endcomment %}
+                                            <a href="{% url 'projects:delete_payment' payment.id %}" class="btn btn-danger" title="Удалить">🗑️</a>
+                                        </div>
+                                    </td>
+                                {% endif %}
                             </tr>
-                            {% endfor %}
+                        {% empty %}
+                            <tr>
+                                <td colspan="{% if user.is_superuser %}4{% else %}3{% endif %}" class="text-center text-muted">
+                                    Платежей пока нет.
+                                </td>
+                            </tr>
+                        {% endfor %}
                         </tbody>
                         <tfoot>
-                            <tr class="table-primary">
-                                <th>Итого:</th>
-                                <th>{{total_paid|intcomma }}</th>
-                                {% comment %} <th>{{ apartment.payments.aggregate(Sum('amount'))['amount__sum']|default:0 }} сом</th> {% endcomment %}
-                                <td></td>
+                        <tr class="table-primary">
+                            <th>Итого:</th>
+                            <th>{{ total_paid|intcomma }} сом</th>
+                            <td></td>
+                            {% if user.is_superuser %}<td></td>{% endif %}
+                        </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Статистика по платежам (из старого) -->
+                <div class="mt-3">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body py-2">
+                                    <small class="text-muted">Всего платежей</small>
+                                    <h6 class="mb-0">{{ payments.count }}</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body py-2">
+                                    <small class="text-muted">Общая сумма</small>
+                                    <h6 class="mb-0">{{ total_paid|intcomma }} сом</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-light">
+                                <div class="card-body py-2">
+                                    <small class="text-muted">Остаток</small>
+                                    <h6 class="mb-0">{{ apartment.remaining_deal_amount|intcomma }} сом</h6>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Арендные платежи (новое) -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>Арендные платежи</h5>
+                <a href="{% url 'projects:add_rent_payment' apartment.id %}" class="btn btn-success btn-sm">+ Добавить</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th>Дата</th>
+                            <th>Сумма</th>
+                            <th>Период</th>
+                            <th>Комментарий</th>
+                            {% if user.is_superuser %}
+                                <th>Действия</th>
+                            {% endif %}
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for payment in apartment.rent_payments.all %}
+                            <tr>
+                                <td>{{ payment.payment_date|date:"d.m.Y H:i" }}</td>
+                                <td>{{ payment.amount|intcomma }} сом</td>
+                                <td>{{ payment.period_start|date:"d.m.Y" }} – {{ payment.period_end|date:"d.m.Y" }}</td>
+                                <td>
+                                    {{ payment.comment|default:"-" }}
+                                    {% if payment.updated_by %}
+                                        <br>
+                                        <small class="text-muted">
+                                            Изменено: {{ payment.updated_at|date:"d.m.Y H:i" }}
+                                            {% if payment.updated_by != payment.created_by %}
+                                                ({{ payment.updated_by.username }})
+                                            {% endif %}
+                                        </small>
+                                    {% endif %}
+                                </td>
+                                {% if user.is_superuser %}
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            {% comment %} <a href="{% url 'projects:edit_rent_payment' payment.id %}" class="btn btn-warning" title="Редактировать">✏️</a> {% endcomment %}
+                                            <a href="{% url 'projects:delete_rent_payment' payment.id %}" class="btn btn-danger" title="Удалить">🗑️</a>
+                                        </div>
+                                    </td>
+                                {% endif %}
                             </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="{% if user.is_superuser %}5{% else %}4{% endif %}" class="text-center text-muted">
+                                    Арендных платежей пока нет.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                        <tfoot>
+                        <tr class="table-primary">
+                            <th>Итого:</th>
+                            <th>{{ apartment.total_rent_income|intcomma }} сом</th>
+                            <td></td>
+                            <td></td>
+                            {% if user.is_superuser %}<td></td>{% endif %}
+                        </tr>
                         </tfoot>
                     </table>
                 </div>
@@ -139,11 +315,10 @@
         </div>
     </div>
 </div>
+
+<!-- Комментарии -->
 <div class="container mt-4">
-
-
     <h4>Комментарии</h4>
-
     {% if comments %}
         <ul class="list-group mb-4">
             {% for comment in comments %}

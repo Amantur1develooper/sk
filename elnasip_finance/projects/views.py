@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from projects.forms import ApartmentForm, DealPaymentForm
 from finances.models import Allocation, CashFlow, CommonCash, Sale
-from .models import Apartment, Project, Block, EstimateItem, EstimateCategory
+from .models import Apartment, DealPayment, Project, Block, EstimateItem, EstimateCategory, RentPayment
 from django.db.models import Sum
 
 @login_required
@@ -295,7 +295,7 @@ def apartment_list(request, block_id):
     }
     return render(request, 'projects/apartment_list.html', context)
 
-from .forms import ApartmentCommentForm
+from .forms import ApartmentCommentForm, DealPaymentEditForm, RentApartmentForm, RentPaymentEditForm, RentPaymentForm
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from .models import Apartment
@@ -385,11 +385,16 @@ def add_payment(request, apartment_id):
         form = DealPaymentForm(request.POST)
         if form.is_valid():
             payment = form.save(commit=False)
+            payment.apartment = apartment
+            payment.created_by = request.user  # Сохраняем кто создал платеж
+            messages.success(request, 'Платеж успешно добавлен')
+            payment = form.save(commit=False)
             Sale.objects.create(
                  block = apartment.block,
                  area = 0,
                  apartment = apartment,
                  amount = payment.amount,
+                 
                  client_info = f'{apartment.client_name}',
                  created_by = request.user
             )
@@ -397,6 +402,7 @@ def add_payment(request, apartment_id):
             payment.apartment = apartment
             payment.save()
             messages.success(request, 'Платеж успешно добавлен')
+            # return redirect('projects:apartment_detail', apartment_id=apartment.id)
             return redirect('projects:apartment_detail', apartment_id=apartment.id)
     else:
         form = DealPaymentForm(initial={'payment_date': timezone.now()})
@@ -526,3 +532,151 @@ def add_estimate_item(request, block_id):
         "form": form,
         "block": block,
     })
+
+
+from django.contrib.auth.decorators import user_passes_test
+from django.http import HttpResponseForbidden
+
+def superuser_required(view_func):
+    """Декоратор для проверки, что пользователь - суперпользователь"""
+    decorated_view_func = user_passes_test(
+        lambda u: u.is_active and u.is_superuser,
+        login_url='/admin/login/'
+    )(view_func)
+    return decorated_view_func
+
+@login_required
+@superuser_required
+def edit_payment(request, payment_id):
+    payment = get_object_or_404(DealPayment, id=payment_id)
+    
+    if request.method == 'POST':
+        form = DealPaymentEditForm(request.POST, instance=payment)
+        if form.is_valid():
+            # Сохраняем, кто изменил платеж
+            payment = form.save(commit=False)
+            payment.updated_by = request.user
+            payment.save()
+            
+            messages.success(request, 'Платеж успешно обновлен')
+            return redirect('projects:apartment_detail', apartment_id=payment.apartment.id)
+    else:
+        form = DealPaymentEditForm(instance=payment)
+    
+    context = {
+        'form': form,
+        'payment': payment,
+        'apartment': payment.apartment,
+    }
+    return render(request, 'projects/edit_payment.html', context)
+
+@login_required
+@superuser_required
+def delete_payment(request, payment_id):
+    payment = get_object_or_404(DealPayment, id=payment_id)
+    apartment_id = payment.apartment.id
+    
+    if request.method == 'POST':
+        # Создаем запись в истории перед удалением
+        from finances.models import CashFlow, CommonCash
+        common_cash = CommonCash.objects.first()
+        
+        if common_cash:
+            CashFlow.objects.create(
+                common_cash=common_cash,
+                flow_type='expense',  # Обратная операция - возврат средств
+                amount=payment.amount,
+                description=f"УДАЛЕНИЕ: Платеж за кв. {payment.apartment.apartment_number} ({payment.payment_date.strftime('%d.%m.%Y')})",
+                block=payment.apartment.block,
+                created_by=request.user
+            )
+        
+        payment.delete()
+        messages.success(request, 'Платеж успешно удален')
+        return redirect('projects:apartment_detail', apartment_id=apartment_id)
+    
+    context = {
+        'payment': payment,
+    }
+    return render(request, 'projects/delete_payment_confirm.html', context)
+
+
+@login_required
+def rent_apartment(request, apartment_id):
+    apartment = get_object_or_404(Apartment, id=apartment_id)
+    
+    if request.method == 'POST':
+        form = RentApartmentForm(request.POST, instance=apartment)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Информация об аренде обновлена')
+            return redirect('projects:apartment_detail', apartment_id=apartment.id)
+    else:
+        form = RentApartmentForm(instance=apartment)
+    
+    context = {
+        'apartment': apartment,
+        'form': form,
+    }
+    return render(request, 'projects/rent_apartment.html', context)
+
+@login_required
+def add_rent_payment(request, apartment_id):
+    apartment = get_object_or_404(Apartment, id=apartment_id)
+    
+    if request.method == 'POST':
+        form = RentPaymentForm(request.POST)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.apartment = apartment
+            payment.created_by = request.user
+            payment.save()
+            messages.success(request, 'Арендный платеж успешно добавлен')
+            return redirect('projects:apartment_detail', apartment_id=apartment.id)
+    else:
+        form = RentPaymentForm()
+    
+    context = {
+        'apartment': apartment,
+        'form': form,
+    }
+    return render(request, 'projects/add_rent_payment.html', context)
+
+@login_required
+@superuser_required
+def edit_rent_payment(request, payment_id):
+    payment = get_object_or_404(RentPayment, id=payment_id)
+    
+    if request.method == 'POST':
+        form = RentPaymentEditForm(request.POST, instance=payment)
+        if form.is_valid():
+            payment = form.save(commit=False)
+            payment.updated_by = request.user
+            payment.save()
+            messages.success(request, 'Арендный платеж успешно обновлен')
+            return redirect('projects:apartment_detail', apartment_id=payment.apartment.id)
+    else:
+        form = RentPaymentEditForm(instance=payment)
+    
+    context = {
+        'form': form,
+        'payment': payment,
+        'apartment': payment.apartment,
+    }
+    return render(request, 'projects/edit_rent_payment.html', context)
+
+@login_required
+@superuser_required
+def delete_rent_payment(request, payment_id):
+    payment = get_object_or_404(RentPayment, id=payment_id)
+    apartment_id = payment.apartment.id
+    
+    if request.method == 'POST':
+        payment.delete()
+        messages.success(request, 'Арендный платеж успешно удален')
+        return redirect('projects:apartment_detail', apartment_id=apartment_id)
+    
+    context = {
+        'payment': payment,
+    }
+    return render(request, 'projects/delete_rent_payment_confirm.html', context)

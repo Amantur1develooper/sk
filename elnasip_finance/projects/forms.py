@@ -1,5 +1,5 @@
 from django import forms
-from .models import Apartment, DealPayment
+from .models import Apartment, DealPayment, RentPayment
 
 class ApartmentForm(forms.ModelForm):
     class Meta:
@@ -81,7 +81,8 @@ class ApartmentSaleForm(forms.ModelForm):
     
 from django import forms
 from .models import ApartmentComment
-
+from django.utils import timezone
+from datetime import timedelta 
 class ApartmentCommentForm(forms.ModelForm):
     class Meta:
         model = ApartmentComment
@@ -127,7 +128,20 @@ class ApartmentReservationForm(forms.ModelForm):
         labels = {
             "client_name": "Кто бронирует"
         }
-
+class DealPaymentEditForm(forms.ModelForm):
+    class Meta:
+        model = DealPayment
+        fields = ['amount', 'payment_date', 'comment']
+        widgets = {
+            'payment_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'comment': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Комментарий к платежу'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Форматируем дату для корректного отображения в форме
+        if self.instance and self.instance.payment_date:
+            self.initial['payment_date'] = self.instance.payment_date.strftime('%Y-%m-%dT%H:%M')
 # @login_required
 # # @user_passes_test(is_accountant_or_admin, login_url='/accounts/login/')
 # def sell_apartment(request, apartment_id):
@@ -200,3 +214,58 @@ class ApartmentCreateForm(forms.ModelForm):
         if data.get("planned_price_per_m2", 0) <= 0:
             self.add_error("planned_price_per_m2", "Планируемая цена м² должна быть больше 0")
         return data
+
+
+class RentApartmentForm(forms.ModelForm):
+    class Meta:
+        model = Apartment
+        fields = [
+            'is_rented', 'rent_price_per_month', 'rent_start_date', 'rent_end_date',
+            'tenant_name', 'tenant_phone', 'tenant_contract'
+        ]
+        widgets = {
+            'rent_start_date': forms.DateInput(attrs={'type': 'date'}),
+            'rent_end_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Устанавливаем текущую дату по умолчанию
+        if not self.instance.rent_start_date:
+            self.initial['rent_start_date'] = timezone.now().date()
+
+class RentPaymentForm(forms.ModelForm):
+    class Meta:
+        model = RentPayment
+        fields = ['amount', 'payment_date', 'period_start', 'period_end', 'comment']
+        widgets = {
+            'payment_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'period_start': forms.DateInput(attrs={'type': 'date'}),
+            'period_end': forms.DateInput(attrs={'type': 'date'}),
+            'comment': forms.Textarea(attrs={'rows': 3, 'placeholder': 'Комментарий к арендному платежу'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Устанавливаем текущую дату по умолчанию
+        if not self.instance.pk:
+            self.initial['payment_date'] = timezone.now().strftime('%Y-%m-%dT%H:%M')
+            self.initial['period_start'] = timezone.now().date()
+            self.initial['period_end'] = (timezone.now() + timedelta(days=30)).date()
+
+class RentPaymentEditForm(forms.ModelForm):
+    class Meta:
+        model = RentPayment
+        fields = ['amount', 'payment_date', 'period_start', 'period_end', 'comment']
+        widgets = {
+            'payment_date': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'period_start': forms.DateInput(attrs={'type': 'date'}),
+            'period_end': forms.DateInput(attrs={'type': 'date'}),
+            'comment': forms.Textarea(attrs={'rows': 3}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Форматируем дату для корректного отображения в форме
+        if self.instance and self.instance.payment_date:
+            self.initial['payment_date'] = self.instance.payment_date.strftime('%Y-%m-%dT%H:%M')

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Редактирование платежа{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4>Редактирование платежа</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong>Квартира:</strong> {{ apartment.apartment_number }} ({{ apartment.block }})<br>
+                    <strong>Клиент:</strong> {{ apartment.client_name|default:"Не указан" }}
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.amount.id_for_label }}" class="form-label">Сумма платежа</label>
+                        {{ form.amount }}
+                        {% if form.amount.errors %}
+                        <div class="text-danger">{{ form.amount.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.payment_date.id_for_label }}" class="form-label">Дата и время платежа</label>
+                        {{ form.payment_date }}
+                        {% if form.payment_date.errors %}
+                        <div class="text-danger">{{ form.payment_date.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.comment.id_for_label }}" class="form-label">Комментарий</label>
+                        {{ form.comment }}
+                        {% if form.comment.errors %}
+                        <div class="text-danger">{{ form.comment.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'projects:apartment_detail' apartment.id %}" class="btn btn-secondary me-md-2">Отмена</a>
+                        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

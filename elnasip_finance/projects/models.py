@@ -7,8 +7,7 @@ from django.contrib.auth.models import User
 from django.db.models import Sum
 def some_logic():
         from finances.models import Allocation 
-# from elnasip_finance.finances.models import Allocation
-# from finances.models import Allocation,CommonCash
+        
 from decimal import Decimal, ROUND_HALF_UP
 from django.db import models
 from django.db.models import Sum, Q
@@ -34,9 +33,17 @@ class Apartment(models.Model):
     planned_deal_amount = models.DecimalField(max_digits=15, default=0, decimal_places=2, blank=True, null=True, verbose_name="Планируемая сделка")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_rented = models.BooleanField(default=False, verbose_name="Сдана в аренду")
+    rent_price_per_month = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, blank=True, null=True,
+        verbose_name="Цена аренды в месяц (сом)"
+    )
+    rent_start_date = models.DateField(blank=True, null=True, verbose_name="Начало аренды")
+    rent_end_date = models.DateField(blank=True, null=True, verbose_name="Окончание аренды")
+    tenant_name = models.CharField(max_length=200, blank=True, null=True, verbose_name="Арендатор")
+    tenant_phone = models.CharField(max_length=20, blank=True, null=True, verbose_name="Телефон арендатора")
+    tenant_contract = models.CharField(max_length=100, blank=True, null=True, verbose_name="Номер договора аренды")
 
-
-    
     def save(self, *args, **kwargs):
         # Автоматический расчет сделки и остатка
         if self.sold_area and self.fact_price_per_m2:
@@ -49,16 +56,57 @@ class Apartment(models.Model):
         # Автоматический расчет планируемой сделки
         if self.area and self.planned_price_per_m2:
             self.planned_deal_amount = self.area * self.planned_price_per_m2
-        # Если квартира продана, применяем скидку к фактической сумме сделки
-        # if self.is_sold and self.discount and self.deal_Fakt_deal_amount:
-        # # Вычисляем сумму без скидки
-        #     original_amount = self.deal_Fakt_deal_amount / (1 - self.discount / 100)
-        #     self.deal_amount = original_amount
-        #     self.planned_deal_amount = 0
-        if self.is_sold==True:
+            
+        # Если квартира продана, снимаем с аренды
+        if self.is_sold and self.is_rented:
+            self.is_rented = False
+            self.rent_start_date = None
+            self.rent_end_date = None
+            
+        # Если квартира сдана в аренду, снимаем бронь
+        if self.is_rented and self.is_reserved:
+            self.is_reserved = False
+            
+        if self.is_sold:
             self.planned_deal_amount = 0
         
         super().save(*args, **kwargs)
+    @property
+    def rent_status(self):
+        """Статус аренды"""
+        from django.utils import timezone
+        if not self.is_rented:
+            return "not_rented"
+        if self.rent_end_date and timezone.now().date() > self.rent_end_date:
+            return "expired"
+        return "active"
+    
+    @property
+    def total_rent_income(self):
+        """Общий доход от аренды"""
+        return self.rent_payments.aggregate(Sum('amount'))['amount__sum'] or 0
+    # def save(self, *args, **kwargs):
+    #     # Автоматический расчет сделки и остатка
+    #     if self.sold_area and self.fact_price_per_m2:
+    #         self.deal_amount = self.sold_area * self.fact_price_per_m2
+    #         if self.planned_deal_amount:
+    #             self.remaining_deal_amount = self.planned_deal_amount - self.deal_amount
+    #         else:
+    #             self.remaining_deal_amount = self.deal_Fakt_deal_amount - self.deal_amount
+        
+    #     # Автоматический расчет планируемой сделки
+    #     if self.area and self.planned_price_per_m2:
+    #         self.planned_deal_amount = self.area * self.planned_price_per_m2
+    #     # Если квартира продана, применяем скидку к фактической сумме сделки
+    #     # if self.is_sold and self.discount and self.deal_Fakt_deal_amount:
+    #     # # Вычисляем сумму без скидки
+    #     #     original_amount = self.deal_Fakt_deal_amount / (1 - self.discount / 100)
+    #     #     self.deal_amount = original_amount
+    #     #     self.planned_deal_amount = 0
+    #     if self.is_sold==True:
+    #         self.planned_deal_amount = 0
+        
+    #     super().save(*args, **kwargs)
     @property
     def sold_area_if_sold(self):
         """Вернёт проданную площадь только если квартира отмечена как проданная"""
@@ -95,8 +143,13 @@ class DealPayment(models.Model):
     payment_date = models.DateTimeField(verbose_name="Дата платежа")
     comment = models.TextField(blank=True, null=True, verbose_name="Комментарий")
     created_at = models.DateTimeField(auto_now_add=True)
-
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, 
+                                   related_name='created_payments')
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, 
+                                   related_name='updated_payments')
     
+
     def save(self, *args, **kwargs):
         # Сначала сохраняем сам платеж
         super().save(*args, **kwargs)
@@ -112,11 +165,14 @@ class DealPayment(models.Model):
             apartment.sold_area = total_paid / apartment.fact_price_per_m2
             apartment.sold_area = min(apartment.sold_area, apartment.area)  # не больше общей площади
 
-
+        # Определяем статус "продана"
+        if deal_amount > 0:
+            apartment.is_sold = True
+        else:
+            apartment.is_sold = False
 
         apartment.save()
 
-  
 
     def __str__(self):
         return f"Платеж {self.amount} для кв. {self.apartment.apartment_number}"
@@ -125,6 +181,34 @@ class DealPayment(models.Model):
         verbose_name = "Платеж по сделке"
         verbose_name_plural = "Платежи по сделкам"
         ordering = ['-payment_date']
+    # def save(self, *args, **kwargs):
+    #     # Сначала сохраняем сам платеж
+    #     super().save(*args, **kwargs)
+    
+    #     apartment = self.apartment
+    #     total_paid = apartment.payments.aggregate(Sum('amount'))['amount__sum'] or 0
+
+    #     # Безопасное значение deal_amount
+    #     deal_amount = apartment.deal_amount or 0
+
+    #     if apartment.fact_price_per_m2 and apartment.planned_price_per_m2 > 0:
+    #         # Рассчитываем проданную площадь
+    #         apartment.sold_area = total_paid / apartment.fact_price_per_m2
+    #         apartment.sold_area = min(apartment.sold_area, apartment.area)  # не больше общей площади
+
+
+
+    #     apartment.save()
+
+  
+
+    # def __str__(self):
+    #     return f"Платеж {self.amount} для кв. {self.apartment.apartment_number}"
+
+    # class Meta:
+    #     verbose_name = "Платеж по сделке"
+    #     verbose_name_plural = "Платежи по сделкам"
+    #     ordering = ['-payment_date']
 
 # Обновляем модель Block для добавления вычисляемых свойств
 
@@ -325,3 +409,60 @@ class EstimateItem(models.Model):
         verbose_name_plural = "Позиции смет"
         
         
+class RentPayment(models.Model):
+    apartment = models.ForeignKey(Apartment, on_delete=models.CASCADE, related_name='rent_payments')
+    amount = models.DecimalField(max_digits=15, decimal_places=2, verbose_name="Сумма платежа")
+    payment_date = models.DateTimeField(verbose_name="Дата платежа")
+    period_start = models.DateField(verbose_name="Начало периода")
+    period_end = models.DateField(verbose_name="Конец периода")
+    comment = models.TextField(blank=True, null=True, verbose_name="Комментарий")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, 
+                                   related_name='created_rent_payments')
+    updated_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, 
+                                   related_name='updated_rent_payments')
+    
+    def save(self, *args, **kwargs):
+        # Создаем запись в движении денег
+        from finances.models import CommonCash, CashFlow
+        common_cash = CommonCash.objects.first()
+        if common_cash and not self.pk:  # Только для новых записей
+            CashFlow.objects.create(
+                common_cash=common_cash,
+                flow_type='income',
+                amount=self.amount,
+                description=f"Аренда кв. {self.apartment.apartment_number} ({self.period_start} - {self.period_end})",
+                block=self.apartment.block,
+                created_by=self.created_by
+            )
+            
+            # Помечаем квартиру как сданную в аренду
+            if not self.apartment.is_rented:
+                self.apartment.is_rented = True
+                self.apartment.save()
+        
+        super().save(*args, **kwargs)
+    
+    def delete(self, *args, **kwargs):
+        # Создаем запись об удалении в движении денег
+        from finances.models import CommonCash, CashFlow
+        common_cash = CommonCash.objects.first()
+        if common_cash:
+            CashFlow.objects.create(
+                common_cash=common_cash,
+                flow_type='expense',  # Обратная операция
+                amount=self.amount,
+                description=f"УДАЛЕНИЕ: Аренда кв. {self.apartment.apartment_number}",
+                block=self.apartment.block,
+                created_by=User.objects.filter(is_superuser=True).first()
+            )
+        super().delete(*args, **kwargs)
+    
+    def __str__(self):
+        return f"Арендный платеж {self.amount} для кв. {self.apartment.apartment_number}"
+    
+    class Meta:
+        verbose_name = "Платеж по аренде"
+        verbose_name_plural = "Платежи по аренде"
+        ordering = ['-payment_date']
