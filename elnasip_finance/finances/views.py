@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import login_required
+
 from .models import CommonCash, CashFlow, Allocation, Expense, Sale
 from projects.models import Project, Block, EstimateItem
 from employees.models import Employee, SalaryPayment
@@ -7,166 +7,129 @@ from django.db.models import Sum
 from django.db.models import Sum, Q
 from django.db.models import Q
 from django.utils.dateparse import parse_date
-from projects.models import Block
+from django.http import JsonResponse
+from django.db.models import Q
+from django.shortcuts import redirect
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from .models import WarehouseCar
+from .forms import CarPurchaseForm, CarSaleForm
+from .models import Block, EstimateItem
+from .forms import AllocationForm
 
 @login_required
 def common_cash_detail(request):
     common_cash = CommonCash.objects.first()
+    
+    # Фильтрация для движения денег
     cash_flows = CashFlow.objects.all().order_by('-date')
-
-    # Получаем список блоков для выпадающего списка
-    blocks = Block.objects.all()
-
-    # Фильтры из GET-запроса
-    flow_type = request.GET.get("flow_type")   # 'income' или 'expense'
-    block_id = request.GET.get("block")
-    start_date = request.GET.get("start_date")
-    end_date = request.GET.get("end_date")
-
-    # Фильтр по типу операции
-    if flow_type in ["income", "expense"]:
+    
+    # Фильтры
+    flow_type = request.GET.get('flow_type')
+    block_id = request.GET.get('block')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    if flow_type:
         cash_flows = cash_flows.filter(flow_type=flow_type)
-
-    # Фильтр по блоку
+    
     if block_id:
         cash_flows = cash_flows.filter(block_id=block_id)
-
-    # Фильтр по датам
-    if start_date:
-        cash_flows = cash_flows.filter(date__date__gte=start_date)
-    if end_date:
-        cash_flows = cash_flows.filter(date__date__lte=end_date)
-
-    # Экспорт в Excel
-    if "export" in request.GET:
-        return export_cash_flows_to_excel(cash_flows)
     
-    total_income = cash_flows.filter(flow_type="income").aggregate(Sum("amount"))["amount__sum"] or 0
-    total_expense = cash_flows.filter(flow_type="expense").aggregate(Sum("amount"))["amount__sum"] or 0
+    if start_date:
+        cash_flows = cash_flows.filter(date__gte=start_date)
+    
+    if end_date:
+        cash_flows = cash_flows.filter(date__lte=end_date)
+    
+    # Получаем все выделения средств
+    allocations = Allocation.objects.all().select_related(
+        'estimate_item', 'estimate_item__block'
+    ).order_by('-date')
+    
+    # Статистика по выделениям
+    total_allocated = allocations.aggregate(Sum('amount'))['amount__sum'] or 0
+    average_allocation = total_allocated / allocations.count() if allocations.count() > 0 else 0
+    
+    # Статистика по движению денег
+    total_income = cash_flows.filter(flow_type='income').aggregate(Sum('amount'))['amount__sum'] or 0
+    total_expense = cash_flows.filter(flow_type='expense').aggregate(Sum('amount'))['amount__sum'] or 0
     net_balance = total_income - total_expense
     
     context = {
         'common_cash': common_cash,
         'cash_flows': cash_flows,
-        'blocks': blocks,
-        
-        
-        
+        'allocations': allocations,
         'total_income': total_income,
         'total_expense': total_expense,
         'net_balance': net_balance,
+        'total_allocated': total_allocated,
+        'average_allocation': average_allocation,
+        'blocks': Block.objects.all(),
     }
     
     
     return render(request, 'finances/common_cash_detail.html', context)
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Block, EstimateItem, CommonCash, Allocation
-from .forms import AllocationForm
 
-def allocation_create(request):
-    common_cash = get_object_or_404(CommonCash, pk=1)
-    blocks = Block.objects.all()
-    block_id = request.GET.get("block")
-
-    form = None
+@login_required
+def common_cash_detail2(request):
+    common_cash = CommonCash.objects.first()
+    
+    # Фильтрация для движения денег
+    cash_flows = CashFlow.objects.all().order_by('-date')
+    
+    # Фильтры
+    flow_type = request.GET.get('flow_type')
+    block_id = request.GET.get('block')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    
+    if flow_type:
+        cash_flows = cash_flows.filter(flow_type=flow_type)
+    
     if block_id:
-        estimate_items = EstimateItem.objects.filter(block_id=block_id)
-        if request.method == "POST":
-            form = AllocationForm(request.POST)
-            form.fields["estimate_item"].queryset = estimate_items
-            if form.is_valid():
-                allocation = form.save(commit=False)
-                allocation.save()
-                return redirect("finances:allocations_list")
-        else:
-            form = AllocationForm()
-            form.fields["estimate_item"].queryset = estimate_items
-
+        cash_flows = cash_flows.filter(block_id=block_id)
+    
+    if start_date:
+        cash_flows = cash_flows.filter(date__gte=start_date)
+    
+    if end_date:
+        cash_flows = cash_flows.filter(date__lte=end_date)
+    
+    # Получаем все выделения средств
+    allocations = Allocation.objects.all().select_related(
+        'estimate_item', 'estimate_item__block'
+    ).order_by('-date')
+    
+    # Статистика по выделениям
+    total_allocated = allocations.aggregate(Sum('amount'))['amount__sum'] or 0
+    average_allocation = total_allocated / allocations.count() if allocations.count() > 0 else 0
+    
+    # Статистика по движению денег
+    total_income = cash_flows.filter(flow_type='income').aggregate(Sum('amount'))['amount__sum'] or 0
+    total_expense = cash_flows.filter(flow_type='expense').aggregate(Sum('amount'))['amount__sum'] or 0
+    net_balance = total_income - total_expense
+    
     context = {
-        "common_cash": common_cash,
-        "blocks": blocks,
-        "block_id": int(block_id) if block_id else None,
-        "form": form,
+        'common_cash': common_cash,
+        'cash_flows': cash_flows,
+        'allocations': allocations,
+        'total_income': total_income,
+        'total_expense': total_expense,
+        'net_balance': net_balance,
+        'total_allocated': total_allocated,
+        'average_allocation': average_allocation,
+        'blocks': Block.objects.all(),
     }
-    return render(request, "finances/allocation_create.html", context)
-
-# @login_required
-# def common_cash_detail(request):
-#     common_cash = CommonCash.objects.first()
-#     cash_flows = CashFlow.objects.all().order_by('-date')
-
-#     # Фильтры из GET-запроса
-#     flow_type = request.GET.get("flow_type")   # 'income' или 'expense'
-#     block_id = request.GET.get("block")
-#     start_date = request.GET.get("start_date")
-#     end_date = request.GET.get("end_date")
-
-#     # Фильтр по типу операции
-#     if flow_type in ["income", "expense"]:
-#         cash_flows = cash_flows.filter(flow_type=flow_type)
-
-#     # Фильтр по блоку (ищем блок в описании!)
-#     if block_id:
-#         cash_flows = cash_flows.filter(description__icontains=f"блок {block_id}")
-
-#     # Фильтр по датам
-#     if start_date:
-#         cash_flows = cash_flows.filter(date__date__gte=parse_date(start_date))
-#     if end_date:
-#         cash_flows = cash_flows.filter(date__date__lte=parse_date(end_date))
-
-#     # Экспорт в Excel
-#     if "export" in request.GET:
-#         return export_cash_flows_to_excel(cash_flows)
-
-#     context = {
-#         'common_cash': common_cash,
-#         'cash_flows': cash_flows,
-#     }
-#     return render(request, 'finances/common_cash_detail.html', context)
+    
+    
+    return render(request, 'finances/common_cash_detail2.html', context)
 
 
-# @login_required
-# def common_cash_detail(request):
-#     common_cash = CommonCash.objects.first()
-#     cash_flows = CashFlow.objects.all().order_by('-date')
 
-#     # 🔹 фильтры
-#     block_id = request.GET.get('block')
-#     start_date = request.GET.get('start_date')
-#     end_date = request.GET.get('end_date')
 
-#     if block_id:
-#         cash_flows = cash_flows.filter(description__icontains=Block.objects.get(id=block_id).name)
 
-#     if start_date:
-#         cash_flows = cash_flows.filter(date__date__gte=parse_date(start_date))
-#     if end_date:
-#         cash_flows = cash_flows.filter(date__date__lte=parse_date(end_date))
 
-#     # 🔹 итоги
-#     total_income = cash_flows.filter(flow_type="income").aggregate(sum=Sum("amount"))["sum"] or 0
-#     total_expense = cash_flows.filter(flow_type="expense").aggregate(sum=Sum("amount"))["sum"] or 0
-#     net_balance = total_income - total_expense
-
-#     # 🔹 экспорт в Excel
-#     if 'export' in request.GET:
-#         return export_cash_flows_to_excel(cash_flows)
-
-#     blocks = Block.objects.all()
-
-#     context = {
-#         'common_cash': common_cash,
-#         'cash_flows': cash_flows,
-#         'blocks': blocks,
-#         'selected_block': block_id,
-#         'start_date': start_date,
-#         'end_date': end_date,
-#         'total_income': total_income,
-#         'total_expense': total_expense,
-#         'net_balance': net_balance,
-#     }
-#     return render(request, 'finances/common_cash_detail.html', context)
 
 @login_required
 def dashboard(request):
@@ -198,45 +161,13 @@ def dashboard(request):
 import datetime
 from django.utils.dateparse import parse_date
 from django.http import HttpResponse
-import openpyxl
+
 from openpyxl.utils import get_column_letter
 from django.db.models import Q
 from projects.models import Block
 from .models import CommonCash, CashFlow
 
-# @login_required
-# def common_cash_detail(request):
-#     common_cash = CommonCash.objects.first()
-#     cash_flows = CashFlow.objects.all().order_by('-date')
 
-#     # 🔹 фильтры
-#     block_id = request.GET.get('block')
-#     start_date = request.GET.get('start_date')
-#     end_date = request.GET.get('end_date')
-
-#     if block_id:
-#         cash_flows = cash_flows.filter(description__icontains=Block.objects.get(id=block_id).name)
-
-#     if start_date:
-#         cash_flows = cash_flows.filter(date__date__gte=parse_date(start_date))
-#     if end_date:
-#         cash_flows = cash_flows.filter(date__date__lte=parse_date(end_date))
-
-#     # 🔹 экспорт в Excel
-#     if 'export' in request.GET:
-#         return export_cash_flows_to_excel(cash_flows)
-
-#     blocks = Block.objects.all()
-
-#     context = {
-#         'common_cash': common_cash,
-#         'cash_flows': cash_flows,
-#         'blocks': blocks,
-#         'selected_block': block_id,
-#         'start_date': start_date,
-#         'end_date': end_date,
-#     }
-#     return render(request, 'finances/common_cash_detail.html', context)
 
 import openpyxl
 from io import BytesIO
@@ -308,73 +239,8 @@ def export_cash_flows_to_excel(cash_flows):
     response['Content-Disposition'] = f'attachment; filename={filename}'
     return response
 
-# def export_cash_flows_to_excel(cash_flows):
-#     wb = openpyxl.Workbook()
-#     ws = wb.active
-#     ws.title = "Cash Flows"
 
-#     # Заголовки
-#     ws.append(["Дата", "Тип", "Сумма", "Описание"])
 
-#     # Данные
-#     for flow in cash_flows:
-#         ws.append([
-#             flow.date.strftime("%d.%m.%Y %H:%M"),
-#             "Приход" if flow.flow_type == "income" else "Расход",
-#             float(flow.amount),
-#             flow.description,
-#         ])
-
-#     # Запись в память
-#     buffer = BytesIO()
-#     wb.save(buffer)
-#     buffer.seek(0)
-
-#     # HTTP-ответ
-#     response = HttpResponse(
-#         buffer.getvalue(),
-#         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-#     )
-#     response['Content-Disposition'] = 'attachment; filename=cash_flows.xlsx'
-#     return response
-
-# def export_cash_flows_to_excel(cash_flows):
-#     wb = openpyxl.Workbook()
-#     ws = wb.active
-#     ws.title = "Движение средств"
-
-#     headers = ["Дата", "Тип", "Сумма", "Описание"]
-#     ws.append(headers)
-
-#     for flow in cash_flows:
-#         ws.append([
-#             flow.date.strftime("%d.%m.%Y %H:%M"),
-#             "Приход" if flow.flow_type == "income" else "Расход",
-#             float(flow.amount),
-#             flow.description
-#         ])
-
-#     # ширина колонок
-#     for col_num, _ in enumerate(headers, 1):
-#         ws.column_dimensions[get_column_letter(col_num)].width = 20
-
-#     response = HttpResponse(
-#         content=openpyxl.writer.excel.save_virtual_workbook(wb),
-#         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-#     )
-#     response['Content-Disposition'] = 'attachment; filename="cash_flows.xlsx"'
-#     return response
-
-# @login_required
-# def common_cash_detail(request):
-#     common_cash = CommonCash.objects.first()
-#     cash_flows = CashFlow.objects.all().order_by('-date')
-    
-#     context = {
-#         'common_cash': common_cash,
-#         'cash_flows': cash_flows,
-#     }
-#     return render(request, 'finances/common_cash_detail.html', context)
 
 @login_required
 def allocations_list(request):
@@ -425,153 +291,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import Block, EstimateItem, CommonCash, Allocation
 from .forms import AllocationForm
 
-def allocation_create(request):
-    common_cash = CommonCash.objects.first()
-    blocks = Block.objects.all()
-    block_id = request.GET.get("block")
 
-    form = None
-    if block_id:
-        estimate_items = EstimateItem.objects.filter(block_id=block_id)
-        print(f"Block ID: {block_id}, Found items: {estimate_items.count()}")  # Отладочный вывод
-        if request.method == "POST":
-            form = AllocationForm(request.POST)
-            form.fields["estimate_item"].queryset = estimate_items
-            if form.is_valid():
-                allocation = form.save(commit=False)
-                # allocation = form.save(commit=False)
-
-                # if common_cash.balance < allocation.amount:
-                #     messages.error(request, 'Недостаточно средств в Общаге')
-                #     return render(request, 'finances/allocation_form.html', {'form': form, 'common_cash': common_cash, 'blocks': blocks, 'block_id': block_id})
-
-                # создаём CashFlow и привязываем block из estimate_item
-                cash_flow = CashFlow.objects.create(
-                    common_cash=common_cash,
-                    flow_type='expense',
-                    amount=allocation.amount,
-                    block=allocation.estimate_item.block,
-                    description=f"Выделение средств: {allocation.description}",
-                    created_by=request.user
-                )
-
-                allocation.common_cash = common_cash
-                allocation.save()
-
-                messages.success(request, f'Средства в размере {allocation.amount} сом успешно выделены!')
-    
-                return redirect("finances:common_cash_detail")
-        else:
-            form = AllocationForm()
-            form.fields["estimate_item"].queryset = estimate_items
-
-    context = {
-        "common_cash": common_cash,
-        "blocks": blocks,
-        "block_id": int(block_id) if block_id else None,
-        "form": form,
-    }
-    return render(request, "finances/allocation_create.html", context)
-
-# def create_allocation(request):
-#     common_cash = CommonCash.objects.first()
-#     blocks = Block.objects.all()
-#     block_id = request.GET.get('block')  # фильтр по блоку в GET
-
-#     # На GET: инициализируем форму и подрезаем queryset позиций если выбран блок
-#     if request.method == 'GET':
-#         form = AllocationForm()
-#         if block_id:
-#             form.fields['estimate_item'].queryset = EstimateItem.objects.filter(block_id=block_id)
-#     else:
-#         # POST
-#         form = AllocationForm(request.POST)
-#         # важно: чтобы валидация прошла, убедимся, что в queryset есть выбранный элемент
-#         # оставим полный queryset (или можно подрезать как выше)
-#         form.fields['estimate_item'].queryset = EstimateItem.objects.select_related('block', 'category').all()
-
-#         if form.is_valid():
-#             try:
-#                 allocation = form.save(commit=False)
-
-#                 if common_cash.balance < allocation.amount:
-#                     messages.error(request, 'Недостаточно средств в Общаге')
-#                     return render(request, 'finances/allocation_form.html', {'form': form, 'common_cash': common_cash, 'blocks': blocks, 'block_id': block_id})
-
-#                 # создаём CashFlow и привязываем block из estimate_item
-#                 cash_flow = CashFlow.objects.create(
-#                     common_cash=common_cash,
-#                     flow_type='expense',
-#                     amount=allocation.amount,
-#                     block=allocation.estimate_item.block,
-#                     description=f"Выделение средств: {allocation.description}",
-#                     created_by=request.user
-#                 )
-
-#                 allocation.common_cash = common_cash
-#                 allocation.save()
-
-#                 messages.success(request, f'Средства в размере {allocation.amount} сом успешно выделены!')
-                
-#                 return redirect('finances:common_cash_detail')
-            
-#             except Exception as e:
-#                 messages.error(request, f'Ошибка при выделении средств: {str(e)}')
-
-#     return render(request, 'finances/allocation_form.html', {
-#         'form': form,
-#         'common_cash': common_cash,
-#         'blocks': blocks,
-#         'block_id': int(block_id) if block_id else None
-#     })
-
-# def create_allocation(request):
-#     common_cash = CommonCash.objects.first()
-#     block_id = request.GET.get("block")
-
-#     if request.method == 'POST':
-#         form = AllocationForm(request.POST)
-#         if form.is_valid():
-#             allocation = form.save(commit=False)
-
-#             if common_cash.balance < allocation.amount:
-#                 messages.error(request, 'Недостаточно средств в Общаге')
-#                 return render(request, 'finances/allocation_form.html', {'form': form, 'common_cash': common_cash})
-
-#             cash_flow = CashFlow.objects.create(
-#                 common_cash=common_cash,
-#                 flow_type='expense',
-#                 amount=allocation.amount,
-#                 block=allocation.estimate_item.block,
-#                 description=f"Выделение средств: {allocation.description}",
-#                 created_by=request.user
-#             )
-#             allocation.common_cash = common_cash
-#             allocation.save()
-#             messages.success(request, f'Средства в размере {allocation.amount} сом успешно выделены!')
-#             return redirect('finances:common_cash_detail')
-#     else:
-#         form = AllocationForm()
-
-#     # фильтруем estimate_item если выбран блок
-#     if block_id:
-#         form.fields['estimate_item'].queryset = form.fields['estimate_item'].queryset.filter(block_id=block_id)
-
-#     blocks = Block.objects.all()
-#     return render(request, 'finances/allocation_form.html', {
-#         'form': form,
-#         'common_cash': common_cash,
-#         'blocks': blocks,
-#         'block_id': int(block_id) if block_id else None
-#     })
-from django.http import JsonResponse
-
-# finances/views.py
-from django.http import JsonResponse
-from django.db.models import Q
-from projects.models import EstimateItem
-from django.http import JsonResponse
-from .models import EstimateItem
 
 def get_estimate_items(request):
     block_id = request.GET.get("block_id")
@@ -608,56 +328,7 @@ def get_estimate_items3(request):
 
     return JsonResponse({'results': items})
 
-# def get_estimate_items(request):
-#     block_id = request.GET.get("block_id")
-#     items = EstimateItem.objects.filter(block_id=block_id).values("id", "name")
-#     return JsonResponse(list(items), safe=False)
 
-# @login_required
-# @transaction.atomic
-# def create_allocation(request):
-#     common_cash = CommonCash.objects.first()
-    
-#     if request.method == 'POST':
-#         form = AllocationForm(request.POST)
-#         if form.is_valid():
-#             try:
-#                 # Создаем запись о выделении средств
-#                 allocation = form.save(commit=False)
-                
-#                 # Проверяем достаточно ли средств в Общаге
-#                 if common_cash.balance < allocation.amount:
-#                     messages.error(request, 'Недостаточно средств в Общаге')
-#                     return render(request, 'finances/allocation_form.html', {'form': form})
-                
-#                 # Создаем запись о движении денег (расход)
-#                 cash_flow = CashFlow.objects.create(
-#                     common_cash=common_cash,
-#                     flow_type='expense',
-#                     amount=allocation.amount,
-#                     block=allocation.estimate_item.block,  
-#                     description=f"Выделение средств: {allocation.description}",
-#                     created_by=request.user
-#                 )
-                
-#                 # Сохраняем выделение средств
-#                 allocation.common_cash = common_cash
-#                 allocation.save()
-                
-#                 messages.success(request, f'Средства в размере {allocation.amount} сом успешно выделены!')
-#                 # return redirect('finances:allocations_list')
-#                 return redirect('finances:common_cash_detail')
-                
-#             except Exception as e:
-#                 messages.error(request, f'Ошибка при выделении средств: {str(e)}')
-#     else:
-#         form = AllocationForm()
-    
-#     context = {
-#         'form': form,
-#         'common_cash': common_cash,
-#     }
-#     return render(request, 'finances/allocation_form.html', context)
 
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -761,13 +432,12 @@ def add_loan_payment(request, loan_id):
     return render(request, 'finances/loan_payment_form.html', context)
 
 
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.utils import timezone
 
 
-from .models import WarehouseCar, CommonCash
-from .forms import CarPurchaseForm, CarSaleForm
+
+
+
+
 
 
 @login_required
@@ -806,3 +476,95 @@ def car_sale(request, pk):
     else:
         form = CarSaleForm(instance=car)
     return render(request, "finances/car_sale.html", {"form": form, "car": car})
+
+
+from django.contrib.auth.decorators import user_passes_test
+
+def superuser_required(view_func):
+    """Декоратор для проверки, что пользователь - суперпользователь"""
+    decorated_view_func = user_passes_test(
+        lambda u: u.is_active and u.is_superuser,
+        login_url='/admin/login/'
+    )(view_func)
+    return decorated_view_func
+
+@login_required
+@superuser_required
+def delete_allocation(request, allocation_id):
+    allocation = get_object_or_404(Allocation, id=allocation_id)
+    
+    if request.method == 'POST':
+        # Сохраняем информацию для сообщения
+        allocation_info = f"{allocation.amount} сом на {allocation.estimate_item}"
+        
+        # Удаляем выделение (в методе delete уже реализована логика возврата средств)
+        allocation.delete()
+        
+        messages.success(request, f'Выделение средств {allocation_info} успешно удалено. Средства возвращены в Общаг.')
+        return redirect('finances:common_cash_detail2')
+    
+    context = {
+        'allocation': allocation,
+    }
+    return render(request, 'finances/delete_allocation_confirm.html', context)
+
+
+
+
+@login_required
+def allocation_create(request):
+    common_cash = CommonCash.objects.first()
+    blocks = Block.objects.all()
+    block_id = request.GET.get("block")
+
+    form = None
+    if block_id:
+        estimate_items = EstimateItem.objects.filter(block_id=block_id)
+        if request.method == "POST":
+            form = AllocationForm(request.POST)
+            form.fields["estimate_item"].queryset = estimate_items
+            if form.is_valid():
+                try:
+                    allocation = form.save(commit=False)
+                    
+                    # Проверяем достаточно ли средств в Общаге
+                    if common_cash.balance < allocation.amount:
+                        messages.error(request, 'Недостаточно средств в Общаге')
+                        return render(request, 'finances/allocation_create.html', {
+                            'form': form, 
+                            'common_cash': common_cash, 
+                            'blocks': blocks, 
+                            'block_id': block_id
+                        })
+
+                    # Создаем запись в движении денег
+                    # cash_flow = CashFlow.objects.create(
+                    #     common_cash=common_cash,
+                    #     flow_type='expense',
+                    #     amount=allocation.amount,
+                    #     block=allocation.estimate_item.block,
+                    #     description=f"Выделение средств: {allocation.description}",
+                    #     created_by=request.user
+                    # )
+
+                    # Сохраняем выделение средств
+                    allocation.common_cash = common_cash
+                    allocation.created_by = request.user
+                    allocation.save()
+
+                    messages.success(request, f'Средства в размере {allocation.amount} сом успешно выделены!')
+                    return redirect("finances:common_cash_detail")
+                    
+                except Exception as e:
+                    messages.error(request, f'Ошибка при выделении средств: {str(e)}')
+        else:
+            form = AllocationForm()
+            form.fields["estimate_item"].queryset = estimate_items
+
+    context = {
+        "common_cash": common_cash,
+        "blocks": blocks,
+        "block_id": int(block_id) if block_id else None,
+        "form": form,
+    }
+    return render(request, "finances/allocation_create.html", context)

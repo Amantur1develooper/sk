@@ -48,51 +48,10 @@
 <div class="mb-3">
     <a href="{% url 'finances:create_allocation' %}" class="btn btn-primary">+ Выделить средства</a>
     <a href="{% url 'projects:projects_list' %}" class="btn btn-secondary">← Назад к списку проектов</a>
-    <a href="{% url 'finances:common_cash_detail2' %}" class="btn btn-secondary">Удаление расходов</a>
+    <a href="{% url 'finances:common_cash_detail' %}" class="btn btn-secondary">Назад</a>
 </div>
 
-<!-- Движение средств -->
-<h3>Движение средств</h3>
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Дата</th>
-            <th>Тип</th>
-            <th>Сумма</th>
-            <th>Блок</th>
-            <th>Описание</th>
-            <th>Кто создал</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for flow in cash_flows %}
-        <tr>
-            <td>{{ flow.date|date:"d.m.Y H:i" }}</td>
-            <td>
-                {% if flow.flow_type == 'income' %}
-                <span class="badge bg-success">Приход</span>
-                {% else %}
-                <span class="badge bg-danger">Расход</span>
-                {% endif %}
-            </td>
-            <td>{{ flow.amount|intcomma }} сом</td>
-            <td>{{ flow.block }}</td>
-            <td>{{ flow.description }}</td>
-            <td>{{ flow.created_by }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
 
-<!-- Итоги -->
-<div class="card mt-3">
-    <div class="card-body">
-        <h5 class="card-title">Итоги по фильтру</h5>
-        <p><strong>Общий приход:</strong> {{ total_income|intcomma }} сом</p>
-        <p><strong>Общий расход:</strong> {{ total_expense|intcomma }} сом</p>
-        <p><strong>Разница:</strong> {{ net_balance|intcomma }} сом</p>
-    </div>
-</div>
 
 <!-- Новая секция: Выделения средств -->
 <h3 class="mt-5">Выделения средств</h3>

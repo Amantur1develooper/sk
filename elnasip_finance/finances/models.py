@@ -61,12 +61,40 @@ class Allocation(models.Model):
     description = models.TextField(verbose_name="Назначение")
     date = models.DateTimeField(auto_now_add=True)
     
-    # def save(self, *args, **kwargs):
+    def save(self, *args, **kwargs):
         # При выделении средств уменьшаем баланс Общага
-        # if not self.pk :  # Если это новая запись
-        #     self.common_cash.balance -= self.amount
-        #     self.common_cash.save()
-        # super().save(*args, **kwargs)
+        if not self.pk:  # Если это новая запись
+            # self.common_cash.balance -= self.amount
+            self.common_cash.save()
+            
+            # Создаем запись в движении денег
+            CashFlow.objects.create(
+                common_cash=self.common_cash,
+                flow_type='expense',
+                amount=self.amount,
+                description=f"Выделение средств: {self.description}",
+                block=self.estimate_item.block if self.estimate_item else None,
+                created_by=self.created_by
+            )
+        super().save(*args, **kwargs)
+        
+        
+    def delete(self, *args, **kwargs):
+        # Возвращаем средства в Общаг при удалении
+        # self.common_cash.balance += self.amount
+        self.common_cash.save()
+        
+        # Создаем запись о возврате средств в движении денег
+        CashFlow.objects.create(
+            common_cash=self.common_cash,
+            flow_type='income',
+            amount=self.amount,
+            description=f"ВОЗВРАТ: {self.description}",
+            block=self.estimate_item.block if self.estimate_item else None,
+            created_by=User.objects.filter(is_superuser=True).first()
+        )
+        
+        super().delete(*args, **kwargs)
     
     def __str__(self):
         return f"Выделение {self.amount} на {self.estimate_item}, {self.description}"

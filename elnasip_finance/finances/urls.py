@@ -6,6 +6,7 @@ app_name = 'finances'
 urlpatterns = [
     path('', views.dashboard, name='dashboard'),
     path('common-cash/', views.common_cash_detail, name='common_cash_detail'),
+    path('common-cash2/', views.common_cash_detail2, name='common_cash_detail2'),
     path('allocations/create/', views.allocation_create, name='create_allocation'),
     path('allocations/', views.allocations_list, name='allocations_list'),
     path('expenses/', views.expenses_list, name='expenses_list'),
@@ -17,6 +18,8 @@ urlpatterns = [
     path("cars/purchase/", views.car_purchase, name="car_purchase"),
     path("cars/<int:pk>/sale/", views.car_sale, name="car_sale"),
     
+    path('allocation/<int:allocation_id>/delete/', views.delete_allocation, name='delete_allocation'),
+     
     path('loans/', views.loans_list, name='loans_list'),
     path('loans/create/', views.create_loan, name='create_loan'),
     path('loans/<int:loan_id>/', views.loan_detail, name='loan_detail'),

@@ -160,17 +160,7 @@ def salary_payment_create_for_employee(request, employee_id):
         'employee': employee,
     })
 
-# def salary_payment_create(request):
-#     if request.method == 'POST':
-#         form = SalaryPaymentForm(request.POST)
-#         if form.is_valid():
-#             payment = form.save()
-#             messages.success(request, f'✅ {payment.get_payment_type_display()} в размере {payment.amount} сом выплачена сотруднику {payment.employee.full_name}')
-#             return redirect('salary_payment_list')  # сделаем список выплат
-#     else:
-#         form = SalaryPaymentForm()
 
-#     return render(request, 'employees/salary_payment_form.html', {'form': form})
 
 
 from .models import SalaryPayment
