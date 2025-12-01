@@ -15,7 +15,7 @@
             <div class="card-body text-center">
                 <h5> Общая площадь ЖК:</h5>
                
-                <h3> {{ project.calc_total_area|intcomma  }} м²</h3>
+                <h3> {{ project.calc_total_area|floatformat:0|intcomma  }} м²</h3>
             </div>
         </div>
     </div>
@@ -93,7 +93,7 @@
             <tr>
                 <td>{{ block.name }}</td>
                 <td>{{ block.floors|intcomma  }}</td>
-                <td>{{ block.total_area|intcomma  }} м²</td>
+                <td>{{ block.total_area|floatformat:0|intcomma  }} м²</td>
                 <td>{{ block.sold_area_sum|floatformat:0|intcomma  }} м²</td>
                
                 <td>{{ block.not_sold_area_sum|floatformat:0|intcomma  }} м²</td>
