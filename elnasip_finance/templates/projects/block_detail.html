@@ -102,7 +102,7 @@
                 <h5>Расходы вне сметы </h5>
                 
                 {% comment %} <h4>{{ total_spent|floatformat:0 }} сом</h4> {% endcomment %}
-                    <h4>{{ extra_allocated|intcomma  }} сом</h4>
+                    <h4>{{ extra_allocated|floatformat:0|intcomma  }} сом</h4>
             </div>
         </div>
     </div>
