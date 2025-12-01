@@ -107,7 +107,7 @@ def block_detail(request, block_id):
     total_spent = sum(item.spent_amount for item in estimate_items_for_calc)
     total_planned = total_planned_positive - total_allocated
     # 2920000 2238980
-    print((plan_prodaj+fakt_prodaj))
+    # print((plan_prodaj+fakt_prodaj))
     # total_allocated = total_allocated - 200
     # Планируемые продажи plan_prodaj Факт сделок fakt_prodaj 
     # План по смете total_planned2 Факт расходов total_allocated
