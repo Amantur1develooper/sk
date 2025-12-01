@@ -148,11 +148,14 @@ def dashboard(request):
     refund_total = CashFlow.objects.filter(
     description__startswith="ВОЗВРАТ:"
     ).aggregate(total=Sum('amount'))['total'] or 0
+    refund_total2 = CashFlow.objects.filter(
+    description__startswith="УДАЛЕНИЕ:"
+    ).aggregate(total=Sum('amount'))['total'] or 0
 
 #     refund_flows = CashFlow.objects.filter(
 #     description__startswith="ВОЗВРАТ:"
 # )
-    print('ggggfdfdfdfdfdfdfdfdfdddf',refund_total)
+    print('ggggfdfdfdfdfdfdfdfdfdddf',refund_total2)
     # Получаем последние операции
     recent_operations = CashFlow.objects.all().order_by('-date')[:10]
     
@@ -164,6 +167,7 @@ def dashboard(request):
         
         'total_income2': total_income-refund_total,
         'total_income': total_income,
+        'total_expense2': total_expense-refund_total2,
         'total_expense': total_expense,
         'margin': margin,
         'recent_operations': recent_operations,
