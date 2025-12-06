@@ -40,7 +40,7 @@
                     <div class="fw-bold">Площадь продана / общая</div>
                     <div class="fs-6">
                         {{ stats.sold_area|floatformat:0|intcomma }} m² /
-                        {{ stats.total_area|default:"0" }} m²
+                        {{ stats.total_area|floatformat:0|intcomma }} m²
                     </div>
                 </div>
             </div>
