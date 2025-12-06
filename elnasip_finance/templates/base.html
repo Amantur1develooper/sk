@@ -67,8 +67,13 @@
     </a>
 </li>
 <li class="nav-item">
-    <a class="nav-link {% if 'projects' in request.path %}active{% endif %}" href="{% url 'projects:projects_list' %}">
+    <a class="nav-link {% if 'projects' in request.path and not 'apartments' in request.path %}active{% endif %}" href="{% url 'projects:projects_list' %}">
         Объекты
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link {% if 'apartments' in request.path %}active{% endif %}" href="{% url 'projects:apartments_list' %}">
+        Квартиры
     </a>
 </li>
 

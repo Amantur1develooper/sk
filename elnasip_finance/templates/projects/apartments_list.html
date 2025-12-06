@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+{% load form_tags %}
+{% load humanize %}
+{% block title %}Квартиры Эл Насип{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h1 class="mb-3">Квартиры «Эл Насип»</h1>
+
+    <!-- Статистика -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="fw-bold">Всего квартир</div>
+                    <div class="fs-4">{{ stats.total|default:"0" }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mt-3 mt-md-0">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="fw-bold">Продано</div>
+                    <div class="fs-4">{{ stats.sold|default:"0" }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mt-3 mt-md-0">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="fw-bold">Свободные</div>
+                    <div class="fs-4">{{ stats.free|default:"0" }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mt-3 mt-md-0">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="fw-bold">Площадь продана / общая</div>
+                    <div class="fs-6">
+                        {{ stats.sold_area|floatformat:0|intcomma }} m² /
+                        {{ stats.total_area|default:"0" }} m²
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="card mb-4">
+        <div class="card-header">
+            Фильтры
+        </div>
+        <div class="card-body">
+
+            <!-- Быстрые пресеты -->
+            <div class="mb-3">
+                <a href="?status=free" class="btn btn-outline-primary btn-sm">
+                    Только свободные
+                </a>
+                <a href="?status=rented" class="btn btn-outline-info btn-sm">
+                    Только аренда
+                </a>
+            </div>
+
+            <form method="get" class="row g-3">
+
+                <!-- ЖК -->
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.project.label }}</label>
+                    {{ form.project|add_class:"form-select" }}
+                </div>
+
+                <!-- Блок -->
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.block.label }}</label>
+                    {{ form.block|add_class:"form-select" }}
+                </div>
+
+                <!-- Статус -->
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.status.label }}</label>
+                    {{ form.status|add_class:"form-select" }}
+                </div>
+
+                <!-- Сортировка -->
+                <div class="col-md-3">
+                    <label class="form-label">{{ form.order.label }}</label>
+                    {{ form.order|add_class:"form-select" }}
+                </div>
+
+                <!-- Комнат от/до -->
+                <div class="col-md-2">
+                    <label class="form-label">{{ form.rooms_min.label }}</label>
+                    {{ form.rooms_min|add_class:"form-control" }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">{{ form.rooms_max.label }}</label>
+                    {{ form.rooms_max|add_class:"form-control" }}
+                </div>
+
+                <!-- Площадь от/до -->
+                <div class="col-md-2">
+                    <label class="form-label">{{ form.area_min.label }}</label>
+                    {{ form.area_min|add_class:"form-control" }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">{{ form.area_max.label }}</label>
+                    {{ form.area_max|add_class:"form-control" }}
+                </div>
+
+                <!-- План. цена m² от/до -->
+                <div class="col-md-2">
+                    <label class="form-label">{{ form.price_min.label }}</label>
+                    {{ form.price_min|add_class:"form-control" }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">{{ form.price_max.label }}</label>
+                    {{ form.price_max|add_class:"form-control" }}
+                </div>
+
+                <!-- Этаж от/до -->
+                <div class="col-md-2">
+                    <label class="form-label">{{ form.floor_min.label }}</label>
+                    {{ form.floor_min|add_class:"form-control" }}
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">{{ form.floor_max.label }}</label>
+                    {{ form.floor_max|add_class:"form-control" }}
+                </div>
+
+                <!-- Поиск по клиенту -->
+                <div class="col-md-4">
+                    <label class="form-label">{{ form.client_search.label }}</label>
+                    {{ form.client_search|add_class:"form-control" }}
+                </div>
+
+                <!-- Кнопки -->
+                <div class="col-12 d-flex gap-2 mt-2">
+                    <button type="submit" class="btn btn-primary">
+                        Применить
+                    </button>
+                    <a href="{% url 'projects:apartments_list' %}" class="btn btn-outline-secondary">
+                        Сбросить
+                    </a>
+
+                    <!-- Экспорт в Excel (CSV) по текущим фильтрам -->
+                    <button type="submit" name="export" value="csv" class="btn btn-success ms-auto">
+                        Экспорт в Excel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Таблица квартир -->
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ЖК</th>
+                    <th>Блок</th>
+                    <th>Этаж</th>
+                    <th>№ кв</th>
+                    <th>Комнат</th>
+                    <th>Площадь, m²</th>
+                    <th>План. цена m²</th>
+                    <th>Факт. цена m²</th>
+                    <th>Сделка (сом)</th>
+                    <th>Статус</th>
+                    <th>Клиент / арендатор</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in apartments %}
+                    <tr>
+                        <td>{{ a.block.project.name }}</td>
+                        <td>{{ a.block.name }}</td>
+                        <td>{{ a.floor }}</td>
+                        
+                        
+                        <td><a href="{% url 'projects:apartment_detail' a.id %}">{{ a.apartment_number }}</td></a>
+                        <td>{{ a.rooms }}</td>
+                        <td>{{ a.area }}</td>
+                        <td>{{ a.planned_price_per_m2 }}</td>
+                        <td>{{ a.fact_price_per_m2 }}</td>
+                        <td>{{ a.deal_amount }}</td>
+                        <td>
+                            {% if a.is_sold %}
+                                <span class="badge bg-success">Продана</span>
+                            {% elif a.is_reserved %}
+                                <span class="badge bg-warning text-dark">Бронь</span>
+                            {% elif a.is_rented %}
+                                <span class="badge bg-info text-dark">Аренда</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Свободна</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if a.client_name %}
+                                {{ a.client_name }}
+                            {% elif a.tenant_name %}
+                                {{ a.tenant_name }}
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="11" class="text-center">
+                            По заданным фильтрам квартиры не найдены.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

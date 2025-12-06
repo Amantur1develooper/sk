@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views, apartmentsviews
 
 app_name = 'projects'
 
@@ -16,7 +16,7 @@ urlpatterns = [
     path("blocks/<int:block_id>/apartments/add/", views.apartment_add, name="apartment_add"),
     path("block/<int:block_id>/apartments/", views.apartment_list, name="apartment_list"),
     
-    
+    path('apartments/', apartmentsviews.apartment_list, name='apartments_list'),
     path('payment/<int:payment_id>/edit/', views.edit_payment, name='edit_payment'),
     path('payment/<int:payment_id>/delete/', views.delete_payment, name='delete_payment'),
     
