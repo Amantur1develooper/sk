@@ -48,45 +48,62 @@ def project_detail(request, project_id):
         'total_spent': total_spent,
     }
     return render(request, 'projects/project_detail.html', context)
-
+import re
+from collections import OrderedDict
+from decimal import Decimal
 
 @login_required
 def block_detail(request, block_id):
     block = get_object_or_404(Block, id=block_id)
-    estimate_items = block.estimate_items.all()
+    estimate_items = block.estimate_items.select_related('category').all()
     apartments = block.apartments.all()
-    
-    plan_prodaj = apartments.filter( is_sold=False ).aggregate(Sum('planned_deal_amount'))['planned_deal_amount__sum'] or 0 
-    fakt_prodaj = apartments.filter( is_sold=True ).aggregate(Sum('deal_Fakt_deal_amount'))['deal_Fakt_deal_amount__sum'] or 0
+
+    # --- ПРОДАЖИ ---
+    plan_prodaj = apartments.filter(is_sold=False).aggregate(
+        Sum('planned_deal_amount')
+    )['planned_deal_amount__sum'] or 0
+
+    fakt_prodaj = apartments.filter(is_sold=True).aggregate(
+        Sum('deal_Fakt_deal_amount')
+    )['deal_Fakt_deal_amount__sum'] or 0
+
     postupillo = block.received_amount
-    # plan_prodaj = apartments.aggregate(total=Sum('planned_deal_amount'))['total'] or 0
-    # Добавляем расчет общих сумм для контекста
-    total_planned = sum(item.planned_amount for item in estimate_items)
-    total_allocated = sum(item.get_allocated_sum() for item in estimate_items)
-    total_spent = sum(item.spent_amount for item in estimate_items)
-    total_margin = total_planned - total_spent
-    total_planned2 = total_planned - total_allocated #+200
-     # исключаем категорию 21 "Дополнительные расходы не входящие в смету"
-    estimate_items_for_calc = estimate_items.exclude(category__name="21.Дополнительные расходы не входящие в смету")
-    # только категория 21
-    extra_items = estimate_items.filter(category__name="21.Дополнительные расходы не входящие в смету")
-    # extra_allocated = sum(item.get_allocated_sum() for item in extra_items)
+
+    # --- ДЛЯ ОСНОВНЫХ РАСЧЁТОВ (без категории 21) ---
+    estimate_items_for_calc = estimate_items.exclude(
+        category__name="21.Дополнительные расходы не входящие в смету"
+    )
+
+    total_planned_raw = sum(item.planned_amount for item in estimate_items)
+    total_allocated_raw = sum(item.get_allocated_sum() for item in estimate_items)
+    total_spent_raw = sum(item.spent_amount for item in estimate_items)
+    total_margin_raw = total_planned_raw - total_spent_raw
+    total_planned2 = total_planned_raw - total_allocated_raw
+
+    # --- ОТДЕЛЬНО КАТЕГОРИЯ 21 ---
+    extra_items = estimate_items.filter(
+        category__name="21.Дополнительные расходы не входящие в смету"
+    )
+
     extra_allocated = sum(item.get_allocated_sum() for item in extra_items)
     extra_planned = sum(item.planned_amount for item in extra_items)
-    # extra_allocated = sum(item.get_allocated_sum() for item in extra_items)
     extra_spent = sum(item.spent_amount for item in extra_items)
-    # считаем суммы только по оставшимся позициям
-    total_planned = sum(item.planned_amount for item in estimate_items_for_calc) 
-    # Сумма положительных planned_amount
-    total_planned_positive = sum(
-    item.planned_amount for item in estimate_items_for_calc if item.planned_amount > 0
-)
 
-# Сумма отрицательных planned_amount
+    # --- ПЛАН ПО ОСНОВНОЙ СМЕТЕ ---
+    total_planned = sum(item.planned_amount for item in estimate_items_for_calc)
+
+    total_planned_positive = sum(
+        item.planned_amount
+        for item in estimate_items_for_calc
+        if item.planned_amount > 0
+    )
     total_planned_negative = sum(
-    item.planned_amount for item in estimate_items_for_calc if item.planned_amount < 0
-)
-    estimate_items_for_calc = estimate_items.exclude(category__name="21.Дополнительные расходы не входящие в смету")
+        item.planned_amount
+        for item in estimate_items_for_calc
+        if item.planned_amount < 0
+    )
+
+    # --- НОРМАЛЬНЫЕ РАСХОДЫ / ПЕРЕРАСХОД ---
     normal_allocated = 0
     over_allocated = 0
 
@@ -95,58 +112,384 @@ def block_detail(request, block_id):
         allocated = item.get_allocated_sum() or 0
 
         if allocated <= planned:
-        # всё ушло в нормальный расход
             normal_allocated += allocated
         else:
-        # часть в пределах плана, остальное — перерасход
             normal_allocated += planned
             over_allocated += allocated - planned
 
-    total_allocated = sum(item.get_allocated_sum() for item in estimate_items_for_calc)
     total_allocated = normal_allocated
     total_spent = sum(item.spent_amount for item in estimate_items_for_calc)
+
+    # Как у тебя: план по смете с учётом выделенного
     total_planned = total_planned_positive - total_allocated
-    # 2920000 2238980
-    # print((plan_prodaj+fakt_prodaj))
-    # total_allocated = total_allocated - 200
-    # Планируемые продажи plan_prodaj Факт сделок fakt_prodaj 
-    # План по смете total_planned2 Факт расходов total_allocated
-    marja = (((plan_prodaj+fakt_prodaj)-total_planned-(total_allocated)) -extra_allocated)- over_allocated #-200
-    # Группируем расходы по категориям для графика
-    
+
+    # --- МАРЖА (оставляю твою формулу) ---
+    marja = (
+        ((plan_prodaj + fakt_prodaj) - total_planned - total_allocated)
+        - extra_allocated
+    ) - over_allocated
+
+    # --- КАТЕГОРИИ ДЛЯ ГРАФИКА ---
     categories = []
     for category in EstimateCategory.objects.all():
-        category_total = sum(item.spent_amount for item in estimate_items if item.category == category)
+        category_total = sum(
+            item.spent_amount for item in estimate_items if item.category == category
+        )
         if category_total > 0:
             categories.append({
                 'name': category.name,
                 'total_spent': category_total
             })
-    
+
+    # ------------------------------------------------------------------
+    #  ГРУППИРОВКА ПО КАТЕГОРИЯМ СМЕТЫ (EstimateCategory)
+    # ------------------------------------------------------------------
+    selected_category_id = request.GET.get('category', '').strip()
+
+    # берём только те категории, которые реально есть у этого блока
+    used_categories = (
+        EstimateCategory.objects
+        .filter(estimateitem__block=block)
+        .distinct()
+        .order_by('id')
+    )
+
+    category_groups = []
+    for cat in used_categories:
+        cat_items = [item for item in estimate_items if item.category_id == cat.id]
+        if not cat_items:
+            continue
+
+        cat_total_planned = sum(i.planned_amount for i in cat_items)
+        cat_total_allocated = sum(i.get_allocated_sum() or 0 for i in cat_items)
+        cat_total_margin = sum(i.margin for i in cat_items)
+
+        category_groups.append({
+            'category': cat,
+            'items': cat_items,
+            'total_planned': cat_total_planned,
+            'total_allocated': cat_total_allocated,
+            'total_margin': cat_total_margin,
+        })
+
+    # ИТОГИ ПО ВСЕМ СМЕТАМ (НЕ ЗАВИСЯТ ОТ ФИЛЬТРА)
+    table_total_planned = sum(i.planned_amount for i in estimate_items)
+    table_total_allocated = sum(i.get_allocated_sum() or 0 for i in estimate_items)
+    table_total_margin = sum(i.margin for i in estimate_items)
+
     context = {
         "normal_allocated": normal_allocated,
-    "over_allocated": over_allocated,
+        "over_allocated": over_allocated,
         'current_block': block,
         'estimate_items': estimate_items,
-        'total_planned': total_planned,
-        'total_allocated': total_allocated,
-        'total_planned2':total_planned2,
-        'fakt_prodaj':fakt_prodaj,
-        'plan_prodaj':plan_prodaj,
-        'marja':marja,
-        'total_planned_positive':total_planned_positive,
-        'total_planned_negative':total_planned_negative,
-        'extra_allocated':extra_allocated,
-        'postupillo':postupillo,
+
+        'total_planned': total_planned,      # для карточки "План по смете"
+        'total_allocated': total_allocated,  # для карточки "Факт расходов"
+        'total_planned2': total_planned2,
+        'fakt_prodaj': fakt_prodaj,
+        'plan_prodaj': plan_prodaj,
+        'marja': marja,
+        'total_planned_positive': total_planned_positive,
+        'total_planned_negative': total_planned_negative,
+        'extra_allocated': extra_allocated,
+        'postupillo': postupillo,
         'total_spent': total_spent,
-        'total_margin': total_margin,
+        'total_margin': total_margin_raw,
         'categories': categories,
+        
         
         "extra_planned": extra_planned,
         
         "extra_spent": extra_spent,
+
+        # НОВОЕ:
+        'category_groups': category_groups,
+        'selected_category_id': selected_category_id,
+        'table_total_planned': table_total_planned,
+        'table_total_allocated': table_total_allocated,
+        'table_total_margin': table_total_margin,
     }
     return render(request, 'projects/block_detail.html', context)
+
+# @login_required
+# def block_detail(request, block_id):
+#     block = get_object_or_404(Block, id=block_id)
+#     estimate_items = block.estimate_items.all()
+#     apartments = block.apartments.all()
+
+#     # --- ПРОДАЖИ ---
+#     plan_prodaj = apartments.filter(is_sold=False).aggregate(
+#         Sum('planned_deal_amount')
+#     )['planned_deal_amount__sum'] or 0
+
+#     fakt_prodaj = apartments.filter(is_sold=True).aggregate(
+#         Sum('deal_Fakt_deal_amount')
+#     )['deal_Fakt_deal_amount__sum'] or 0
+
+#     postupillo = block.received_amount
+
+#     # --- БАЗОВЫЕ СУММЫ ПО ВСЕМ СТРОКАМ СМЕТЫ (без учёта категории 21) ---
+#     estimate_items_for_calc = estimate_items.exclude(
+#         category__name="21.Дополнительные расходы не входящие в смету"
+#     )
+
+#     # Для старых расчётов (если где-то используешь total_planned2 / total_margin)
+#     total_planned_raw = sum(item.planned_amount for item in estimate_items)
+#     total_allocated_raw = sum(item.get_allocated_sum() for item in estimate_items)
+#     total_spent_raw = sum(item.spent_amount for item in estimate_items)
+#     total_margin_raw = total_planned_raw - total_spent_raw
+#     total_planned2 = total_planned_raw - total_allocated_raw
+
+#     # --- ОТДЕЛЬНО КАТЕГОРИЯ 21 ---
+#     extra_items = estimate_items.filter(
+#         category__name="21.Дополнительные расходы не входящие в смету"
+#     )
+
+#     extra_allocated = sum(item.get_allocated_sum() for item in extra_items)
+#     extra_planned = sum(item.planned_amount for item in extra_items)
+#     extra_spent = sum(item.spent_amount for item in extra_items)
+
+#     # --- ПЛАН ТОЛЬКО ПО ОСНОВНОЙ СМЕТЕ (без 21 категории) ---
+#     total_planned = sum(item.planned_amount for item in estimate_items_for_calc)
+
+#     # Сумма положительных / отрицательных planned_amount
+#     total_planned_positive = sum(
+#         item.planned_amount
+#         for item in estimate_items_for_calc
+#         if item.planned_amount > 0
+#     )
+#     total_planned_negative = sum(
+#         item.planned_amount
+#         for item in estimate_items_for_calc
+#         if item.planned_amount < 0
+#     )
+
+#     # --- РАЗБИВКА: нормальные расходы и перерасход ---
+#     normal_allocated = 0
+#     over_allocated = 0
+
+#     for item in estimate_items_for_calc:
+#         planned = item.planned_amount or 0
+#         allocated = item.get_allocated_sum() or 0
+
+#         if allocated <= planned:
+#             normal_allocated += allocated
+#         else:
+#             normal_allocated += planned
+#             over_allocated += allocated - planned
+
+#     # Для карточек "Факт расходов" используем normal_allocated
+#     total_allocated = normal_allocated
+#     total_spent = sum(item.spent_amount for item in estimate_items_for_calc)
+
+#     # Пересчёт total_planned для карточки (как у тебя было)
+#     total_planned = total_planned_positive - total_allocated
+
+#     # --- МАРЖА (как у тебя, не трогаю формулу) ---
+#     marja = (
+#         ((plan_prodaj + fakt_prodaj) - total_planned - (total_allocated))
+#         - extra_allocated
+#     ) - over_allocated
+
+#     # --- КАТЕГОРИИ ДЛЯ ГРАФИКА ---
+#     categories = []
+#     for category in EstimateCategory.objects.all():
+#         category_total = sum(
+#             item.spent_amount for item in estimate_items if item.category == category
+#         )
+#         if category_total > 0:
+#             categories.append(
+#                 {
+#                     'name': category.name,
+#                     'total_spent': category_total
+#                 }
+#             )
+
+#     # ------------------------------------------------------------------
+#     #  ГРУППИРОВКА ПО НОМЕРУ В НАЗВАНИИ (1.2, 4, 4,5,7 и т.п.)
+#     # ------------------------------------------------------------------
+
+#     # выбранная группа из GET (для фильтра)
+#     selected_group = request.GET.get('group', '').strip()
+
+#     # словарь: ключ = "номер" из начала названия, значение = данные группы
+#     group_map = {}
+
+#     for item in estimate_items:
+#         name = item.name or ''
+#         first_token = name.split()[0] if name else ''
+
+#         # если название начинается с цифры — считаем это номером группы
+#         if first_token and first_token[0].isdigit():
+#             group_key = first_token.rstrip('.')  # "1." -> "1"
+#         else:
+#             group_key = 'Без номера'
+
+#         if group_key not in group_map:
+#             group_map[group_key] = {
+#                 'items': [],
+#                 'total_planned': Decimal('0'),
+#                 'total_allocated': Decimal('0'),
+#                 'total_margin': Decimal('0'),
+#             }
+
+#         grp = group_map[group_key]
+#         grp['items'].append(item)
+#         planned = item.planned_amount or 0
+#         allocated = item.get_allocated_sum() or 0
+#         margin = getattr(item, 'margin', None) or 0
+
+#         grp['total_planned'] += planned
+#         grp['total_allocated'] += allocated
+#         grp['total_margin'] += margin
+
+#     # функция сортировки групп: сначала числовые, потом текст
+#     def group_sort_key(k: str):
+#         if k and k[0].isdigit():
+#             parts = re.split(r'[^0-9]+', k)
+#             nums = [int(p) for p in parts if p]
+#             return (0, nums)
+#         return (1, k.lower())
+
+#     estimate_groups = OrderedDict()
+#     for key in sorted(group_map.keys(), key=group_sort_key):
+#         estimate_groups[key] = group_map[key]
+
+#     # ------------------------------------------------------------------
+#     #  ИТОГ ПО ВСЕМ СМЕТАМ ДЛЯ НИЖНЕЙ СТРОКИ ТАБЛИЦЫ
+#     #  (НЕ ЗАВИСИТ ОТ ФИЛЬТРА/ГРУПП)
+#     # ------------------------------------------------------------------
+#     table_total_planned = sum(item.planned_amount or 0 for item in estimate_items)
+#     table_total_allocated = sum(item.get_allocated_sum() or 0 for item in estimate_items)
+#     table_total_margin = sum(
+#         (getattr(item, 'margin', None) or 0) for item in estimate_items
+#     )
+
+#     context = {
+#         "normal_allocated": normal_allocated,
+#         "over_allocated": over_allocated,
+#         'current_block': block,
+#         'estimate_items': estimate_items,  # если где-то ещё используешь
+#         'total_planned': total_planned,
+#         'total_allocated': total_allocated,
+#         'total_planned2': total_planned2,
+#         'fakt_prodaj': fakt_prodaj,
+#         'plan_prodaj': plan_prodaj,
+#         'marja': marja,
+#         'total_planned_positive': total_planned_positive,
+#         'total_planned_negative': total_planned_negative,
+#         'extra_allocated': extra_allocated,
+#         'postupillo': postupillo,
+#         'total_spent': total_spent,
+#         'total_margin': total_margin_raw,  # старый общий маржин по всем
+#         'categories': categories,
+#         "extra_planned": extra_planned,
+#         "extra_spent": extra_spent,
+
+#         # НОВОЕ:
+#         'estimate_groups': estimate_groups,
+#         'selected_group': selected_group,
+#         'table_total_planned': table_total_planned,
+#         'table_total_allocated': table_total_allocated,
+#         'table_total_margin': table_total_margin,
+#     }
+#     return render(request, 'projects/block_detail.html', context)
+
+# @login_required
+# def block_detail(request, block_id):
+#     block = get_object_or_404(Block, id=block_id)
+#     estimate_items = block.estimate_items.all()
+#     apartments = block.apartments.all()
+    
+#     plan_prodaj = apartments.filter( is_sold=False ).aggregate(Sum('planned_deal_amount'))['planned_deal_amount__sum'] or 0 
+#     fakt_prodaj = apartments.filter( is_sold=True ).aggregate(Sum('deal_Fakt_deal_amount'))['deal_Fakt_deal_amount__sum'] or 0
+#     postupillo = block.received_amount
+#     # plan_prodaj = apartments.aggregate(total=Sum('planned_deal_amount'))['total'] or 0
+#     # Добавляем расчет общих сумм для контекста
+#     total_planned = sum(item.planned_amount for item in estimate_items)
+#     total_allocated = sum(item.get_allocated_sum() for item in estimate_items)
+#     total_spent = sum(item.spent_amount for item in estimate_items)
+#     total_margin = total_planned - total_spent
+#     total_planned2 = total_planned - total_allocated #+200
+#      # исключаем категорию 21 "Дополнительные расходы не входящие в смету"
+#     estimate_items_for_calc = estimate_items.exclude(category__name="21.Дополнительные расходы не входящие в смету")
+#     # только категория 21
+#     extra_items = estimate_items.filter(category__name="21.Дополнительные расходы не входящие в смету")
+#     # extra_allocated = sum(item.get_allocated_sum() for item in extra_items)
+#     extra_allocated = sum(item.get_allocated_sum() for item in extra_items)
+#     extra_planned = sum(item.planned_amount for item in extra_items)
+#     # extra_allocated = sum(item.get_allocated_sum() for item in extra_items)
+#     extra_spent = sum(item.spent_amount for item in extra_items)
+#     # считаем суммы только по оставшимся позициям
+#     total_planned = sum(item.planned_amount for item in estimate_items_for_calc) 
+#     # Сумма положительных planned_amount
+#     total_planned_positive = sum(
+#     item.planned_amount for item in estimate_items_for_calc if item.planned_amount > 0)
+
+# # Сумма отрицательных planned_amount
+#     total_planned_negative = sum(
+#     item.planned_amount for item in estimate_items_for_calc if item.planned_amount < 0)
+#     estimate_items_for_calc = estimate_items.exclude(category__name="21.Дополнительные расходы не входящие в смету")
+#     normal_allocated = 0
+#     over_allocated = 0
+
+#     for item in estimate_items_for_calc:
+#         planned = item.planned_amount or 0
+#         allocated = item.get_allocated_sum() or 0
+
+#         if allocated <= planned:
+#         # всё ушло в нормальный расход
+#             normal_allocated += allocated
+#         else:
+#         # часть в пределах плана, остальное — перерасход
+#             normal_allocated += planned
+#             over_allocated += allocated - planned
+
+#     total_allocated = sum(item.get_allocated_sum() for item in estimate_items_for_calc)
+#     total_allocated = normal_allocated
+#     total_spent = sum(item.spent_amount for item in estimate_items_for_calc)
+#     total_planned = total_planned_positive - total_allocated
+#     # 2920000 2238980
+#     # print((plan_prodaj+fakt_prodaj))
+#     # total_allocated = total_allocated - 200
+#     # Планируемые продажи plan_prodaj Факт сделок fakt_prodaj 
+#     # План по смете total_planned2 Факт расходов total_allocated
+#     marja = (((plan_prodaj+fakt_prodaj)-total_planned-(total_allocated)) -extra_allocated)- over_allocated #-200
+#     # Группируем расходы по категориям для графика
+    
+#     categories = []
+#     for category in EstimateCategory.objects.all():
+#         category_total = sum(item.spent_amount for item in estimate_items if item.category == category)
+#         if category_total > 0:
+#             categories.append({
+#                 'name': category.name,
+#                 'total_spent': category_total
+#             })
+    
+#     context = {
+#         "normal_allocated": normal_allocated,
+#     "over_allocated": over_allocated,
+#         'current_block': block,
+#         'estimate_items': estimate_items,
+#         'total_planned': total_planned,
+#         'total_allocated': total_allocated,
+#         'total_planned2':total_planned2,
+#         'fakt_prodaj':fakt_prodaj,
+#         'plan_prodaj':plan_prodaj,
+#         'marja':marja,
+#         'total_planned_positive':total_planned_positive,
+#         'total_planned_negative':total_planned_negative,
+#         'extra_allocated':extra_allocated,
+#         'postupillo':postupillo,
+#         'total_spent': total_spent,
+#         'total_margin': total_margin,
+#         'categories': categories,
+        
+#         "extra_planned": extra_planned,
+        
+#         "extra_spent": extra_spent,
+#     }
+#     return render(request, 'projects/block_detail.html', context)
 # @login_required
 # def block_detail(request, block_id):
 #     block = get_object_or_404(Block, id=block_id)

@@ -6,10 +6,6 @@
 {% block content %}
 <h2>Смета по блоку: {{ block.name }}</h2>
 
-
-
-
-
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2>{{ current_block}}</h2>
     <div>
@@ -129,6 +125,26 @@
 </div>
 
 <h4>Смета блока</h4>
+
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <label for="id_category" class="form-label mb-0">Категория сметы:</label>
+        <select name="category" id="id_category" class="form-select form-select-sm">
+            <option value="">Все категории</option>
+            {% for group in category_groups %}
+                <option value="{{ group.category.id }}"
+                        {% if selected_category_id == group.category.id|stringformat:"s" %}selected{% endif %}>
+                    {{ group.category.name }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="col-auto d-flex align-items-end">
+        <button type="submit" class="btn btn-sm btn-primary">Применить</button>
+    </div>
+</form>
+
 <div class="table-responsive">
     <table class="table table-striped">
         <thead>
@@ -147,42 +163,66 @@
             </tr>
         </thead>
        
-        <tbody>
-            {% for item in estimate_items %}
-            <tr>
-                <td>{{ item.category.name }}</td>
-                <td>{{ item.name }}</td>
-                <td>{{ item.unit|intcomma  }}</td>
-                <td>{{ item.quantity|intcomma  }}</td>
-                 <td>{{ item.fakt_quantity|intcomma  }}</td>
-                <td>{{ item.unit_price|intcomma  }} сом</td>
-                <td>{{ item.planned_amount|floatformat:0|intcomma  }} сом</td>
-                <td>
-                    {{ item.get_allocated_sum|floatformat:0|intcomma  }} сом
-                </td>
-                {% comment %} <td>{{ item.spent_amount }} сом</td> {% endcomment %}
-                <td class="{% if item.margin > 0 %}text-success{% elif item.margin < 0 %}text-danger{% endif %}">
-                    {{ item.margin|floatformat:0|intcomma  }} сом
-                </td>
-                <td>
-                    <a href="{% url 'admin:projects_estimateitem_change' item.id %}" class="btn btn-sm btn-warning">Редактировать</a>
-                    {% comment %} <a href="{% url 'admin:finances_expense_add' %}?estimate_item={{ item.id }}" class="btn btn-sm btn-danger">Добавить расход</a> {% endcomment %}
+<tbody>
+    {% for group in category_groups %}
+        {# если фильтр не выбран – показываем все; если выбран – только нужную категорию #}
+        {% if not selected_category_id or selected_category_id == group.category.id|stringformat:"s" %}
+            <tr class="table-secondary">
+                <td colspan="10">
+                    <strong>{{ group.category.name }}</strong>
                 </td>
             </tr>
+
+            {% for item in group.items %}
+                <tr>
+                    <td>{{ item.category.name }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.unit|intcomma }}</td>
+                    <td>{{ item.quantity|intcomma }}</td>
+                    <td>{{ item.fakt_quantity|intcomma }}</td>
+                    <td>{{ item.unit_price|intcomma }} сом</td>
+                    <td>{{ item.planned_amount|floatformat:0|intcomma }} сом</td>
+                    <td>{{ item.get_allocated_sum|floatformat:0|intcomma }} сом</td>
+                    <td class="{% if item.margin > 0 %}text-success{% elif item.margin < 0 %}text-danger{% endif %}">
+                        {{ item.margin|floatformat:0|intcomma }} сом
+                    </td>
+                    <td>
+                        <a href="{% url 'admin:projects_estimateitem_change' item.id %}"
+                           class="btn btn-sm btn-warning">
+                            Редактировать
+                        </a>
+                    </td>
+                </tr>
             {% endfor %}
-        </tbody>
-        <tfoot>
-            <tr class="table-primary">
-                <th colspan="6">Итого:</th>
-                <th>{{ total_planned|floatformat:0|intcomma  }} сом</th>
-                <th>{{ total_allocated|floatformat:0|intcomma  }} сом</th>
-               
-                <th class="{% if total_margin > 0 %}text-success{% elif total_margin < 0 %}text-danger{% endif %}">
-                    {{ total_margin|floatformat:0|intcomma  }} сом
-                </th>
-                <th></th>
+
+            <tr class="table-light fw-bold">
+                <td colspan="6" class="text-end">
+                    Итого по категории: {{ group.category.name }}
+                </td>
+                <td>{{ group.total_planned|floatformat:0|intcomma }} сом</td>
+                <td>{{ group.total_allocated|floatformat:0|intcomma }} сом</td>
+                <td class="{% if group.total_margin > 0 %}text-success{% elif group.total_margin < 0 %}text-danger{% endif %}">
+                    {{ group.total_margin|floatformat:0|intcomma }} сом
+                </td>
+                <td></td>
             </tr>
-        </tfoot>
+        {% endif %}
+    {% endfor %}
+</tbody>
+
+<tfoot>
+    <tr class="table-primary">
+        <th colspan="6">Итого по всем сметам (ВСЕ категории, независимо от фильтра):</th>
+        <th>{{ table_total_planned|floatformat:0|intcomma }} сом</th>
+        <th>{{ table_total_allocated|floatformat:0|intcomma }} сом</th>
+        <th class="{% if table_total_margin > 0 %}text-success{% elif table_total_margin < 0 %}text-danger{% endif %}">
+            {{ table_total_margin|floatformat:0|intcomma }} сом
+        </th>
+        <th></th>
+    </tr>
+</tfoot>
+
+
     </table>
 </div>
 
