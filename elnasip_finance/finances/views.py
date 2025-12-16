@@ -143,7 +143,7 @@ def dashboard(request):
     total_income = CashFlow.objects.filter(flow_type='income').aggregate(Sum('amount'))['amount__sum'] or 0
     total_expense = CashFlow.objects.filter(flow_type='expense').aggregate(Sum('amount'))['amount__sum'] or 0
     margin = total_income - total_expense
-
+    
 
     refund_total = CashFlow.objects.filter(
     description__startswith="ВОЗВРАТ:"
@@ -155,21 +155,24 @@ def dashboard(request):
 #     refund_flows = CashFlow.objects.filter(
 #     description__startswith="ВОЗВРАТ:"
 # )
-    print('ggggfdfdfdfdfdfdfdfdfdddf',refund_total2)
+    # print('ggggfdfdfdfdfdfdfdfdfdddf',refund_total2)
     # Получаем последние операции
     recent_operations = CashFlow.objects.all().order_by('-date')[:10]
-    
+    total_income2 = total_income-refund_total
+    total_expense2 = total_expense-refund_total2
+    margin_mini = total_income2 - total_expense2
     context = {
         'common_cash': common_cash,
         'projects': projects,
         'total_projects': total_projects,
         'total_blocks': total_blocks,
         
-        'total_income2': total_income-refund_total,
+        'total_income2': total_income2,
         'total_income': total_income,
-        'total_expense2': total_expense-refund_total2,
+        'total_expense2': total_expense2,
         'total_expense': total_expense,
         'margin': margin,
+        "margin_mini":margin_mini,
         'recent_operations': recent_operations,
     }
     return render(request, 'finances/dashboard.html', context)

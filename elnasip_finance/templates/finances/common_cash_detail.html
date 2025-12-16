@@ -60,6 +60,7 @@
             <th>Тип</th>
             <th>Сумма</th>
             <th>Блок</th>
+            <th>Позиция сметы</th>
             <th>Описание</th>
             <th>Кто создал</th>
         </tr>
@@ -77,6 +78,7 @@
             </td>
             <td>{{ flow.amount|intcomma }} сом</td>
             <td>{{ flow.block }}</td>
+            <td>{{ flow.estimate_item.name }}</td>
             <td>{{ flow.description }}</td>
             <td>{{ flow.created_by }}</td>
         </tr>
