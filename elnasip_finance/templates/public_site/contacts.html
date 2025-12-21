@@ -1,0 +1,218 @@
+{% extends "public_site/base.html" %}
+{% load static %}
+
+{% block title %}Контакты{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contacts-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+        gap: 32px;
+        align-items: center;
+    }
+
+    @media (max-width: 768px) {
+        .contacts-hero {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    .contacts-card {
+        background: #ffffff;
+        border-radius: 24px;
+        padding: 24px;
+        box-shadow: 0 18px 40px rgba(0,0,0,0.08);
+        border: 1px solid rgba(255,122,0,0.12);
+    }
+
+    .contacts-badge {
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        border-radius:999px;
+        padding:6px 14px;
+        background: rgba(255,122,0,0.06);
+        font-size:12px;
+        font-weight:500;
+        color:#ff7a00;
+        text-transform:uppercase;
+        letter-spacing:0.1em;
+    }
+
+    .contacts-title {
+        font-size: clamp(26px, 3vw, 32px);
+        font-weight: 700;
+        margin: 16px 0 8px;
+    }
+
+    .contacts-subtitle {
+        font-size: 14px;
+        color: #666;
+        max-width: 480px;
+    }
+
+    .contact-line-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: #999;
+    }
+
+    .contact-line-value {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .map-frame {
+        border-radius: 22px;
+        overflow: hidden;
+        box-shadow: 0 18px 40px rgba(0,0,0,0.08);
+        border: 1px solid rgba(0,0,0,0.04);
+        min-height: 260px;
+    }
+
+    .form-label {
+        font-size: 13px;
+        font-weight: 500;
+        color: #555;
+    }
+
+    .form-control {
+        border-radius: 12px;
+        border-color: rgba(0,0,0,0.08);
+        font-size: 14px;
+    }
+
+    .form-control:focus {
+        border-color: #ff7a00;
+        box-shadow: 0 0 0 0.15rem rgba(255,122,0,0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+{% if messages %}
+    <div class="mb-3">
+        {% for message in messages %}
+            <div class="alert alert-success mb-2" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="contacts-hero">
+    <!-- Левая часть: инфо + соцсети -->
+    <div>
+        <div class="contacts-badge">
+            <span>Эл Насип</span> · отдел продаж
+        </div>
+
+        <h1 class="contacts-title">Контакты и запрос на консультацию</h1>
+
+        <p class="contacts-subtitle">
+            Оставьте заявку или напишите нам в мессенджеры – подберём квартиру,
+            расскажем об объектах, рассрочке и условиях покупки.
+        </p>
+
+        <div class="mt-4 contacts-card mb-4">
+            <div class="mb-3">
+                <div class="contact-line-label">Телефон</div>
+                <div class="contact-line-value">
+                    <a href="tel:{{ phone_raw }}" style="text-decoration:none; color:inherit;">
+                        {{ phone_display }}
+                    </a>
+                    <span class="text-muted" style="font-size: 13px;">(WhatsApp, Telegram)</span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="contact-line-label">Офис продаж</div>
+                <div class="contact-line-value">
+                    {{ office_address }}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <div class="contact-line-label">Мессенджеры и соцсети</div>
+                <div class="d-flex flex-wrap gap-2 mt-1">
+                    <a href="{{ whatsapp_link }}" target="_blank" class="eln-pill">
+                        💬 WhatsApp
+                    </a>
+                    <a href="{{ telegram_link }}" target="_blank" class="eln-pill">
+                        📲 Telegram
+                    </a>
+                    <a href="{{ instagram_link }}" target="_blank" class="eln-pill">
+                        📷 Instagram
+                    </a>
+                    <a href="{{ threads_link }}" target="_blank" class="eln-pill">
+                        🧵 Threads
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Форма заявки -->
+        <div class="contacts-card">
+            <h2 class="h5 mb-3">Отправить запрос на консультацию</h2>
+            <form method="post" novalidate>
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label" for="id_name">Имя</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-danger small mt-1">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label" for="id_phone">Телефон / WhatsApp</label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                            <div class="text-danger small mt-1">{{ form.phone.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="id_email">Email (необязательно)</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="id_message">Ваш вопрос</label>
+                        {{ form.message }}
+                        {% if form.message.errors %}
+                            <div class="text-danger small mt-1">{{ form.message.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mt-4">
+                    <button type="submit" class="eln-btn-primary">
+                        Отправить заявку
+                    </button>
+                    <div class="text-muted" style="font-size: 12px; max-width: 320px;">
+                        Нажимая кнопку, вы соглашаетесь с обработкой персональных данных.
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Правая часть: карта / фон -->
+    <div>
+        <div class="map-frame">
+            <!-- Временно просто заглушка. Потом вставишь iframe от Google/2GIS -->
+            <iframe
+                src="https://maps.google.com/maps?q=osh&t=&z=13&ie=UTF8&iwloc=&output=embed"
+                width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy">
+            </iframe>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

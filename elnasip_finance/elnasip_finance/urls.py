@@ -26,10 +26,12 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path("login/", login_view, name="login"),
     path("logout/", logout_view, name="logout"),
-    path('', dashboard, name='dashboard'),
+    path("", include("public_site.urls")),
+    path('dashboard/', dashboard, name='dashboard'),
     path('finances/', include('finances.urls')),
     path('projects/', include('projects.urls')),
     path('employees/', include('employees.urls')),
     path('reports/', include('reports.urls')),
 path("select2/", include("django_select2.urls")),
+
 ]

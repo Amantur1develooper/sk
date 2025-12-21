@@ -42,7 +42,8 @@ INSTALLED_APPS = [
     "django_select2",
     'finances',
     'projects',
-    'reports'
+    'reports',
+    "public_site"
 ]
 
 
