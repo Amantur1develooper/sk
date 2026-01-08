@@ -1,17 +1,16 @@
-from decimal import Decimal
+
 from django.db import models
 
-# Create your models here.
-from django.db import models
+
 from django.contrib.auth.models import User
 from django.db.models import Sum
+from django.db.models import Sum, F, ExpressionWrapper, DecimalField      
+from decimal import Decimal, ROUND_HALF_UP
+from django.db.models import Sum, Q
 def some_logic():
         from finances.models import Allocation 
         
-from decimal import Decimal, ROUND_HALF_UP
-from django.db import models
-from django.db.models import Sum, Q
-
+        
 class Apartment(models.Model):
     block = models.ForeignKey("Block", on_delete=models.CASCADE, related_name='apartments')
     floor = models.IntegerField(verbose_name="Этаж", default=1)
@@ -85,28 +84,7 @@ class Apartment(models.Model):
     def total_rent_income(self):
         """Общий доход от аренды"""
         return self.rent_payments.aggregate(Sum('amount'))['amount__sum'] or 0
-    # def save(self, *args, **kwargs):
-    #     # Автоматический расчет сделки и остатка
-    #     if self.sold_area and self.fact_price_per_m2:
-    #         self.deal_amount = self.sold_area * self.fact_price_per_m2
-    #         if self.planned_deal_amount:
-    #             self.remaining_deal_amount = self.planned_deal_amount - self.deal_amount
-    #         else:
-    #             self.remaining_deal_amount = self.deal_Fakt_deal_amount - self.deal_amount
-        
-    #     # Автоматический расчет планируемой сделки
-    #     if self.area and self.planned_price_per_m2:
-    #         self.planned_deal_amount = self.area * self.planned_price_per_m2
-    #     # Если квартира продана, применяем скидку к фактической сумме сделки
-    #     # if self.is_sold and self.discount and self.deal_Fakt_deal_amount:
-    #     # # Вычисляем сумму без скидки
-    #     #     original_amount = self.deal_Fakt_deal_amount / (1 - self.discount / 100)
-    #     #     self.deal_amount = original_amount
-    #     #     self.planned_deal_amount = 0
-    #     if self.is_sold==True:
-    #         self.planned_deal_amount = 0
-        
-    #     super().save(*args, **kwargs)
+    
     @property
     def sold_area_if_sold(self):
         """Вернёт проданную площадь только если квартира отмечена как проданная"""
@@ -181,38 +159,12 @@ class DealPayment(models.Model):
         verbose_name = "Платеж по сделке"
         verbose_name_plural = "Платежи по сделкам"
         ordering = ['-payment_date']
-    # def save(self, *args, **kwargs):
-    #     # Сначала сохраняем сам платеж
-    #     super().save(*args, **kwargs)
-    
-    #     apartment = self.apartment
-    #     total_paid = apartment.payments.aggregate(Sum('amount'))['amount__sum'] or 0
-
-    #     # Безопасное значение deal_amount
-    #     deal_amount = apartment.deal_amount or 0
-
-    #     if apartment.fact_price_per_m2 and apartment.planned_price_per_m2 > 0:
-    #         # Рассчитываем проданную площадь
-    #         apartment.sold_area = total_paid / apartment.fact_price_per_m2
-    #         apartment.sold_area = min(apartment.sold_area, apartment.area)  # не больше общей площади
-
-
-
-    #     apartment.save()
-
-  
-
-    # def __str__(self):
-    #     return f"Платеж {self.amount} для кв. {self.apartment.apartment_number}"
-
-    # class Meta:
-    #     verbose_name = "Платеж по сделке"
-    #     verbose_name_plural = "Платежи по сделкам"
-    #     ordering = ['-payment_date']
+   
 
 # Обновляем модель Block для добавления вычисляемых свойств
 
-from django.db.models import Sum, F, ExpressionWrapper, DecimalField
+
+
 
 class Project(models.Model):
     name = models.CharField(max_length=200, verbose_name="Название ЖК")
@@ -249,12 +201,7 @@ class Project(models.Model):
             )
         )["total"]
         return result or 0
-    # @property
-    # def total_estimate_plan(self):
-    #     # сумма всех смет проекта (через ЖК и Блоки)
-    #     return self.jks.aggregate(
-    #         total=Sum("blocks__estimate_items__amount")
-    #     )["total"] or 0
+    
     @property
     def remaining_area(self):
         """Оставшаяся (свободная) площадь"""
@@ -273,10 +220,7 @@ class Block(models.Model):
     
     def __str__(self):
         return f"{self.project.name} - {self.name}"
-    # @property
-    # def area_sum(self):
-        # """Сумма проданных площадей по квартирам с галочкой 'Продано'"""
-        # return self.apartments.all().aggregate(total=Sum('area'))['total'] or 0
+    
         
     @property
     def not_sold_minus_allocated(self):
@@ -344,9 +288,7 @@ class Block(models.Model):
         return self.total_area - self.sold_area
     
     
-    # @property
-    # def allocated_sum(self):
-    #     return sum(item.allocated for item in self.estimate_items.all())
+    
     
 
     class Meta:

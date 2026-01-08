@@ -12,7 +12,15 @@
         {% comment %} <a href="{% url 'projects:project_detail' block.project.id %}" class="btn btn-secondary">← Назад к проекту</a> {% endcomment %}
         <a href="{% url 'projects:apartment_list' current_block.id %}" class="btn btn-primary">Просмотреть квартиры</a>
         <a href="{% url 'projects:add_estimate_item' current_block.id %}" class="btn btn-primary">+ Добавить позицию сметы</a>
-        
+        <a class="btn btn-sm btn-primary"
+   href="{% url 'projects:import_block_apartments' current_block.id %}">
+  Импорт квартир из Excel
+</a>
+<a class="btn btn-success"
+   href="{% url 'projects:block_apartments_export' current_block.id %}?{{ request.GET.urlencode }}">
+  Экспорт в Excel
+</a>
+
     </div>
 </div>
 

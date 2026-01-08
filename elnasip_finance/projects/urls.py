@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views, apartmentsviews
+from .exportdanny import import_block_apartments_excel, export_block_apartments_excel
 
 app_name = 'projects'
 
@@ -30,4 +31,12 @@ urlpatterns = [
     
     # path("apartment/<int:apartment_id>/add_comments", views.apartment_detail, name="apartment_detail"),
      path("apartment/<int:apartment_id>/reserve/", views.reserve_apartment, name="reserve_apartment"),
+
+    path(
+        "blocks/<int:block_id>/import-apartments/",
+        import_block_apartments_excel,
+        name="import_block_apartments",
+    ),
+    path("blocks/<int:block_id>/apartments/export/", export_block_apartments_excel, name="block_apartments_export"),
+
 ]

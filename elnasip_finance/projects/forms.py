@@ -1,5 +1,23 @@
 from django import forms
 from .models import Apartment, DealPayment, RentPayment
+from django import forms
+
+from django import forms
+
+class BlockApartmentsImportForm(forms.Form):
+    file = forms.FileField(label="Excel файл (.xlsx)")
+    update_existing = forms.BooleanField(label="Обновлять существующие", required=False, initial=True)
+    create_missing = forms.BooleanField(label="Создавать отсутствующие", required=False, initial=True)
+
+class ApartmentImportForm(forms.Form):
+    file = forms.FileField(label="Excel файл квартир (.xlsx или .xls)")
+    update_existing = forms.BooleanField(
+        required=False, initial=True, label="Обновлять существующие квартиры"
+    )
+    create_missing = forms.BooleanField(
+        required=False, initial=True, label="Создавать отсутствующие квартиры"
+    )
+
 
 class ApartmentForm(forms.ModelForm):
     class Meta:

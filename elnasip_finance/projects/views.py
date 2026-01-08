@@ -935,3 +935,4 @@ def delete_rent_payment(request, payment_id):
         'payment': payment,
     }
     return render(request, 'projects/delete_rent_payment_confirm.html', context)
+
