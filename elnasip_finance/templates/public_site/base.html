@@ -6,6 +6,11 @@
 
 <head>
     <meta charset="UTF-8">
+      
+  <link rel="icon" type="image/png" sizes="32x32" href="{% static 'logo.png' %}">
+  <link rel="icon" type="image/png" sizes="16x16" href="{% static 'logo.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'logo.png' %}">
+  <link rel="shortcut icon" href="{% static 'logo.png' %}">
     <title>Эл Насип – {% block title %}{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -379,7 +384,6 @@
         <div class="d-flex align-items-center justify-content-between gap-3">
             <div class="d-flex align-items-center gap-3">
                 <a href="{% url 'public_site:home' %}" class="d-flex align-items-center gap-3 text-decoration-none">
-                    <img src="{% static 'public_site/img/logo-elnasip.png' %}" alt="Эл Насип" class="eln-logo">
                     <div class="d-none d-sm-block">
                         <div class="eln-brand-text">{% trans "Эл Насип" %}</div>
                         <div class="text-muted" style="font-size: 13px;">{% trans "строительная компания" %}</div>
@@ -391,7 +395,7 @@
                 <a href="{% url 'public_site:home' %}">{% trans "Главная" %}</a>
                 <a href="{% url 'public_site:objects' %}">{% trans "Объекты" %}</a>
                 <a href="{% url 'public_site:home' %}#gallery">{% trans "Галерея" %}</a>
-                <a href="{% url 'public_site:home' %}#installment">{% trans "Рассрочка и ипотека" %}</a>
+                <a href="{% url 'public_site:home' %}#installment">{% trans "Рассрочка" %}</a>
                 <a href="{% url 'public_site:contacts' %}">{% trans "Контакты" %}</a>
             </nav>
 
