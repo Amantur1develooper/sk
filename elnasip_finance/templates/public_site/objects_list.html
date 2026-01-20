@@ -1,0 +1,53 @@
+{% extends "public_site/base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Объекты" %}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-end justify-content-between mb-3">
+  <div>
+    <div class="eln-pill">{% trans "Проекты Эл Насип" %}</div>
+    <h1 class="h4 mt-2 mb-0">{% trans "Объекты" %}</h1>
+    <div class="text-muted" style="font-size:13px;">{% trans "Выберите проект и посмотрите планировки, галерею и условия покупки." %}</div>
+  </div>
+</div>
+
+<div class="row g-3">
+  {% for p in projects %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{% url 'public_site:project_detail' p.slug %}" class="text-decoration-none">
+        <div class="object-card" style="border-radius:22px; overflow:hidden; background:#000; position:relative; min-height:220px; box-shadow:0 18px 45px rgba(0,0,0,.25);">
+          {% if p.hero_image %}
+            <div style="position:absolute; inset:0; background:url('{{ p.hero_image.url }}') center/cover no-repeat;"></div>
+          {% else %}
+            <div style="position:absolute; inset:0; background:linear-gradient(120deg, #111827, #000);"></div>
+          {% endif %}
+          <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.85));"></div>
+
+          <div style="position:relative; z-index:1; padding:14px;">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="badge" style="background:rgba(15,23,42,.75); color:#fff; border-radius:999px;">
+                {{ p.get_status_display }}
+              </span>
+              <span class="badge" style="background:rgba(255,122,0,.15); color:#fff; border:1px solid rgba(255,122,0,.35); border-radius:999px;">
+                {% trans "Смотреть" %}
+              </span>
+            </div>
+
+            <div style="margin-top:10px; color:#fff; font-weight:700; font-size:18px;">
+              {{ p.get_name }}
+            </div>
+            {% if p.get_tagline %}
+              <div style="color:rgba(255,255,255,.8); font-size:13px; max-width:90%;">
+                {{ p.get_tagline }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </a>
+    </div>
+  {% empty %}
+    <div class="text-muted">{% trans "Пока нет объектов. Добавь их в админке." %}</div>
+  {% endfor %}
+</div>
+{% endblock %}

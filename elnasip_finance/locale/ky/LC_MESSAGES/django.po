@@ -1,0 +1,151 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-20 16:27+0600\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+#: public_site/views.py:15
+#: public_site/views.py:15
+msgid "Эко Парк"
+msgstr "Эко Парк"
+
+#: public_site/views.py:16
+msgid "4 блока"
+msgstr "4 блок"
+
+#: public_site/views.py:17
+msgid "Строится"
+msgstr "Курулуп жатат"
+
+#: templates/public_site/base.html:366
+msgid "ЭЛ НАСИП"
+msgstr "ЭЛ НАСИП"
+
+#: templates/public_site/base.html:367 templates/public_site/base.html:383
+msgid "строительная компания"
+msgstr "курулуш компаниясы"
+
+#: templates/public_site/base.html:382
+msgid "Эл Насип"
+msgstr "Эл Насип"
+
+#: templates/public_site/base.html:389 templates/public_site/base.html:425
+#: templates/public_site/home.html:5
+msgid "Главная"
+msgstr "Башкы бет"
+
+#: templates/public_site/base.html:390 templates/public_site/base.html:426
+msgid "Объекты"
+msgstr "Объекттер"
+
+#: templates/public_site/base.html:391 templates/public_site/base.html:427
+#: templates/public_site/home.html:376
+msgid "Галерея"
+msgstr "Галерея"
+
+#: templates/public_site/base.html:392 templates/public_site/base.html:428
+#: templates/public_site/home.html:395
+msgid "Рассрочка и ипотека"
+msgstr "Бөлүп төлөө жана ипотека"
+
+#: templates/public_site/base.html:393 templates/public_site/base.html:429
+#: templates/public_site/base.html:444
+msgid "Контакты"
+msgstr "Байланыш"
+
+#: templates/public_site/base.html:399
+msgid "отдел продаж"
+msgstr "сатуу бөлүмү"
+
+#: templates/public_site/base.html:465
+msgid "Эл Насип. Все права защищены."
+msgstr "Эл Насип. Бардык укуктар корголгон."
+
+#: templates/public_site/home.html:332
+msgid "Предыдущий"
+msgstr "Мурунку"
+
+#: templates/public_site/home.html:336
+msgid "Следующий"
+msgstr "Кийинки"
+
+#: templates/public_site/home.html:344
+msgid "Проекты Эл Насип"
+msgstr "Эл Насип долбоорлору"
+
+#: templates/public_site/home.html:345
+msgid "Выберите проект — мы подберём планировку и условия оплаты."
+msgstr "Долбоорду тандаңыз — биз планировка жана төлөө шарттарын сунуштайбыз."
+
+#: templates/public_site/home.html:364
+msgid "Запросить консультацию"
+msgstr "Кеңеш алуу"
+
+#: templates/public_site/home.html:377
+msgid "Визуализации / фото строительства."
+msgstr "Визуализациялар / курулуштан сүрөттөр."
+
+#: templates/public_site/home.html:396
+msgid "Комфортный график платежей"
+msgstr "Ыңгайлуу төлөм графиги"
+
+#: templates/public_site/home.html:398
+msgid "Рассрочка до 36 месяцев;"
+msgstr "36 айга чейин бөлүп төлөө;"
+
+#: templates/public_site/home.html:399
+msgid "Помощь в ипотеке (банки-партнёры);"
+msgstr "Ипотека боюнча жардам (өнөктөш банктар);"
+
+#: templates/public_site/home.html:400
+msgid "Подбор квартиры под бюджет;"
+msgstr "Бюджетке ылайык батир тандоо;"
+
+#: templates/public_site/home.html:401
+msgid "Сопровождение документов."
+msgstr "Документтерди коштоп жүрүү."
+
+#: templates/public_site/home.html:403
+msgid "Обсудить условия"
+msgstr "Шарттарды талкуулоо"
+
+#: templates/public_site/home.html:408
+msgid "Пример расчёта"
+msgstr "Эсептөөнүн үлгүсү"
+
+#: templates/public_site/home.html:410
+msgid "*Пример. Точный расчёт даст менеджер."
+msgstr "*Мисал. Так эсептөөнү менеджер берет."
+
+#: templates/public_site/home.html:413
+msgid "Стоимость</span><span>80 000 $"
+msgstr "Баасы</span><span>80 000 $"
+
+#: templates/public_site/home.html:414
+msgid "Первый взнос</span><span>24 000 $"
+msgstr "Алгачкы төлөм</span><span>24 000 $"
+
+#: templates/public_site/home.html:415
+msgid "Остаток</span><span>56 000 $"
+msgstr "Калдык</span><span>56 000 $"
+
+#: templates/public_site/home.html:416
+msgid "24 мес</span><span>≈ 2 333 $/мес"
+msgstr "24 ай</span><span>≈ 2 333 $/ай"
+
+#: templates/public_site/home.html:419
+msgid "Напишите в WhatsApp/Telegram — подберём вариант оплаты."
+msgstr "WhatsApp/Telegram'га жазыңыз — төлөө вариантын тандап беребиз."

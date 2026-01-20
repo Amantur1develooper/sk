@@ -1,15 +1,146 @@
 {% load static %}
+{% load i18n %}
 <!DOCTYPE html>
-<html lang="ru">
+{% get_current_language as LANGUAGE_CODE %}
+<html lang="{{ LANGUAGE_CODE }}">
+
 <head>
     <meta charset="UTF-8">
     <title>Эл Насип – {% block title %}{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+<style>        /* Splash-экран с логотипом */
 
+    .eln-splash-word{
+    font-weight: 900;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    font-size: clamp(44px, 8vw, 92px);
+    line-height: 1.05;
+    background: var(--elnasip-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 10px 40px rgba(255,122,0,0.15);
+}
+
+.eln-splash-sub{
+    margin-top: 10px;
+    font-size: clamp(12px, 2.2vw, 14px);
+    color: rgba(229,231,235,0.85);
+    letter-spacing: .18em;
+    text-transform: uppercase;
+}
+
+.eln-splash-mini-logo{
+    width: 90px;
+    opacity: 0.9;
+    filter: drop-shadow(0 10px 22px rgba(0,0,0,0.4));
+}
+
+        .eln-splash {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity .4s ease-out, visibility .4s ease-out;
+        }
+        .eln-splash.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        .eln-splash-inner {
+            position: relative;
+        }
+        .eln-splash-pulse {
+            position: absolute;
+            inset: -40px;
+            border-radius: 999px;
+            background:
+                radial-gradient(circle, rgba(255,122,0,0.4), transparent 60%);
+            filter: blur(18px);
+            opacity: 0.8;
+        }
+        .eln-splash-logo {
+            position: relative;
+            width: 160px;
+            max-width: 50vw;
+            z-index: 1;
+        }
+
+        /* Плавающая кнопка контактов */
+        .contact-fab {
+            position: fixed;
+            right: 16px;
+            bottom: 18px;
+            z-index: 1050;
+        }
+        .contact-fab-main {
+            border: none;
+            border-radius: 999px;
+            padding: 10px 16px;
+            background-image: var(--elnasip-gradient);
+            color: #fff;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 18px 45px rgba(0,0,0,0.35);
+            cursor: pointer;
+        }
+        .contact-fab-main span.icon {
+            font-size: 18px;
+        }
+        .contact-fab-menu {
+            position: absolute;
+            right: 0;
+            bottom: 52px;
+            padding: 8px;
+            border-radius: 16px;
+            background: #111827;
+            color: #e5e7eb;
+            box-shadow: 0 18px 45px rgba(0,0,0,0.35);
+            min-width: 190px;
+            opacity: 0;
+            transform: translateY(6px);
+            pointer-events: none;
+            transition: opacity .18s ease-out, transform .18s ease-out;
+            font-size: 13px;
+        }
+        .contact-fab-menu.open {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+        .contact-fab-menu a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 6px;
+            text-decoration: none;
+            color: inherit;
+            border-radius: 10px;
+        }
+        .contact-fab-menu a:hover {
+            background: rgba(31,41,55,0.85);
+        }
+        @media (max-width: 576px) {
+            .contact-fab-main {
+                padding: 9px 14px;
+                font-size: 13px;
+            }
+            .contact-fab-menu {
+                min-width: 170px;
+            }
+        }
+</style>
     <style>
         :root {
             --elnasip-orange: #ff7a00;
@@ -229,6 +360,18 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
+<!-- SPLASH -->
+<div class="eln-splash" id="eln-splash" aria-hidden="true">
+    <div class="eln-splash-inner text-center">
+        <div class="eln-splash-pulse"></div>
+
+        <div class="eln-splash-word">{% trans "ЭЛ НАСИП" %}</div>
+        <div class="eln-splash-sub">{% trans "строительная компания" %}</div>
+
+        <!-- по желанию: маленький логотип снизу -->
+        
+    </div>
+</div>
 
 <header class="eln-header">
     <div class="eln-header-bar"></div>
@@ -236,26 +379,26 @@
         <div class="d-flex align-items-center justify-content-between gap-3">
             <div class="d-flex align-items-center gap-3">
                 <a href="{% url 'public_site:home' %}" class="d-flex align-items-center gap-3 text-decoration-none">
-                    <img src="{% static 'logo2.PNG' %}" alt="Эл Насип" class="eln-logo">
+                    <img src="{% static 'public_site/img/logo-elnasip.png' %}" alt="Эл Насип" class="eln-logo">
                     <div class="d-none d-sm-block">
-                        <div class="eln-brand-text mb-4 "> </div>
-                        <div class="text-muted" style="font-size: 13px;">строительная компания</div>
+                        <div class="eln-brand-text">{% trans "Эл Насип" %}</div>
+                        <div class="text-muted" style="font-size: 13px;">{% trans "строительная компания" %}</div>
                     </div>
                 </a>
             </div>
 
             <nav class="eln-nav d-none d-lg-flex">
-                <a href="{% url 'public_site:home' %}">Главная</a>
-                <a href="{% url 'public_site:home' %}#objects">Объекты</a>
-                <a href="{% url 'public_site:home' %}#gallery">Галерея</a>
-                <a href="{% url 'public_site:home' %}#installment">Рассрочка и ипотека</a>
-                <a href="{% url 'public_site:contacts' %}">Контакты</a>
+                <a href="{% url 'public_site:home' %}">{% trans "Главная" %}</a>
+                <a href="{% url 'public_site:objects' %}">{% trans "Объекты" %}</a>
+                <a href="{% url 'public_site:home' %}#gallery">{% trans "Галерея" %}</a>
+                <a href="{% url 'public_site:home' %}#installment">{% trans "Рассрочка и ипотека" %}</a>
+                <a href="{% url 'public_site:contacts' %}">{% trans "Контакты" %}</a>
             </nav>
 
             <div class="d-flex align-items-center gap-2">
                 <div class="text-end d-none d-md-block">
                     <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color:#666;">
-                        отдел продаж
+                        {% trans "отдел продаж" %}
                     </div>
                     <a href="tel:+996558333200"
                        class="fw-semibold"
@@ -266,6 +409,31 @@
                         WhatsApp, Telegram
                     </div>
                 </div>
+               {% get_current_language as CURRENT_LANG %}
+{% get_available_languages as LANGUAGES %}
+{% get_language_info_list for LANGUAGES as languages %}
+
+<form action="{% url 'set_language' %}" method="post" class="d-none d-md-block" data-lang-form>
+    {% csrf_token %}
+    <input type="hidden" name="next" value="">
+    <div class="dropdown">
+        <button class="btn btn-sm btn-outline-secondary rounded-pill dropdown-toggle"
+                type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            {% if CURRENT_LANG == "ru" %}RU{% elif CURRENT_LANG == "ky" %}KY{% else %}EN{% endif %}
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+            {% for lang in languages %}
+                <li>
+                    <button class="dropdown-item {% if lang.code == CURRENT_LANG %}active{% endif %}"
+                            type="submit" name="language" value="{{ lang.code }}">
+                        {{ lang.name_local }}
+                    </button>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</form>
+
 
                 <button class="eln-burger d-lg-none" type="button" aria-label="Меню"
                         data-eln-burger>
@@ -281,13 +449,31 @@
 
     <div class="eln-mobile-menu" id="eln-mobile-menu">
         <div class="eln-mobile-menu-inner">
-            <a href="{% url 'public_site:home' %}">Главная</a>
-            <a href="{% url 'public_site:home' %}#objects">Объекты</a>
-            <a href="{% url 'public_site:home' %}#gallery">Галерея</a>
-            <a href="{% url 'public_site:home' %}#installment">Рассрочка и ипотека</a>
-            <a href="{% url 'public_site:contacts' %}">Контакты</a>
+            <a href="{% url 'public_site:home' %}">{% trans "Главная" %}</a>
+            <a href="{% url 'public_site:objects' %}">{% trans "Объекты" %}</a>
+            <a href="{% url 'public_site:home' %}#gallery">{% trans "Галерея" %}</a>
+            <a href="{% url 'public_site:home' %}#installment">{% trans "Рассрочка и ипотека" %}</a>
+            <a href="{% url 'public_site:contacts' %}">{% trans "Контакты" %}</a>
         </div>
+        <div class="mt-2">
+   <div class="mt-2">
+    <div class="text-muted" style="font-size:12px; text-transform:uppercase; letter-spacing:.12em;">
+        {% trans "Язык" %}
     </div>
+
+    <form action="{% url 'set_language' %}" method="post" class="d-flex gap-2 mt-2" data-lang-form>
+        {% csrf_token %}
+        <input type="hidden" name="next" value="">
+        <button class="btn btn-sm btn-outline-secondary rounded-pill" type="submit" name="language" value="ru">RU</button>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill" type="submit" name="language" value="ky">KY</button>
+        <button class="btn btn-sm btn-outline-secondary rounded-pill" type="submit" name="language" value="en">EN</button>
+    </form>
+</div>
+
+</div>
+
+    </div>
+
 </header>
 
 <main class="eln-main">
@@ -296,9 +482,32 @@
     </div>
 </main>
 
+<!-- FLOAT CONTACT BUTTON -->
+<div class="contact-fab">
+    <button type="button" class="contact-fab-main" data-contact-fab aria-label="Контакты">
+        <span class="icon">💬</span>
+        <span class="label d-none d-sm-inline">{% trans "Контакты" %}</span>
+    </button>
+
+    <div class="contact-fab-menu" id="contact-fab-menu">
+        <a href="http://wa.me/996558333200" target="_blank" rel="noopener">
+            💬 <span>WhatsApp</span>
+        </a>
+        <a href="https://t.me/elnasip" target="_blank" rel="noopener">
+            📲 <span>Telegram</span>
+        </a>
+        <a href="https://www.instagram.com/elnasip_stroy?igsh=ZTIybXV1bHVxd3Yy" target="_blank" rel="noopener">
+            📷 <span>Instagram</span>
+        </a>
+        <a href="https://www.threads.com/@elnasip_stroy?igshid=NTc4MTIwNjQ2YQ==" target="_blank" rel="noopener">
+            🧵 <span>Threads</span>
+        </a>
+    </div>
+</div>
+
 <footer class="eln-footer">
     <div class="container d-flex flex-column flex-md-row justify-content-between gap-2">
-        <div>© {% now "Y" %} Эл Насип. Все права защищены.</div>
+        <div>© {% now "Y" %} {% trans "Эл Насип. Все права защищены." %}</div>
         <div class="d-flex flex-wrap gap-3">
             <a href="https://t.me/elnasip" class="social-link">Telegram</a>
             <a href="https://www.instagram.com/elnasip_stroy?igsh=ZTIybXV1bHVxd3Yy" class="social-link">
@@ -313,28 +522,114 @@
         </div>
     </div>
 </footer>
+<script>
+(function () {
+    const defaultLang = "ru";
+    const langs = ["ru", "ky", "en"];
+
+    function stripLangPrefix(pathname) {
+        for (const code of langs) {
+            if (code === defaultLang) continue;
+            if (pathname === `/${code}`) return "/";
+            if (pathname.startsWith(`/${code}/`)) return pathname.slice(code.length + 1);
+        }
+        return pathname;
+    }
+
+    function buildNext(selectedLang) {
+        const basePath = stripLangPrefix(window.location.pathname);
+        const query = window.location.search || "";
+        if (selectedLang === defaultLang) return basePath + query;
+        return `/${selectedLang}${basePath}${query}`;
+    }
+
+    document.querySelectorAll("form[data-lang-form]").forEach((form) => {
+        form.addEventListener("submit", (e) => {
+            const submitter = e.submitter; // кнопка, которой отправили форму
+            const selected = submitter && submitter.name === "language" ? submitter.value : defaultLang;
+
+            const nextInput = form.querySelector('input[name="next"]');
+            if (nextInput) nextInput.value = buildNext(selected);
+        });
+    });
+})();
+</script>
 
 <script>
     (function () {
+        // Burger menu
         const burger = document.querySelector('[data-eln-burger]');
         const menu = document.getElementById('eln-mobile-menu');
 
-        if (!burger || !menu) return;
+        if (burger && menu) {
+            burger.addEventListener('click', function () {
+                burger.classList.toggle('is-open');
+                menu.classList.toggle('open');
+            });
 
-        burger.addEventListener('click', function () {
-            burger.classList.toggle('is-open');
-            menu.classList.toggle('open');
-        });
+            menu.addEventListener('click', function (e) {
+                if (e.target.tagName === 'A') {
+                    burger.classList.remove('is-open');
+                    menu.classList.remove('open');
+                }
+            });
+        }
 
-        // закрывать меню при клике по ссылке
-        menu.addEventListener('click', function (e) {
-            if (e.target.tagName === 'A') {
-                burger.classList.remove('is-open');
-                menu.classList.remove('open');
+        // Splash screen
+        const splash = document.getElementById('eln-splash');
+        if (splash) {
+            window.addEventListener('load', function () {
+                // держим чуть-чуть, чтобы было как у Royal/Karagay
+                setTimeout(function () {
+                    splash.classList.add('hidden');
+                    // можно вообще убрать из DOM после анимации
+                    setTimeout(() => splash.remove(), 500);
+                }, 900);
+            });
+        }
+
+        // Contact FAB
+        const fabBtn = document.querySelector('[data-contact-fab]');
+        const fabMenu = document.getElementById('contact-fab-menu');
+
+        if (fabBtn && fabMenu) {
+            const openMenu = () => fabMenu.classList.add('open');
+            const closeMenu = () => fabMenu.classList.remove('open');
+            const toggleMenu = () => fabMenu.classList.toggle('open');
+
+            fabBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                toggleMenu();
+            });
+
+            // Hover для desktop (мышь)
+            if (window.matchMedia("(pointer: fine)").matches) {
+                fabBtn.addEventListener('mouseenter', openMenu);
+                fabMenu.addEventListener('mouseleave', closeMenu);
             }
-        });
+
+            // Закрыть при клике вне
+            document.addEventListener('click', function (e) {
+                if (!fabMenu.contains(e.target) && e.target !== fabBtn) {
+                    closeMenu();
+                }
+            });
+
+            // Закрыть при клике на ссылку
+            fabMenu.addEventListener('click', function (e) {
+                if (e.target.closest('a')) closeMenu();
+            });
+
+            // Esc
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') closeMenu();
+            });
+        }
     })();
 </script>
+
+
+
 
 {% block extra_js %}{% endblock %}
 </body>

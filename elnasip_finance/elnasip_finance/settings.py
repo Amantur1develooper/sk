@@ -52,10 +52,24 @@ ADMIN_SITE_TITLE = "Эл Насип"
 ADMIN_INDEX_TITLE = "Панель управления"
 
 
+USE_I18N = True
+LANGUAGE_CODE = "ru"
+
+LANGUAGES = [
+    ("ru", "Русский"),
+    ("ky", "Кыргызча"),
+    ("en", "English"),
+]
+
+LOCALE_PATHS = [BASE_DIR / "locale"]
+
+
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    "django.middleware.locale.LocaleMiddleware",
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',

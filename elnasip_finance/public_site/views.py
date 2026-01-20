@@ -1,71 +1,110 @@
 
 from django.shortcuts import render, redirect
-
+from django.utils.translation import gettext_lazy as _
 from django.contrib import messages
-
+from .forms import ConsultationRequestForm
+from django.shortcuts import render, redirect
 from .forms import ConsultationRequestForm
 
 
 def home_view(request):
-    # пока статические данные-заглушки, потом можно заменить на модели
-    objects_preview = [
+    # 3 проекта (третьему пока поставь заглушку — потом переименуешь)
+    projects = [
         {
-            "name": "Эко Парк",
-            "tag": "Старт продаж",
-            "desc": "Современный жилой комплекс рядом с парком. 1–4 комнатные квартиры.",
-            "status": "Строится",
+            "slug": "eco-park",
+            "name": _("Эко Парк"),
+            "badge": _("4 блока"),
+            "status": _("Строится"),
+            "image": "public_site/img/projects/eco-park/cover.png",
+            "short": "Закрытый двор, зелёные зоны, семейная инфраструктура.",
         },
         {
-            "name": "City Residence",
-            "tag": "Скоро",
-            "desc": "Дом бизнес-класса в центре города. Подходит для жизни и инвестиций.",
-            "status": "Проектирование",
-        },
-        {
-            "name": "Family House",
-            "tag": "Рассрочка",
-            "desc": "Спокойный семейный квартал с детскими площадками и парковками.",
+            "slug": "nasip-k",
+            "name": "Насип",
+            "badge": "К блок",
             "status": "В продаже",
+            "image": "public_site/img/projects/nasip-k/cover.png",
+            "short": "Удобные планировки, современный фасад, развитый район.",
+        },
+        {
+            "slug": "elnasip-3",
+            "name": "Эл Насип 3",
+            "badge": "Скоро",
+            "status": "Анонс",
+            "image": "public_site/img/projects/elnasip-3/cover.png",
+            "short": "Новый проект. Подробности уточняйте у менеджера.",
         },
     ]
 
-    advantages = [
-        ("🏗️", "Собственная строительная компания", "Контролируем все этапы: от проекта до сдачи дома."),
-        ("📍", "Локации в перспективных районах", "Рядом парки, школы, сады и транспорт."),
-        ("📑", "Рассрочка и партнёрские банки", "Гибкие условия для покупателей и инвесторов."),
-        ("🤝", "Прозрачность и сопровождение", "Помощь с документами и консультации на каждом шаге."),
+    # Слайды карусели: 1 общий + 3 по проектам (можно менять тексты)
+    hero_slides = [
+        {
+            "badge": "Эл Насип · строительная компания",
+            "title": "Жилые комплексы нового уровня в Оше",
+            "sub": "Рассрочка до 36 месяцев. Помощь в ипотеке. Сопровождение сделки.",
+            "image": "public_site/img/hero/hero1.png",
+            "primary": {"text": "Смотреть проекты", "href": "#objects"},
+            "secondary": {"text": "Консультация", "href": "/contacts/"},
+        },
+        {
+            "badge": "Эко Парк · 4 блока",
+            "title": "Просторные дворы и зелёные зоны",
+            "sub": "Комфорт для семьи и выгодно для инвестиций.",
+            "image": "public_site/img/hero/hero2.png",
+            "primary": {"text": "Эко Парк", "href": "/contacts/?project=eco-park"},
+            "secondary": {"text": "Галерея", "href": "#gallery"},
+        },
+        {
+            "badge": "Насип · К блок",
+            "title": "Современная архитектура и удобные планировки",
+            "sub": "Подберём этаж, площадь и вариант оплаты.",
+            "image": "public_site/img/hero/hero3.png",
+            "primary": {"text": "Насип (К блок)", "href": "/contacts/?project=nasip-k"},
+            "secondary": {"text": "Условия оплаты", "href": "#installment"},
+        },
+        {
+            "badge": "Эл Насип 3 · скоро",
+            "title": "Новый проект — старт анонса",
+            "sub": "Оставьте заявку — сообщим первым о старте продаж.",
+            "image": "public_site/img/hero/hero4.png",
+            "primary": {"text": "Оставить заявку", "href": "/contacts/?project=elnasip-3"},
+            "secondary": {"text": "Контакты", "href": "/contacts/"},
+        },
     ]
 
-    gallery_items = [
-        "Первый фасад",
-        "Внутренний двор",
-        "Холл и подъезд",
-        "Детская площадка",
-        "Вид с террасы",
-        "Ночной вид",
+    # Галерея (пока можно 6-8 картинок)
+    gallery_images = [
+        "public_site/img/gallery/1.png",
+        "public_site/img/gallery/2.png",
+        "public_site/img/gallery/3.png",
+        "public_site/img/gallery/4.png",
+        "public_site/img/gallery/5.png",
+        "public_site/img/gallery/6.png",
     ]
 
     context = {
-        "objects_preview": objects_preview,
-        "advantages": advantages,
-        "gallery_items": gallery_items,
+        "projects": projects,
+        "hero_slides": hero_slides,
+        "gallery_images": gallery_images,
     }
     return render(request, "public_site/home.html", context)
 
 
 def contacts_view(request):
+    # Автоподстановка текста по проекту
+    project = request.GET.get("project")
+    initial = {}
+    if project:
+        initial["message"] = f"Здравствуйте! Хочу консультацию по проекту: {project}"
+
     if request.method == "POST":
         form = ConsultationRequestForm(request.POST)
         if form.is_valid():
             form.save()
-   
-            messages.success(
-                request,
-                "Спасибо! Ваша заявка на консультацию отправлена. Мы свяжемся с вами в ближайшее время."
-            )
+            messages.success(request, "Спасибо! Заявка отправлена. Мы свяжемся с вами в ближайшее время.")
             return redirect("public_site:contacts")
     else:
-        form = ConsultationRequestForm()
+        form = ConsultationRequestForm(initial=initial)
 
     context = {
         "form": form,
@@ -75,8 +114,24 @@ def contacts_view(request):
         "telegram_link": "https://t.me/elnasip",
         "instagram_link": "https://www.instagram.com/elnasip_stroy?igsh=ZTIybXV1bHVxd3Yy",
         "threads_link": "https://www.threads.com/@elnasip_stroy?igshid=NTc4MTIwNjQ2YQ==",
-        
         "office_address": "г. Ош, офис продаж Эл Насип",
-   
     }
     return render(request, "public_site/contacts.html", context)
+from django.shortcuts import render, get_object_or_404
+from .models import Project
+
+
+def objects_list_view(request):
+    projects = Project.objects.all()
+    return render(request, "public_site/objects_list.html", {"projects": projects})
+
+
+def project_detail_view(request, slug):
+    project = get_object_or_404(Project, slug=slug)
+    images = project.images.all()
+    plans = project.plans.all()
+    return render(
+        request,
+        "public_site/project_detail.html",
+        {"project": project, "images": images, "plans": plans},
+    )

@@ -1,0 +1,151 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-01-20 16:27+0600\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+#: public_site/views.py:15
+#: public_site/views.py:15
+msgid "Эко Парк"
+msgstr "Eco Park"
+
+#: public_site/views.py:16
+msgid "4 блока"
+msgstr "4 blocks"
+
+#: public_site/views.py:17
+msgid "Строится"
+msgstr "Under construction"
+
+#: templates/public_site/base.html:366
+msgid "ЭЛ НАСИП"
+msgstr "EL NASIP"
+
+#: templates/public_site/base.html:367 templates/public_site/base.html:383
+msgid "строительная компания"
+msgstr "construction company"
+
+#: templates/public_site/base.html:382
+msgid "Эл Насип"
+msgstr "El Nasip"
+
+#: templates/public_site/base.html:389 templates/public_site/base.html:425
+#: templates/public_site/home.html:5
+msgid "Главная"
+msgstr "Home"
+
+#: templates/public_site/base.html:390 templates/public_site/base.html:426
+msgid "Объекты"
+msgstr "Projects"
+
+#: templates/public_site/base.html:391 templates/public_site/base.html:427
+#: templates/public_site/home.html:376
+msgid "Галерея"
+msgstr "Gallery"
+
+#: templates/public_site/base.html:392 templates/public_site/base.html:428
+#: templates/public_site/home.html:395
+msgid "Рассрочка и ипотека"
+msgstr "Installments & Mortgage"
+
+#: templates/public_site/base.html:393 templates/public_site/base.html:429
+#: templates/public_site/base.html:444
+msgid "Контакты"
+msgstr "Contacts"
+
+#: templates/public_site/base.html:399
+msgid "отдел продаж"
+msgstr "sales department"
+
+#: templates/public_site/base.html:465
+msgid "Эл Насип. Все права защищены."
+msgstr "El Nasip. All rights reserved."
+
+#: templates/public_site/home.html:332
+msgid "Предыдущий"
+msgstr "Previous"
+
+#: templates/public_site/home.html:336
+msgid "Следующий"
+msgstr "Next"
+
+#: templates/public_site/home.html:344
+msgid "Проекты Эл Насип"
+msgstr "El Nasip Projects"
+
+#: templates/public_site/home.html:345
+msgid "Выберите проект — мы подберём планировку и условия оплаты."
+msgstr "Choose a project — we’ll help you find a layout and payment terms."
+
+#: templates/public_site/home.html:364
+msgid "Запросить консультацию"
+msgstr "Request a consultation"
+
+#: templates/public_site/home.html:377
+msgid "Визуализации / фото строительства."
+msgstr "Renderings / construction photos."
+
+#: templates/public_site/home.html:396
+msgid "Комфортный график платежей"
+msgstr "A comfortable payment schedule"
+
+#: templates/public_site/home.html:398
+msgid "Рассрочка до 36 месяцев;"
+msgstr "Installments up to 36 months;"
+
+#: templates/public_site/home.html:399
+msgid "Помощь в ипотеке (банки-партнёры);"
+msgstr "Mortgage assistance (partner banks);"
+
+#: templates/public_site/home.html:400
+msgid "Подбор квартиры под бюджет;"
+msgstr "Apartment selection to fit your budget;"
+
+#: templates/public_site/home.html:401
+msgid "Сопровождение документов."
+msgstr "Document support."
+
+#: templates/public_site/home.html:403
+msgid "Обсудить условия"
+msgstr "Discuss terms"
+
+#: templates/public_site/home.html:408
+msgid "Пример расчёта"
+msgstr "Payment example"
+
+#: templates/public_site/home.html:410
+msgid "*Пример. Точный расчёт даст менеджер."
+msgstr "*Example. The manager will provide the exact calculation."
+
+#: templates/public_site/home.html:413
+msgid "Стоимость</span><span>80 000 $"
+msgstr "Price</span><span>$80,000"
+
+#: templates/public_site/home.html:414
+msgid "Первый взнос</span><span>24 000 $"
+msgstr "Down payment</span><span>$24,000"
+
+#: templates/public_site/home.html:415
+msgid "Остаток</span><span>56 000 $"
+msgstr "Balance</span><span>$56,000"
+
+#: templates/public_site/home.html:416
+msgid "24 мес</span><span>≈ 2 333 $/мес"
+msgstr "24 months</span><span>≈ $2,333/month"
+
+#: templates/public_site/home.html:419
+msgid "Напишите в WhatsApp/Telegram — подберём вариант оплаты."
+msgstr "Message us on WhatsApp/Telegram — we’ll help you choose a payment option."

@@ -1,0 +1,131 @@
+{% extends "public_site/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ project.get_name }}{% endblock %}
+
+{% block content %}
+<section style="border-radius:28px; overflow:hidden; position:relative; min-height:420px; box-shadow:0 26px 60px rgba(0,0,0,.25);">
+  {% if project.hero_image %}
+    <div style="position:absolute; inset:0; background:url('{{ project.hero_image.url }}') center/cover no-repeat; transform:scale(1.03);"></div>
+  {% endif %}
+  <div style="position:absolute; inset:0; background:linear-gradient(120deg, rgba(0,0,0,.85), rgba(0,0,0,.25));"></div>
+
+  <div style="position:relative; z-index:1; padding:22px; max-width:560px; color:#fff;">
+    <div class="eln-pill" style="background:rgba(15,23,42,.65); color:#fff;">
+      {{ project.get_status_display }}
+    </div>
+    <h1 style="font-weight:800; margin:14px 0 8px; font-size:clamp(26px, 3.6vw, 38px);">
+      {{ project.get_name }}
+    </h1>
+    <div style="color:rgba(255,255,255,.85); font-size:14px; max-width:520px;">
+      {{ project.get_tagline }}
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 mt-3">
+      <a href="{% url 'public_site:contacts' %}" class="eln-btn-primary">{% trans "Запросить консультацию" %}</a>
+      {% if project.pdf %}
+        <a href="{{ project.pdf.url }}" class="btn btn-sm btn-outline-light rounded-pill">{% trans "Скачать PDF" %}</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- ЦИФРЫ -->
+<div class="row g-2 mt-3">
+  {% if project.blocks_count %}<div class="col-6 col-md-3"><div class="p-3 bg-white rounded-4 shadow-sm"><div class="fw-bold">{{ project.blocks_count }}</div><div class="text-muted small">{% trans "блоков" %}</div></div></div>{% endif %}
+  {% if project.apartments_count %}<div class="col-6 col-md-3"><div class="p-3 bg-white rounded-4 shadow-sm"><div class="fw-bold">{{ project.apartments_count }}</div><div class="text-muted small">{% trans "квартир" %}</div></div></div>{% endif %}
+  {% if project.underground_parking %}<div class="col-6 col-md-3"><div class="p-3 bg-white rounded-4 shadow-sm"><div class="fw-bold">{{ project.underground_parking }}</div><div class="text-muted small">{% trans "подземных мест" %}</div></div></div>{% endif %}
+  {% if project.guest_parking %}<div class="col-6 col-md-3"><div class="p-3 bg-white rounded-4 shadow-sm"><div class="fw-bold">{{ project.guest_parking }}</div><div class="text-muted small">{% trans "гостевых мест" %}</div></div></div>{% endif %}
+</div>
+
+<!-- ПРЕИМУЩЕСТВА -->
+{% if project.get_advantages_list %}
+  <section class="mt-4">
+    <div class="d-flex align-items-baseline justify-content-between mb-2">
+      <h2 class="h5 mb-0">{% trans "Преимущества" %}</h2>
+      <div class="text-muted small d-none d-md-block">{% trans "Коротко и по делу — всё важное." %}</div>
+    </div>
+
+    <div class="row g-2">
+      {% for item in project.get_advantages_list %}
+        <div class="col-12 col-md-6 col-lg-4">
+          <div class="p-3 bg-white rounded-4 shadow-sm" style="height:100%;">
+            <div class="fw-semibold">• {{ item }}</div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+<!-- ГАЛЕРЕЯ -->
+{% if images %}
+  <section class="mt-4">
+    <div class="d-flex align-items-baseline justify-content-between mb-2">
+      <h2 class="h5 mb-0">{% trans "Галерея" %}</h2>
+    </div>
+
+    <div class="row g-2">
+      {% for img in images %}
+        <div class="col-6 col-md-4 col-lg-3">
+          <div style="border-radius:18px; overflow:hidden; background:#000; box-shadow:0 14px 35px rgba(0,0,0,.18);">
+            <div style="aspect-ratio: 1 / 1; background:url('{{ img.image.url }}') center/cover no-repeat;"></div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+<!-- ПЛАНИРОВКИ -->
+{% if plans %}
+<section class="mt-4">
+  <h2 class="h5 mb-2">{% trans "Планировки" %}</h2>
+
+  <ul class="nav nav-pills gap-2" role="tablist">
+    {% for code,label in project.plans.model.Block.choices %}
+      <li class="nav-item" role="presentation">
+        <button class="nav-link {% if forloop.first %}active{% endif %} rounded-pill"
+                data-bs-toggle="tab" data-bs-target="#tab-{{ code }}" type="button" role="tab">
+          {{ label }}
+        </button>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <div class="tab-content mt-2">
+    {% for code,label in project.plans.model.Block.choices %}
+      <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="tab-{{ code }}" role="tabpanel">
+        <div class="row g-2">
+          {% for p in plans %}
+            {% if p.block == code %}
+              <div class="col-12 col-md-6">
+                <div class="bg-white rounded-4 shadow-sm p-2">
+                  <div class="text-muted small mb-1">{{ p.get_title }}</div>
+                  <div style="border-radius:16px; overflow:hidden;">
+                    <img src="{{ p.image.url }}" alt="" style="width:100%; height:auto; display:block;">
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<!-- CTA -->
+<section class="mt-4 p-4 rounded-4" style="background:#111827; color:#fff;">
+  <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
+    <div>
+      <div style="font-weight:800; font-size:18px;">{% trans "Хотите точный расчёт (ипотека/рассрочка)?" %}</div>
+      <div style="color:rgba(255,255,255,.78); font-size:13px;">
+        {% trans "Оставьте заявку — менеджер подберёт варианты под ваш бюджет." %}
+      </div>
+    </div>
+    <a href="{% url 'public_site:contacts' %}" class="eln-btn-primary">{% trans "Оставить заявку" %}</a>
+  </div>
+</section>
+{% endblock %}

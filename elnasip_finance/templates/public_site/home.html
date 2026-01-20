@@ -1,507 +1,387 @@
 {% extends "public_site/base.html" %}
 {% load static %}
+{% load i18n %}
 
-{% block title %}Главная{% endblock %}
+{% block title %}{% trans "Главная" %}{% endblock %}
 
 {% block extra_css %}
 <style>
-    .hero {
-        display: grid;
-        grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-        gap: 32px;
-        align-items: center;
-        margin-bottom: 40px;
-    }
-
-    @media (max-width: 992px) {
-        .hero {
-            grid-template-columns: minmax(0, 1fr);
-        }
-    }
-
-    .hero-card {
-        background: radial-gradient(circle at top left, rgba(255,122,0,0.08), transparent 50%),
-                    #ffffff;
+    /* HERO / Carousel */
+    .hero-carousel-wrapper { margin-bottom: 28px; }
+    .hero-carousel {
         border-radius: 28px;
-        padding: 24px 24px 26px;
-        box-shadow: 0 22px 50px rgba(0,0,0,0.08);
-        border: 1px solid rgba(255,122,0,0.15);
+        overflow: hidden;
+        box-shadow: 0 26px 60px rgba(0,0,0,0.35);
     }
-
-    .hero-badge {
-        display:inline-flex;
-        align-items:center;
-        gap:8px;
-        border-radius:999px;
-        padding:6px 14px;
-        background: rgba(255,122,0,0.06);
-        font-size:12px;
-        font-weight:500;
-        color:#ff7a00;
-        text-transform:uppercase;
-        letter-spacing:0.1em;
-    }
-
-    .hero-title {
-        font-size: clamp(28px, 3.3vw, 36px);
-        font-weight: 700;
-        margin: 16px 0 10px;
-    }
-
-    .hero-subtitle {
-        font-size: 15px;
-        color: #555;
-        max-width: 500px;
-    }
-
-    .hero-meta {
-        font-size: 13px;
-        color:#777;
-    }
-
-    .hero-tagline {
-        font-size: 13px;
-        color:#666;
-    }
-
-    .hero-figure {
-        border-radius: 28px;
-        padding: 6px;
-        background: radial-gradient(circle at top, #ffd400, transparent 60%),
-                    linear-gradient(135deg, #ff7a00, #ffd400);
-        box-shadow: 0 24px 60px rgba(0,0,0,0.12);
-    }
-
-    .hero-figure-inner {
-        border-radius: 22px;
-        background: #111827;
-        min-height: 260px;
+    .hero-slide {
         position: relative;
-        overflow: hidden;
-        padding: 20px;
+        min-height: 460px;
         color: #f9fafb;
-    }
-
-    .hero-plan {
-        position: absolute;
-        inset: 18px;
-        border-radius: 18px;
-        background: radial-gradient(circle at top left, rgba(250,204,21,0.28), transparent),
-                    radial-gradient(circle at bottom right, rgba(59,130,246,0.22), transparent),
-                    #020617;
-        border: 1px solid rgba(148,163,184,0.5);
-        overflow: hidden;
-        padding: 16px 18px;
         display: flex;
-        flex-direction: column;
-        justify-content: space-between;
+        align-items: center;
     }
+    @media (max-width: 576px) { .hero-slide { min-height: 520px; } }
 
-    .hero-plan-title {
-        font-size: 14px;
-        text-transform: uppercase;
-        letter-spacing: 0.14em;
-        color: #9ca3af;
+    .hero-slide-bg {
+        position: absolute;
+        inset: 0;
+        background-size: cover;
+        background-position: center;
+        transform: scale(1.04);
     }
-
-    .hero-plan-main {
-        font-size: 20px;
-        font-weight: 600;
-        margin-top: 4px;
+    .hero-slide-overlay {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(circle at 10% 15%, rgba(255,122,0,0.45), transparent 52%),
+          linear-gradient(110deg, rgba(0,0,0,0.88), rgba(0,0,0,0.18));
     }
-
-    .hero-plan-pill {
-        display:inline-flex;
-        align-items:center;
-        gap:6px;
-        border-radius:999px;
-        padding:4px 10px;
-        background: rgba(15,118,110,0.25);
-        font-size:11px;
-        color:#a5f3fc;
+    .hero-slide-inner {
+        position: relative;
+        z-index: 1;
+        padding: 22px 22px 24px;
+        max-width: 560px;
     }
+    @media (min-width: 992px) { .hero-slide-inner { padding: 32px 40px 36px; } }
 
-    .hero-plan-meta {
-        font-size: 12px;
-        color:#e5e7eb;
-    }
-
-    .hero-plan-bottom {
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        gap:8px;
-        font-size:12px;
-        color:#9ca3af;
-    }
-
-    .hero-plan-progress {
-        height: 4px;
+    .hero-slide-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
         border-radius: 999px;
-        background: rgba(148,163,184,0.5);
-        overflow: hidden;
-        margin-top: 8px;
+        padding: 7px 14px;
+        background: rgba(15,23,42,0.72);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: #e5e7eb;
+        backdrop-filter: blur(10px);
     }
-
-    .hero-plan-progress-bar {
-        height: 100%;
-        width: 62%;
-        background: linear-gradient(90deg, #22c55e, #a3e635);
+    .hero-slide-title {
+        font-size: clamp(28px, 3.6vw, 38px);
+        font-weight: 800;
+        margin: 14px 0 10px;
+        line-height: 1.06;
     }
-
-    .section-title {
-        font-size: 22px;
-        font-weight: 700;
-        margin-bottom: 4px;
-    }
-
-    .section-subtitle {
+    .hero-slide-sub {
         font-size: 14px;
-        color:#777;
-        margin-bottom: 18px;
+        color: rgba(229,231,235,0.9);
+        max-width: 420px;
+        margin-bottom: 0;
     }
 
+    .hero-slide-actions {
+        margin-top: 16px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+    }
+    .hero-slide-secondary {
+        border-radius: 999px;
+        padding: 9px 16px;
+        font-size: 13px;
+        border: 1px solid rgba(248,250,252,0.35);
+        color: #e5e7eb;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(15,23,42,0.35);
+        backdrop-filter: blur(10px);
+    }
+    .hero-slide-secondary:hover { background: rgba(15,23,42,0.7); color: #fff; }
+
+    .carousel-indicators [data-bs-target] {
+        width: 8px; height: 8px; border-radius: 999px;
+        background-color: rgba(255,255,255,0.55);
+        opacity: 0.7;
+    }
+    .carousel-indicators .active {
+        width: 18px;
+        background-image: var(--elnasip-gradient);
+        opacity: 1;
+    }
+    .carousel-control-prev, .carousel-control-next { width: 12%; }
+    .carousel-control-prev-icon, .carousel-control-next-icon {
+        filter: drop-shadow(0 0 10px rgba(0,0,0,0.8));
+    }
+
+    /* Sections */
+    .section { margin-bottom: 30px; }
+    .section-head {
+        display:flex; align-items: baseline; justify-content: space-between;
+        gap: 10px; margin-bottom: 14px;
+    }
+    .section-title { font-size: 20px; font-weight: 800; }
+    .section-note { font-size: 13px; color:#777; }
+
+    /* Projects cards: desktop grid, mobile horizontal scroll like Royal */
     .objects-grid {
-        display:grid;
+        display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap:18px;
+        gap: 14px;
     }
-
-    @media (max-width: 992px) {
-        .objects-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-    }
-
+    @media (max-width: 992px) { .objects-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 576px) {
         .objects-grid {
-            grid-template-columns: minmax(0,1fr);
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            scroll-snap-type: x mandatory;
         }
+        .objects-grid::-webkit-scrollbar { height: 8px; }
+        .objects-grid::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 999px; }
     }
 
     .object-card {
-        background:#fff;
-        border-radius:20px;
-        padding:16px 16px 14px;
-        box-shadow:0 16px 40px rgba(0,0,0,0.06);
-        border:1px solid rgba(0,0,0,0.04);
-        transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+        border-radius: 22px;
+        overflow: hidden;
+        background: #000;
+        position: relative;
+        color: #f9fafb;
+        min-height: 220px;
+        box-shadow: 0 18px 45px rgba(0,0,0,0.30);
+        text-decoration: none;
+        display: block;
     }
-
-    .object-card:hover {
-        transform: translateY(-3px);
-        box-shadow:0 20px 50px rgba(0,0,0,0.08);
-        border-color: rgba(255,122,0,0.3);
-    }
-
-    .object-tag {
-        display:inline-flex;
-        align-items:center;
-        gap:6px;
-        border-radius:999px;
-        padding:4px 9px;
-        font-size:11px;
-        background:rgba(255,122,0,0.06);
-        color:#ff7a00;
-        text-transform:uppercase;
-        letter-spacing:.12em;
-    }
-
-    .object-name {
-        font-size:16px;
-        font-weight:600;
-        margin-top:7px;
-    }
-
-    .object-desc {
-        font-size:13px;
-        color:#666;
-        margin-top:4px;
-        min-height:48px;
-    }
-
-    .object-status {
-        font-size:12px;
-        color:#888;
-        margin-top:6px;
-    }
-
-    .section {
-        margin-bottom: 36px;
-    }
-
-    .advantages-grid {
-        display:grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap:16px;
-    }
-
-    @media (max-width: 992px) {
-        .advantages-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-    }
-
     @media (max-width: 576px) {
-        .advantages-grid {
-            grid-template-columns: minmax(0, 1fr);
+        .object-card {
+            min-width: 82%;
+            scroll-snap-align: start;
         }
     }
 
-    .adv-card {
-        background:#fff;
-        border-radius:18px;
-        padding:14px 14px 13px;
-        box-shadow:0 14px 35px rgba(0,0,0,0.05);
-        border:1px solid rgba(0,0,0,0.04);
-        font-size:13px;
+    .object-bg {
+        position: absolute; inset: 0;
+        background-size: cover; background-position: center;
+        transform: scale(1.04);
+        transition: transform .22s ease-out;
     }
-
-    .adv-emoji {
-        font-size:20px;
+    .object-overlay {
+        position: absolute; inset: 0;
+        background:
+          linear-gradient(180deg, rgba(0,0,0,0.10), rgba(0,0,0,0.88));
     }
-
-    .adv-title {
-        font-weight:600;
-        margin-top:4px;
-        margin-bottom:2px;
+    .object-inner {
+        position: relative; z-index: 1;
+        height: 100%;
+        padding: 14px 14px 14px;
+        display:flex; flex-direction: column; justify-content: space-between;
     }
-
-    .adv-text {
-        color:#666;
-        font-size:13px;
+    .object-top {
+        display:flex; justify-content: space-between; align-items: flex-start; gap: 10px;
     }
+    .object-top-badge {
+        display:inline-flex; align-items:center; gap:6px;
+        border-radius:999px; padding:6px 10px;
+        background: rgba(15,23,42,0.78);
+        font-size:11px; text-transform:uppercase; letter-spacing:.12em;
+        color:#e5e7eb;
+        backdrop-filter: blur(10px);
+    }
+    .object-status {
+        font-size: 12px; color: rgba(229,231,235,0.85);
+        background: rgba(17,24,39,0.55);
+        border: 1px solid rgba(255,255,255,0.12);
+        padding: 6px 10px; border-radius: 999px;
+        backdrop-filter: blur(10px);
+        white-space: nowrap;
+    }
+    .object-name { font-size: 18px; font-weight: 800; margin-top: 8px; line-height: 1.15; }
+    .object-sub { font-size: 13px; color: rgba(229,231,235,0.86); margin: 8px 0 0; max-width: 95%; }
+    .object-bottom {
+        display:flex; align-items:center; justify-content: space-between;
+        font-size: 12px; color: rgba(229,231,235,0.9);
+        margin-top: 12px;
+    }
+    .object-card:hover .object-bg { transform: scale(1.08); }
 
+    /* Gallery: mobile horizontal scroll too */
     .gallery-grid {
         display:grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap:10px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
     }
-
-    @media (max-width: 768px) {
-        .gallery-grid {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-    }
-
+    @media (max-width: 992px) { .gallery-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 768px) { .gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
     @media (max-width: 480px) {
         .gallery-grid {
-            grid-template-columns: minmax(0, 1fr);
+            display:flex;
+            overflow-x:auto;
+            gap:10px;
+            scroll-snap-type:x mandatory;
+            padding-bottom: 6px;
         }
     }
 
     .gallery-item {
-        position:relative;
-        border-radius:18px;
+        border-radius: 18px;
         overflow:hidden;
-        min-height:110px;
-        background: linear-gradient(135deg, #1f2937, #111827);
-        color:#f9fafb;
-        padding:10px 12px;
-        font-size:13px;
-        display:flex;
-        flex-direction:column;
-        justify-content:space-between;
+        position:relative;
+        background:#000;
+        min-height: 140px;
+        box-shadow:0 14px 35px rgba(0,0,0,0.24);
+    }
+    @media (max-width: 480px) {
+        .gallery-item { min-width: 80%; scroll-snap-align: start; }
     }
 
-    .gallery-tag {
-        font-size:11px;
-        color:#9ca3af;
+    .gallery-bg {
+        position:absolute; inset:0;
+        background-size:cover; background-position:center;
+        transform:scale(1.03);
+        transition:transform .18s ease-out;
     }
+    .gallery-overlay {
+        position:absolute; inset:0;
+        background:linear-gradient(180deg, transparent, rgba(0,0,0,0.85));
+    }
+    .gallery-item:hover .gallery-bg { transform:scale(1.08); }
 
-    .gallery-label {
-        font-weight:500;
+    /* Installment */
+    .installment-row {
+        display:grid;
+        grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+        gap:16px;
+        align-items:stretch;
     }
+    @media (max-width: 992px) { .installment-row { grid-template-columns: minmax(0, 1fr); } }
 
     .installment-card {
+        border-radius: 22px;
+        padding: 18px 18px 16px;
         background:#111827;
         color:#e5e7eb;
-        border-radius:22px;
-        padding:20px 18px;
-        box-shadow:0 22px 60px rgba(15,23,42,0.7);
         position:relative;
         overflow:hidden;
+        box-shadow:0 22px 60px rgba(15,23,42,0.8);
     }
-
     .installment-card::before {
         content:"";
-        position:absolute;
-        inset:-40%;
+        position:absolute; inset:-40%;
         background:
-            radial-gradient(circle at 10% 10%, rgba(250,204,21,0.28), transparent 50%),
-            radial-gradient(circle at 90% 90%, rgba(59,130,246,0.32), transparent 55%);
-        opacity:.9;
+            radial-gradient(circle at 10% 10%, rgba(255,122,0,0.22), transparent 55%),
+            radial-gradient(circle at 85% 80%, rgba(255,212,0,0.22), transparent 55%);
+        opacity:1;
     }
-
-    .installment-inner {
-        position:relative;
-        z-index:1;
-    }
-
-    .installment-title {
-        font-size:18px;
-        font-weight:600;
-        margin-bottom:6px;
-    }
-
-    .installment-sub {
-        font-size:13px;
-        color:#d1d5db;
-        margin-bottom:10px;
-    }
-
-    .installment-pill {
-        display:inline-flex;
-        align-items:center;
-        gap:6px;
-        border-radius:999px;
-        padding:4px 10px;
-        background:rgba(15,23,42,0.7);
-        font-size:11px;
+    .installment-inner { position:relative; z-index:1; }
+    .installment-badge {
+        display:inline-flex; align-items:center; gap:6px;
+        border-radius:999px; padding:6px 12px;
+        background:rgba(15,23,42,0.8);
+        font-size:11px; text-transform:uppercase; letter-spacing:.14em;
         color:#facc15;
     }
+    .installment-title { font-size:18px; font-weight:800; margin-top:10px; margin-bottom:8px; }
+    .installment-points { font-size:13px; color:#e5e7eb; list-style:none; padding-left:0; margin-bottom:10px; }
+    .installment-points li::before { content:"•"; margin-right:6px; }
+
+    .mini-calc {
+        background:#fff;
+        border-radius:20px;
+        padding:14px 14px 12px;
+        box-shadow:0 16px 40px rgba(0,0,0,0.12);
+        font-size:13px;
+    }
+    .mini-calc-row { display:flex; justify-content:space-between; font-size:13px; }
+    .mini-calc-row + .mini-calc-row { margin-top:4px; }
 </style>
 {% endblock %}
 
 {% block content %}
 
-<!-- HERO -->
-<section class="hero">
-    <div>
-        <div class="hero-card mb-3">
-            <div class="hero-badge">
-                <span>Эл Насип</span> · жилые комплексы в Оше
-            </div>
-            <h1 class="hero-title">
-                Современные квартиры для жизни и инвестиций
-            </h1>
-            <p class="hero-subtitle">
-                Строительная компания «Эл Насип» создаёт комфортные дома в перспективных
-                районах. Рассрочка, ипотека через партнёрские банки и полное сопровождение сделки.
-            </p>
-
-            <div class="d-flex flex-wrap gap-2 mt-3 mb-3">
-                <a href="{% url 'public_site:home' %}#objects" class="eln-btn-primary">
-                    Выбрать объект
-                </a>
-                <a href="{% url 'public_site:contacts' %}" class="eln-pill">
-                    📞 Запросить консультацию
-                </a>
-            </div>
-
-            <div class="hero-meta">
-                <span class="hero-tagline">
-                    • Рассрочка до 36 месяцев · без скрытых комиссий
-                </span><br>
-                <span class="hero-tagline">
-                    • Помощь в одобрении ипотеки в банках-партнёрах
-                </span>
-            </div>
+<!-- HERO-КАРУСЕЛЬ -->
+<section class="hero-carousel-wrapper">
+    <div id="elnHeroCarousel" class="carousel slide hero-carousel" data-bs-ride="carousel" data-bs-interval="6500">
+        <div class="carousel-indicators">
+            {% for s in hero_slides %}
+                <button type="button"
+                        data-bs-target="#elnHeroCarousel"
+                        data-bs-slide-to="{{ forloop.counter0 }}"
+                        class="{% if forloop.first %}active{% endif %}"
+                        {% if forloop.first %}aria-current="true"{% endif %}
+                        aria-label="Слайд {{ forloop.counter }}"></button>
+            {% endfor %}
         </div>
-    </div>
 
-    <div class="hero-figure">
-        <div class="hero-figure-inner">
-            <div class="hero-plan">
-                <div>
-                    <div class="hero-plan-title">эко парк · жилой комплекс</div>
-                    <div class="hero-plan-main">Типовая планировка · 3 комнаты</div>
-                    <div class="mt-2 hero-plan-meta">
-                        Площадь 86 м² · кухня-гостиная · две спальни · балкон с видом на парк.
-                    </div>
-                </div>
+        <div class="carousel-inner">
+            {% for s in hero_slides %}
+                <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                    <div class="hero-slide">
+                        <div class="hero-slide-bg" style="background-image:url('{% static s.image %}')"></div>
+                        <div class="hero-slide-overlay"></div>
+                        <div class="hero-slide-inner">
+                            <div class="hero-slide-badge">{{ s.badge }}</div>
+                            <h1 class="hero-slide-title">{{ s.title }}</h1>
+                            <p class="hero-slide-sub">{{ s.sub }}</p>
 
-                <div>
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div class="hero-plan-pill">
-                            ✅ Рассрочка до 36 мес
-                        </div>
-                        <div style="font-size:12px; color:#e5e7eb;">
-                            от 900 $ / м²
+                            <div class="hero-slide-actions">
+                                <a href="{{ s.primary.href }}" class="eln-btn-primary">{{ s.primary.text }}</a>
+                                <a href="{{ s.secondary.href }}" class="hero-slide-secondary">{{ s.secondary.text }}</a>
+                            </div>
                         </div>
                     </div>
-                    <div class="hero-plan-progress">
-                        <div class="hero-plan-progress-bar"></div>
-                    </div>
-                    <div class="hero-plan-bottom mt-1">
-                        <span>Этап: строительство · монолит</span>
-                        <span>Свободно: ~38%</span>
-                    </div>
                 </div>
-            </div>
+            {% endfor %}
         </div>
+
+        <button class="carousel-control-prev" type="button" data-bs-target="#elnHeroCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">{% trans "Предыдущий" %}</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#elnHeroCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">{% trans "Следующий" %}</span>
+        </button>
     </div>
 </section>
 
-<!-- ОБЪЕКТЫ -->
+<!-- ПРОЕКТЫ -->
 <section id="objects" class="section">
-    <div class="d-flex align-items-baseline justify-content-between mb-2">
-        <div>
-            <div class="section-title">Наши объекты</div>
-            <div class="section-subtitle">
-                Квартиры для семей, инвесторов и тех, кто выбирает комфортную городскую среду.
-            </div>
-        </div>
-        <div class="d-none d-md-block">
-            <span class="badge text-bg-light border">
-                Каталог по комнатности и площади — скоро
-            </span>
-        </div>
+    <div class="section-head">
+        <div class="section-title">{% trans "Проекты Эл Насип" %}</div>
+        <div class="section-note d-none d-sm-block">{% trans "Выберите проект — мы подберём планировку и условия оплаты." %}</div>
     </div>
 
     <div class="objects-grid">
-        {% for obj in objects_preview %}
-            <article class="object-card">
-                <div class="object-tag">
-                    {{ obj.tag }}
-                </div>
-                <div class="object-name">
-                    {{ obj.name }}
-                </div>
-                <p class="object-desc">
-                    {{ obj.desc }}
-                </p>
-                <div class="object-status">
-                    Статус: {{ obj.status }}
-                </div>
-            </article>
-        {% endfor %}
-    </div>
-</section>
+        {% for p in projects %}
+            <a class="object-card" href="{% url 'public_site:contacts' %}?project={{ p.slug }}">
+                <div class="object-bg" style="background-image:url('{% static p.image %}')"></div>
+                <div class="object-overlay"></div>
+                <div class="object-inner">
+                    <div>
+                        <div class="object-top">
+                            <div class="object-top-badge">{{ p.badge }}</div>
+                            <div class="object-status">{{ p.status }}</div>
+                        </div>
+                        <div class="object-name">{{ p.name }}</div>
+                        <p class="object-sub">{{ p.short }}</p>
+                    </div>
 
-<!-- ПРЕИМУЩЕСТВА -->
-<section id="advantages" class="section">
-    <div class="section-title">Почему выбирают «Эл Насип»</div>
-    <div class="section-subtitle">
-        Мы не просто строим дома — мы создаём продуманные пространства для жизни, работы и отдыха.
-    </div>
-
-    <div class="advantages-grid">
-        {% for icon, title, text in advantages %}
-            <div class="adv-card">
-                <div class="adv-emoji">{{ icon }}</div>
-                <div class="adv-title">{{ title }}</div>
-                <div class="adv-text">{{ text }}</div>
-            </div>
+                    <div class="object-bottom">
+                        <span>{% trans "Запросить консультацию" %}</span>
+                        <span>→</span>
+                    </div>
+                </div>
+            </a>
         {% endfor %}
     </div>
 </section>
 
 <!-- ГАЛЕРЕЯ -->
 <section id="gallery" class="section">
-    <div class="section-title">Галерея</div>
-    <div class="section-subtitle">
-        Визуализации и реальные фотографии с объектов. Позже сюда добавим фото и видео ваших комплексов.
+    <div class="section-head">
+        <div class="section-title">{% trans "Галерея" %}</div>
+        <div class="section-note d-none d-sm-block">{% trans "Визуализации / фото строительства." %}</div>
     </div>
 
     <div class="gallery-grid">
-        {% for label in gallery_items %}
+        {% for img in gallery_images %}
             <div class="gallery-item">
-                <div class="gallery-tag">визуализация</div>
-                <div class="gallery-label">{{ label }}</div>
-                <div style="font-size:11px; color:#9ca3af; margin-top:4px;">
-                    Изображение-заглушка · позже заменить на реальные фото объекта.
-                </div>
+                <div class="gallery-bg" style="background-image:url('{% static img %}')"></div>
+                <div class="gallery-overlay"></div>
             </div>
         {% endfor %}
     </div>
@@ -509,55 +389,34 @@
 
 <!-- РАССРОЧКА / ИПОТЕКА -->
 <section id="installment" class="section">
-    <div class="row g-3">
-        <div class="col-12 col-lg-7">
-            <div class="installment-card">
-                <div class="installment-inner">
-                    <div class="installment-pill mb-2">
-                        💳 Индивидуальные условия
-                    </div>
-                    <div class="installment-title">
-                        Рассрочка от застройщика и ипотека в банках-партнёрах
-                    </div>
-                    <div class="installment-sub">
-                        Подберём комфортный ежемесячный платёж под ваш бюджет. Возможна комбинация
-                        рассрочки и ипотечного кредита. Все расчёты прозрачны — без скрытых комиссий.
-                    </div>
-                    <ul class="mb-3" style="font-size:13px;">
-                        <li>Рассрочка до 36 месяцев</li>
-                        <li>Минимальный первоначальный взнос — обсуждается индивидуально</li>
-                        <li>Помощь в сборе документов и подаче заявки в банки-партнёры</li>
-                    </ul>
-                    <div class="d-flex flex-wrap gap-2">
-                        <a href="{% url 'public_site:contacts' %}" class="eln-btn-primary">
-                            Обсудить условия
-                        </a>
-                        <span style="font-size:12px; color:#d1d5db;">
-                            Ответим в WhatsApp / Telegram и предложим несколько вариантов.
-                        </span>
-                    </div>
-                </div>
+    <div class="installment-row">
+        <div class="installment-card">
+            <div class="installment-inner">
+                <div class="installment-badge">💳 {% trans "Рассрочка и ипотека" %}</div>
+                <div class="installment-title">{% trans "Комфортный график платежей" %}</div>
+                <ul class="installment-points">
+                    <li>{% trans "Рассрочка до 36 месяцев;" %}</li>
+                    <li>{% trans "Помощь в ипотеке (банки-партнёры);" %}</li>
+                    <li>{% trans "Подбор квартиры под бюджет;" %}</li>
+                    <li>{% trans "Сопровождение документов." %}</li>
+                </ul>
+                <a href="{% url 'public_site:contacts' %}" class="eln-btn-primary">{% trans "Обсудить условия" %}</a>
             </div>
         </div>
 
-        <div class="col-12 col-lg-5">
-            <div class="section-subtitle" style="margin-bottom:8px;">
-                Пример ориентировочного расчёта:
+        <div class="mini-calc">
+            <div style="font-weight:800; margin-bottom:4px;"{% trans "Пример расчёта" %}</div>
+            <div style="font-size:12px; color:#666; margin-bottom:6px;">
+                {% trans "*Пример. Точный расчёт даст менеджер." %}
             </div>
-            <div class="adv-card">
-                <div class="adv-title">Квартира 80 м², стоимость 80 000 $</div>
-                <div class="adv-text mt-1">
-                    При первоначальном взносе 30% и рассрочке на 24 месяца:
-                </div>
-                <ul class="mt-2 mb-2" style="font-size:13px;">
-                    <li>Первоначальный взнос: 24 000 $</li>
-                    <li>Остаток: 56 000 $</li>
-                    <li>Ежемесячный платёж ≈ 2 333 $ (без учёта процентов банка)</li>
-                </ul>
-                <div class="adv-text">
-                    Точные цифры зависят от курса и условий банка. Менеджер подготовит
-                    персональный расчёт под вашу ситуацию.
-                </div>
+
+            <div class="mini-calc-row"><span>{% trans "Стоимость</span><span>80 000 $" %}/span></div>
+            <div class="mini-calc-row"><span>{% trans "Первый взнос</span><span>24 000 $" %}</span></div>
+            <div class="mini-calc-row"><span>{% trans "Остаток</span><span>56 000 $" %}</span></div>
+            <div class="mini-calc-row"><span>{% trans "24 мес</span><span>≈ 2 333 $/мес" %}</span></div>
+
+            <div style="font-size:12px; color:#777; margin-top:8px;">
+                {% trans "Напишите в WhatsApp/Telegram — подберём вариант оплаты." %}
             </div>
         </div>
     </div>
