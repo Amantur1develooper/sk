@@ -141,3 +141,57 @@ class ProjectPlan(models.Model):
         return getattr(self, f"{base}_{lang}", "") or getattr(self, f"{base}_ru", "")
 
     def get_title(self): return self._t("title")
+
+
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+class Apartment(models.Model):
+    class Status(models.TextChoices):
+        AVAILABLE = "available", _("Свободна")
+        RESERVED = "reserved", _("Бронь")
+        SOLD = "sold", _("Продана")
+
+    class Type(models.TextChoices):
+        LIVING = "living", _("Жилые")
+        COMMERCIAL = "commercial", _("Коммерческие")
+
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="apartments", verbose_name=_("Проект"))
+
+    block = models.CharField(_("Блок"), max_length=20, blank=True)  # можно потом choices как у планов
+    number = models.CharField(_("Номер квартиры"), max_length=30, blank=True)
+
+    rooms = models.PositiveSmallIntegerField(_("Комнат"), default=1)
+    area_m2 = models.DecimalField(_("Площадь (м²)"), max_digits=7, decimal_places=2)
+    floor = models.PositiveSmallIntegerField(_("Этаж"), null=True, blank=True)
+
+    delivery_year = models.PositiveSmallIntegerField(_("Срок сдачи (год)"), null=True, blank=True)
+
+    price_usd = models.DecimalField(_("Цена ($)"), max_digits=12, decimal_places=2, null=True, blank=True)
+    installment_from_usd = models.DecimalField(_("Рассрочка от ($/мес)"), max_digits=12, decimal_places=2, null=True, blank=True)
+    installment_months = models.PositiveSmallIntegerField(_("Рассрочка до (мес)"), null=True, blank=True)
+
+    status = models.CharField(_("Статус"), max_length=20, choices=Status.choices, default=Status.AVAILABLE)
+    kind = models.CharField(_("Тип"), max_length=20, choices=Type.choices, default=Type.LIVING)
+
+    # 3 фото:
+    img_plan = models.ImageField(_("Планировка"), upload_to="public_site/apartments/plan/", blank=True)
+    img_inside = models.ImageField(_("Фото квартиры"), upload_to="public_site/apartments/inside/", blank=True)
+    img_top = models.ImageField(_("Вид сверху"), upload_to="public_site/apartments/top/", blank=True)
+
+    sort = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ["sort", "-id"]
+        verbose_name = _("Квартира")
+        verbose_name_plural = _("Квартиры")
+
+    def __str__(self):
+        return f"{self.project.get_name()} · {self.number or self.pk}"
+
+    def images_for_card(self):
+        imgs = []
+        if self.img_plan: imgs.append(self.img_plan.url)
+        if self.img_inside: imgs.append(self.img_inside.url)
+        if self.img_top: imgs.append(self.img_top.url)
+        return imgs

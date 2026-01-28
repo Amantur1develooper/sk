@@ -1,53 +1,292 @@
-{% extends "public_site/base.html" %}
+{% extends "public_site/base2.html" %}
 {% load i18n %}
 
 {% block title %}{% trans "Объекты" %}{% endblock %}
 
+{% block extra_css %}
+<style>
+  .objs-hero{
+    border-radius: 28px;
+    background: #0b0f1a;
+    color:#fff;
+    padding: 22px;
+    position:relative;
+    overflow:hidden;
+    box-shadow: 0 26px 60px rgba(0,0,0,.18);
+    border: 1px solid rgba(255,122,0,.10);
+  }
+  .objs-hero::before{
+    content:"";
+    position:absolute;
+    inset:-40%;
+    background:
+      radial-gradient(circle at 15% 30%, rgba(255,122,0,.28), transparent 55%),
+      radial-gradient(circle at 85% 80%, rgba(255,212,0,.22), transparent 55%),
+      radial-gradient(circle at 80% 20%, rgba(59,130,246,.20), transparent 55%);
+    opacity:.9;
+  }
+  .objs-hero-inner{ position:relative; z-index:1; }
+
+  .objs-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border-radius:999px;
+    padding:6px 14px;
+    background: rgba(255,122,0,0.10);
+    border: 1px solid rgba(255,122,0,0.22);
+    font-size: 12px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color:#ffd9b8;
+  }
+
+  .objs-title{
+    font-weight: 800;
+    margin: 14px 0 8px;
+    font-size: clamp(24px, 3.6vw, 34px);
+    line-height: 1.1;
+  }
+
+  .objs-sub{
+    max-width: 720px;
+    color: rgba(255,255,255,.78);
+    font-size: 14px;
+    margin: 0;
+  }
+
+  .objs-toolbar{
+    margin-top: 14px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:center;
+    justify-content:space-between;
+  }
+
+  .chip{
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(15,23,42,.55);
+    color:#e5e7eb;
+    border-radius:999px;
+    padding: 8px 12px;
+    font-size: 13px;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .chip:hover{ background: rgba(15,23,42,.75); color:#fff; }
+  .chip.active{
+    border-color: rgba(255,122,0,.45);
+    background: rgba(255,122,0,.16);
+    color:#fff;
+  }
+
+  .objs-grid{
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 16px;
+  }
+  @media (max-width: 992px){ .objs-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); } }
+  @media (max-width: 576px){ .objs-grid{ grid-template-columns: minmax(0,1fr); } }
+
+  .p-card{
+    border-radius: 22px;
+    overflow:hidden;
+    background:#000;
+    position:relative;
+    min-height: 330px;
+    box-shadow: 0 18px 45px rgba(0,0,0,.22);
+    transform: translateY(0);
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  .p-card:hover{
+    transform: translateY(-3px);
+    box-shadow: 0 26px 60px rgba(0,0,0,.30);
+  }
+
+  .p-bg{
+    position:absolute;
+    inset:0;
+    background-size:cover;
+    background-position:center;
+    transform: scale(1.03);
+    transition: transform .25s ease;
+    filter: saturate(1.05);
+  }
+  .p-card:hover .p-bg{ transform: scale(1.08); }
+
+  .p-overlay{
+    position:absolute;
+    inset:0;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,.12), rgba(0,0,0,.88));
+  }
+
+  .p-body{
+    position:relative;
+    z-index:1;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding: 14px;
+    color:#fff;
+  }
+
+  .p-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+
+  .p-status{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border-radius:999px;
+    padding:6px 10px;
+    background: rgba(15,23,42,.72);
+    border: 1px solid rgba(255,255,255,.12);
+    font-size: 12px;
+    color:#fff;
+  }
+
+  .p-cta{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border-radius:999px;
+    padding:6px 10px;
+    background: rgba(255,122,0,.16);
+    border: 1px solid rgba(255,122,0,.35);
+    font-size: 12px;
+    color:#fff;
+  }
+
+  .p-title{
+    font-size: 18px;
+    font-weight: 800;
+    margin: 10px 0 6px;
+  }
+
+  .p-tag{
+    color: rgba(255,255,255,.78);
+    font-size: 13px;
+    max-width: 92%;
+  }
+
+  .p-meta{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    margin-top: 10px;
+    color: rgba(255,255,255,.78);
+    font-size: 12px;
+  }
+
+  .p-line{
+    height: 1px;
+    background: rgba(255,255,255,.12);
+    margin: 10px 0 8px;
+  }
+
+  .p-link{
+    text-decoration:none;
+    color:inherit;
+    display:block;
+  }
+
+  .empty-box{
+    border-radius: 22px;
+    padding: 18px;
+    background:#fff;
+    border: 1px solid rgba(0,0,0,.06);
+    box-shadow: 0 18px 40px rgba(0,0,0,.06);
+    color:#666;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="d-flex align-items-end justify-content-between mb-3">
-  <div>
-    <div class="eln-pill">{% trans "Проекты Эл Насип" %}</div>
-    <h1 class="h4 mt-2 mb-0">{% trans "Объекты" %}</h1>
-    <div class="text-muted" style="font-size:13px;">{% trans "Выберите проект и посмотрите планировки, галерею и условия покупки." %}</div>
-  </div>
-</div>
 
-<div class="row g-3">
-  {% for p in projects %}
-    <div class="col-12 col-md-6 col-lg-4">
-      <a href="{% url 'public_site:project_detail' p.slug %}" class="text-decoration-none">
-        <div class="object-card" style="border-radius:22px; overflow:hidden; background:#000; position:relative; min-height:220px; box-shadow:0 18px 45px rgba(0,0,0,.25);">
-          {% if p.hero_image %}
-            <div style="position:absolute; inset:0; background:url('{{ p.hero_image.url }}') center/cover no-repeat;"></div>
-          {% else %}
-            <div style="position:absolute; inset:0; background:linear-gradient(120deg, #111827, #000);"></div>
-          {% endif %}
-          <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.08), rgba(0,0,0,.85));"></div>
+<!-- HERO -->
+<section class="objs-hero">
+  <div class="objs-hero-inner">
+    <div class="objs-badge">Эл Насип · {% trans "проекты" %}</div>
+    <h1 class="objs-title">{% trans "Объекты" %}</h1>
+    <p class="objs-sub">{% trans "Выберите проект и посмотрите планировки, галерею и условия покупки." %}</p>
 
-          <div style="position:relative; z-index:1; padding:14px;">
-            <div class="d-flex justify-content-between align-items-center">
-              <span class="badge" style="background:rgba(15,23,42,.75); color:#fff; border-radius:999px;">
-                {{ p.get_status_display }}
-              </span>
-              <span class="badge" style="background:rgba(255,122,0,.15); color:#fff; border:1px solid rgba(255,122,0,.35); border-radius:999px;">
-                {% trans "Смотреть" %}
-              </span>
-            </div>
+    <!-- ФИЛЬТР (готово под GET ?status=...) -->
+    <div class="objs-toolbar">
+      <div class="d-flex flex-wrap gap-2">
+        {% with cur=request.GET.status|default:"" %}
+          <a class="chip {% if cur == "" %}active{% endif %}" href="?">{% trans "Все" %}</a>
+          <a class="chip {% if cur == "sales" %}active{% endif %}" href="?status=sales">{% trans "В продаже" %}</a>
+          <a class="chip {% if cur == "building" %}active{% endif %}" href="?status=building">{% trans "Строится" %}</a>
+          <a class="chip {% if cur == "design" %}active{% endif %}" href="?status=design">{% trans "Проект" %}</a>
+          <a class="chip {% if cur == "done" %}active{% endif %}" href="?status=done">{% trans "Сдан" %}</a>
+        {% endwith %}
+      </div>
 
-            <div style="margin-top:10px; color:#fff; font-weight:700; font-size:18px;">
-              {{ p.get_name }}
-            </div>
-            {% if p.get_tagline %}
-              <div style="color:rgba(255,255,255,.8); font-size:13px; max-width:90%;">
-                {{ p.get_tagline }}
-              </div>
-            {% endif %}
-          </div>
-        </div>
+      <a href="{% url 'public_site:contacts' %}" class="chip">
+        💬 {% trans "Получить консультацию" %}
       </a>
     </div>
+  </div>
+</section>
+
+<!-- GRID -->
+<section class="objs-grid" aria-label="{% trans 'Список объектов' %}">
+  {% for p in projects %}
+    <a href="{% url 'public_site:project_detail' p.slug %}" class="p-link">
+      <article class="p-card">
+        {% if p.hero_image %}
+          <div class="p-bg" style="background-image:url('{{ p.hero_image.url }}');"></div>
+        {% else %}
+          <div class="p-bg" style="background-image:linear-gradient(120deg,#111827,#000);"></div>
+        {% endif %}
+        <div class="p-overlay"></div>
+
+        <div class="p-body">
+          <div>
+            <div class="p-top">
+              <span class="p-status">● {{ p.get_status_display }}</span>
+              <span class="p-cta">{% trans "Смотреть" %} →</span>
+            </div>
+
+            <div class="p-title">{{ p.get_name }}</div>
+
+            {% if p.get_tagline %}
+              <div class="p-tag">{{ p.get_tagline }}</div>
+            {% endif %}
+          </div>
+
+          <div>
+            <div class="p-line"></div>
+            <div class="p-meta">
+              <span>
+                {% if p.blocks_count %}{% trans "Блоков" %}: {{ p.blocks_count }}{% else %}{% trans "Подробнее внутри" %}{% endif %}
+              </span>
+              <span>
+                {% if p.apartments_count %}{% trans "Квартир" %}: {{ p.apartments_count }}{% else %}{% trans "Планировки" %}{% endif %}
+              </span>
+            </div>
+          </div>
+        </div>
+      </article>
+    </a>
   {% empty %}
-    <div class="text-muted">{% trans "Пока нет объектов. Добавь их в админке." %}</div>
+    <div class="empty-box">
+      {% trans "Пока нет объектов. Добавь их в админке и загрузи hero_image." %}
+    </div>
   {% endfor %}
-</div>
+</section>
+
 {% endblock %}

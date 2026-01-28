@@ -22,7 +22,7 @@ urlpatterns = [
 
 urlpatterns += i18n_patterns(
     path("", include("public_site.urls")),
-    prefix_default_language=False,  # ru без префикса, ky/en с префиксом
+    prefix_default_language=False,  
 )
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

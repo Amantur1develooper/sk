@@ -123,7 +123,11 @@ from .models import Project
 
 def objects_list_view(request):
     projects = Project.objects.all()
-    return render(request, "public_site/objects_list.html", {"projects": projects})
+    status = request.GET.get("status")
+    qs = Project.objects.all()
+    if status:
+        qs = qs.filter(status=status)
+    return render(request, "public_site/objects_list.html", {"projects": qs})
 
 
 def project_detail_view(request, slug):
@@ -135,3 +139,40 @@ def project_detail_view(request, slug):
         "public_site/project_detail.html",
         {"project": project, "images": images, "plans": plans},
     )
+
+
+from django.views.generic import ListView, DetailView
+from .models import Apartment, Project
+from django.views.generic import ListView
+from .models import Apartment
+
+class ApartmentsListView(ListView):
+    model = Apartment
+    template_name = "public_site/apartments_list.html"
+    context_object_name = "apartments"
+    paginate_by = 12
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("project")
+
+        rooms = self.request.GET.getlist("rooms")  # ['1','2']
+        if rooms:
+            qs = qs.filter(rooms__in=rooms)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+
+        # ВАЖНО: тут готовый список для шаблона
+        ctx["selected_rooms"] = self.request.GET.getlist("rooms")
+
+        return ctx
+
+
+class ApartmentDetailView(DetailView):
+    model = Apartment
+    template_name = "public_site/apartment_detail.html"
+    context_object_name = "a"
+apartments_list = ApartmentsListView.as_view()
+apartment_detail = ApartmentDetailView.as_view()

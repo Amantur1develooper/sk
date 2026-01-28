@@ -1,0 +1,216 @@
+{% extends "public_site/base2.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Квартиры" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .market-hero{
+    border-radius: 24px;
+    padding: 22px;
+    background: linear-gradient(135deg, rgba(255,122,0,.12), rgba(255,212,0,.10));
+    border: 1px solid rgba(0,0,0,.06);
+    margin-bottom: 14px;
+  }
+  .chips{ display:flex; gap:10px; overflow:auto; padding-bottom:6px; }
+  .chip{
+    white-space:nowrap;
+    border-radius:999px;
+    padding:8px 14px;
+    border:1px solid rgba(0,0,0,.08);
+    background:#fff;
+    text-decoration:none;
+    color:#333;
+    font-size:13px;
+    flex: 0 0 auto;
+  }
+  .chip.active{ border-color: rgba(255,122,0,.45); box-shadow:0 10px 22px rgba(255,122,0,.10); }
+  .filters{
+    border-radius: 18px;
+    background:#fff;
+    border:1px solid rgba(0,0,0,.06);
+    padding: 12px;
+    margin: 12px 0 16px;
+  }
+  .apt-card{
+    border-radius: 22px;
+    background:#fff;
+    border:1px solid rgba(0,0,0,.06);
+    box-shadow:0 18px 45px rgba(0,0,0,.06);
+    overflow:hidden;
+    height:100%;
+  }
+  .apt-head{
+    padding:12px 14px 0;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    gap:10px;
+  }
+  .apt-title{ font-weight:700; font-size:14px; margin:0; }
+  .apt-sub{ color:#777; font-size:12px; margin-top:2px; }
+  .apt-body{ padding: 10px 14px 14px; }
+  .apt-meta{ display:flex; gap:10px; flex-wrap:wrap; color:#555; font-size:12px; }
+  .apt-pay{ margin-top:10px; font-weight:700; }
+  .apt-tag{
+    display:inline-flex; align-items:center; gap:6px;
+    border-radius:999px; padding:6px 10px;
+    background: rgba(255,122,0,.10);
+    border: 1px solid rgba(255,122,0,.18);
+    font-size:12px;
+  }
+  .apt-imgwrap{ background:#f6f6f7; padding:14px; }
+  .apt-img{
+    width:100%; aspect-ratio: 1/1;
+    object-fit: contain; background:#fff; border-radius: 16px;
+    border:1px solid rgba(0,0,0,.06);
+  }
+  .carousel-indicators [data-bs-target] { width:7px; height:7px; border-radius:999px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="market-hero">
+  <div class="eln-pill">{% trans "Выбор квартир" %}</div>
+  <h1 class="h4 mt-2 mb-1">{% trans "Квартиры" %}</h1>
+  <div class="text-muted" style="font-size:13px;">{% trans "Фильтруйте по проекту, комнатам и площади — как в маркетплейсе." %}</div>
+</div>
+
+<div class="chips">
+  <a class="chip {% if not request.GET.project %}active{% endif %}" href="?">{% trans "Все" %}</a>
+  {% for p in projects %}
+    <a class="chip {% if request.GET.project == p.slug %}active{% endif %}" href="?project={{ p.slug }}">
+      {{ p.get_name }}
+    </a>
+  {% endfor %}
+</div>
+
+<form class="filters" method="get">
+  {% if request.GET.project %}<input type="hidden" name="project" value="{{ request.GET.project }}">{% endif %}
+
+  <div class="row g-2 align-items-end">
+    <div class="col-12 col-md-3">
+      <label class="form-label" style="font-size:12px;">{% trans "Блок" %}</label>
+      <input class="form-control form-control-sm" name="block" value="{{ request.GET.block }}">
+    </div>
+
+    <div class="col-12 col-md-3">
+      <label class="form-label" style="font-size:12px;">{% trans "Площадь от (м²)" %}</label>
+      <input class="form-control form-control-sm" name="area_min" value="{{ request.GET.area_min }}">
+    </div>
+
+    <div class="col-12 col-md-3">
+      <label class="form-label" style="font-size:12px;">{% trans "Площадь до (м²)" %}</label>
+      <input class="form-control form-control-sm" name="area_max" value="{{ request.GET.area_max }}">
+    </div>
+
+    <div class="col-12 col-md-3">
+      <button class="eln-btn-primary w-100" type="submit">{% trans "Показать" %}</button>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 flex-wrap mt-2">
+    <div class="text-muted" style="font-size:12px; padding-top:8px;">{% trans "Комнаты:" %}</div>
+    {% for r in "1234" %}
+      <label class="chip" style="cursor:pointer;">
+        <input type="checkbox" name="rooms" value="{{ r }}" {% if r in selected_rooms %}
+checked{% endif %} style="margin-right:6px;">
+        {{ r }}
+      </label>
+    {% endfor %}
+  </div>
+</form>
+
+<div class="row g-3">
+  {% for a in apartments %}
+    <div class="col-12 col-md-6 col-lg-4">
+      <a href="{% url 'public_site:apartment_detail' a.pk %}" class="text-decoration-none text-dark">
+        <div class="apt-card">
+
+          <div class="apt-head">
+            <div>
+              <p class="apt-title">{% trans "Квартира" %} {{ a.number|default:a.pk }}</p>
+              <div class="apt-sub">
+                {{ a.project.get_name }}{% if a.block %} · {% trans "Блок" %} {{ a.block }}{% endif %}
+                {% if a.delivery_year %} · {% trans "Срок сдачи" %}: {{ a.delivery_year }}{% endif %}
+              </div>
+            </div>
+            <span class="apt-tag">{{ a.get_status_display }}</span>
+          </div>
+
+          <div class="apt-imgwrap">
+            {% with imgs=a.images_for_card %}
+              {% if imgs %}
+                <div id="aptCarousel{{ a.pk }}" class="carousel slide" data-bs-ride="false">
+                  <div class="carousel-inner">
+                    {% for url in imgs %}
+                      <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                        <img src="{{ url }}" class="apt-img" alt="">
+                      </div>
+                    {% endfor %}
+                  </div>
+
+                  {% if imgs|length > 1 %}
+                    <div class="carousel-indicators" style="margin-bottom:0;">
+                      {% for url in imgs %}
+                        <button type="button" data-bs-target="#aptCarousel{{ a.pk }}"
+                                data-bs-slide-to="{{ forloop.counter0 }}"
+                                class="{% if forloop.first %}active{% endif %}"
+                                aria-label="slide"></button>
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+                </div>
+              {% else %}
+                <div class="apt-img" style="display:flex; align-items:center; justify-content:center; color:#999;">
+                  {% trans "Нет фото" %}
+                </div>
+              {% endif %}
+            {% endwith %}
+          </div>
+
+          <div class="apt-body">
+            <div class="apt-pay">
+              {% if a.installment_from_usd %}
+                {% trans "В рассрочку от" %} {{ a.installment_from_usd }} $ / {% trans "мес" %}
+              {% else %}
+                {% if a.price_usd %}{% trans "Цена" %}: {{ a.price_usd }} ${% endif %}
+              {% endif %}
+            </div>
+
+            <div class="apt-meta mt-2">
+              <span>{{ a.rooms }} {% trans "ком" %}</span>
+              <span>•</span>
+              <span>{{ a.area_m2 }} м²</span>
+              {% if a.floor %}
+                <span>•</span>
+                <span>{{ a.floor }} {% trans "этаж" %}</span>
+              {% endif %}
+            </div>
+
+            <div class="mt-2">
+              <span class="chip" style="background:rgba(0,0,0,.04);">{% trans "Жилые дома" %}</span>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  {% empty %}
+    <div class="text-muted">{% trans "Пока нет квартир. Добавь их в админке." %}</div>
+  {% endfor %}
+</div>
+
+{% if is_paginated %}
+  <nav class="mt-4">
+    <ul class="pagination justify-content-center">
+      {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">{% trans "Назад" %}</a></li>
+      {% endif %}
+      <li class="page-item active"><span class="page-link">{{ page_obj.number }}</span></li>
+      {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">{% trans "Далее" %}</a></li>
+      {% endif %}
+    </ul>
+  </nav>
+{% endif %}
+
+{% endblock %}

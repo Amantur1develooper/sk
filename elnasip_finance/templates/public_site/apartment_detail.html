@@ -1,0 +1,66 @@
+{% extends "public_site/base2.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Квартира" %} {{ a.number|default:a.pk }}{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  <div class="eln-pill">{{ a.project.get_name }}</div>
+  <h1 class="h4 mt-2 mb-1">{% trans "Квартира" %} {{ a.number|default:a.pk }}</h1>
+  <div class="text-muted" style="font-size:13px;">
+    {% if a.block %}{% trans "Блок" %} {{ a.block }} · {% endif %}
+    {{ a.rooms }} {% trans "ком" %} · {{ a.area_m2 }} м²
+    {% if a.floor %} · {{ a.floor }} {% trans "этаж" %}{% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-7">
+    {% with imgs=a.images_for_card %}
+      {% if imgs %}
+        <div id="aptDetailCarousel" class="carousel slide" data-bs-ride="false" style="border-radius:18px; overflow:hidden; border:1px solid rgba(0,0,0,.06); background:#fff;">
+          <div class="carousel-inner">
+            {% for url in imgs %}
+              <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <img src="{{ url }}" style="width:100%; aspect-ratio: 16/10; object-fit: contain; background:#fff;" alt="">
+              </div>
+            {% endfor %}
+          </div>
+          {% if imgs|length > 1 %}
+            <button class="carousel-control-prev" type="button" data-bs-target="#aptDetailCarousel" data-bs-slide="prev">
+              <span class="carousel-control-prev-icon"></span>
+              <span class="visually-hidden">Prev</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#aptDetailCarousel" data-bs-slide="next">
+              <span class="carousel-control-next-icon"></span>
+              <span class="visually-hidden">Next</span>
+            </button>
+          {% endif %}
+        </div>
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <div class="col-12 col-lg-5">
+    <div style="border-radius:18px; background:#fff; border:1px solid rgba(0,0,0,.06); padding:16px;">
+      <div class="d-flex justify-content-between">
+        <div class="text-muted" style="font-size:12px;">{% trans "Статус" %}</div>
+        <div class="fw-semibold">{{ a.get_status_display }}</div>
+      </div>
+      <hr>
+      {% if a.installment_from_usd %}
+        <div class="fw-bold">{% trans "Рассрочка от" %}: {{ a.installment_from_usd }} $ / {% trans "мес" %}</div>
+        {% if a.installment_months %}
+          <div class="text-muted" style="font-size:13px;">{% trans "До" %} {{ a.installment_months }} {% trans "мес" %}</div>
+        {% endif %}
+      {% endif %}
+      {% if a.price_usd %}
+        <div class="mt-2">{% trans "Цена" %}: <b>{{ a.price_usd }} $</b></div>
+      {% endif %}
+      <div class="mt-3">
+        <a href="{% url 'public_site:contacts' %}" class="eln-btn-primary">{% trans "Запросить консультацию" %}</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

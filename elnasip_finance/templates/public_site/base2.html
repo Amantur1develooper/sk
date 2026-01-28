@@ -366,17 +366,7 @@
 </head>
 <body>
 <!-- SPLASH -->
-<div class="eln-splash" id="eln-splash" aria-hidden="true">
-    <div class="eln-splash-inner text-center">
-        <div class="eln-splash-pulse"></div>
 
-        <div class="eln-splash-word">{% trans "ЭЛ НАСИП" %}</div>
-        <div class="eln-splash-sub">{% trans "строительная компания" %}</div>
-
-        <!-- по желанию: маленький логотип снизу -->
-        
-    </div>
-</div>
 
 <header class="eln-header">
     <div class="eln-header-bar"></div>
@@ -395,6 +385,7 @@
                 <a href="{% url 'public_site:home' %}">{% trans "Главная" %}</a>
                 <a href="{% url 'public_site:objects' %}">{% trans "Объекты" %}</a>
                 <a href="{% url 'public_site:apartments' %}">{% trans "Квартиры" %}</a>
+
                 <a href="{% url 'public_site:home' %}#gallery">{% trans "Галерея" %}</a>
                 {% comment %} <a href="{% url 'public_site:home' %}#installment">{% trans "Рассрочка" %}</a> {% endcomment %}
                 <a href="{% url 'public_site:contacts' %}">{% trans "Контакты" %}</a>
