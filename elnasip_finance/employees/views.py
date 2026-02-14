@@ -113,7 +113,7 @@ def login_view(request):
 
             # Если суперпользователь → кидаем в админку или спец. страницу
             if user.is_superuser:
-                return redirect("admin:index")   # можно заменить на свою страницу
+                return redirect("projects:projects_list")   # можно заменить на свою страницу
             else:
                 return redirect("projects:projects_list")  # страница для простых пользователей
         else:
