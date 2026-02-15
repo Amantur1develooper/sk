@@ -87,7 +87,7 @@ def home_view(request):
         "hero_slides": hero_slides,
         "gallery_images": gallery_images,
     }
-    return render(request, "public_site/home.html", context)
+    return render(request, "public_site/index.html", context)
 
 
 def contacts_view(request):
@@ -176,3 +176,9 @@ class ApartmentDetailView(DetailView):
     context_object_name = "a"
 apartments_list = ApartmentsListView.as_view()
 apartment_detail = ApartmentDetailView.as_view()
+
+def about_company(request):
+    return render(request, 'public_site/pages/about.html')
+
+def eco_park(request):
+    return render(request, 'public_site/pages/buildings/eco-park.html')

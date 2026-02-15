@@ -1,0 +1,366 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>О нас — Эл Насип</title>
+    <meta
+      name="description"
+      content="Эл Насип — строительная компания. Надёжные жилые и коммерческие проекты, сроки, качество, прозрачность."
+    />
+
+    <link rel="stylesheet" href="{% static '/css/style.css' %}" />
+  </head>
+
+  <body>
+    <!-- НАВБАР ТВОЙ (не меняем структуру) -->
+    <header>
+      <div class="navbar">
+        <div class="logo">
+          <a href="/index.html">
+            <img src="{% static '/assets/images/logo.svg' %}" loading="lazy" alt="logo" />
+          </a>
+        </div>
+
+        <ul class="list">
+          <li><a href="/index.html">Главная</a></li>
+          <li><a href="#aboutTop">О нас</a></li>
+          <li><a href="#dna">Подход</a></li>
+          <li><a href="#timeline">История</a></li>
+          <li><a href="#contactForm">Контакты</a></li>
+        </ul>
+
+        <button onclick="window.location.href = '/index.html#contact'">
+          Связаться
+        </button>
+
+        <div class="burger"><span></span><span></span><span></span></div>
+      </div>
+    </header>
+
+    <div class="nav-overlay"></div>
+
+    <main id="aboutTop">
+      <!-- CINEMATIC HERO -->
+      <section class="aboutHeroX">
+        <div class="aboutHeroX__bg"></div>
+
+        <div class="aboutHeroX__content">
+          <p class="aboutHeroX__badge">Эл Насип • строительная компания</p>
+
+          <h1 class="aboutHeroX__title">
+            Строим так,<br />
+            чтобы это выглядело достойно<br />
+            и служило годами.
+          </h1>
+
+          <p class="aboutHeroX__desc">
+            Наш стиль — строгость в качестве, точность в сроках, комфорт в
+            деталях. Мы создаём проекты, в которые хочется возвращаться.
+          </p>
+
+          <div class="aboutHeroX__actions">
+            <a href="#dna"><button class="btnX">Наш подход</button></a>
+            <a href="#contactForm" class="linkX">Оставить заявку →</a>
+          </div>
+
+          <div class="aboutHeroX__stats">
+            <div class="statX">
+              <span>10+</span>
+              <p>лет опыта</p>
+            </div>
+            <div class="statX">
+              <span>5000+</span>
+              <p>клиентов</p>
+            </div>
+            <div class="statX">
+              <span>Сроки</span>
+              <p>под контролем</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DNA / APPROACH -->
+      <section class="aboutSectionX" id="dna">
+        <div class="containerX">
+          <div class="headX">
+            <h2>ДНК компании</h2>
+            <p>
+              То, на чём держится доверие: понятные условия, жёсткий контроль
+              качества и уважение к клиенту.
+            </p>
+          </div>
+
+          <div class="gridX">
+            <div class="cardX">
+              <div class="cardX__top">
+                <span class="chipX">01</span>
+                <h3>Сроки — это репутация</h3>
+              </div>
+              <p>
+                Планирование и контроль этапов, чтобы клиент понимал, что и
+                когда происходит.
+              </p>
+            </div>
+
+            <div class="cardX">
+              <div class="cardX__top">
+                <span class="chipX">02</span>
+                <h3>Качество без компромиссов</h3>
+              </div>
+              <p>
+                Материалы, технадзор, проверки — мы не строим “на один сезон”.
+              </p>
+            </div>
+
+            <div class="cardX">
+              <div class="cardX__top">
+                <span class="chipX">03</span>
+                <h3>Комфорт в деталях</h3>
+              </div>
+              <p>
+                Продуманная планировка, дворы, инфраструктура — всё ради
+                удобства жизни.
+              </p>
+            </div>
+
+            <div class="cardX">
+              <div class="cardX__top">
+                <span class="chipX">04</span>
+                <h3>Прозрачность</h3>
+              </div>
+              <p>
+                Чёткие условия, честная коммуникация, понятные ответы без
+                “вокруг да около”.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- IMAGE + TEXT (НЕ КАК НА ГЛАВНОЙ) -->
+      <section class="aboutSplitX">
+        <div class="aboutSplitX__media">
+          <img
+            src="{% static '/assets/images/aboutUs.jpg' %}"
+            loading="lazy"
+            alt="Проекты Эл Насип"
+          />
+        </div>
+
+        <div class="aboutSplitX__text">
+          <h2>Мы не “строим дома”.<br />Мы создаём среду.</h2>
+          <p>
+            Когда проект готов — важно не только фасад. Важно, как вы живёте:
+            удобный двор, логика входных групп, безопасность, транспорт,
+            инфраструктура рядом.
+          </p>
+
+          <div class="pillRowX">
+            <span class="pillX">Архитектура</span>
+            <span class="pillX">Инженерия</span>
+            <span class="pillX">Инфраструктура</span>
+            <span class="pillX">Качество</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- TIMELINE -->
+      <section class="aboutSectionX" id="timeline">
+        <div class="containerX">
+          <div class="headX">
+            <h2>Путь компании</h2>
+            <p>Коротко и честно: как мы росли и что укрепляло наш подход.</p>
+          </div>
+
+          <div class="timelineX">
+            <div class="tX">
+              <span class="tX__year">2015</span>
+              <div class="tX__body">
+                <h3>Старт</h3>
+                <p>
+                  Запустили первые проекты и выстроили дисциплину по срокам.
+                </p>
+              </div>
+            </div>
+
+            <div class="tX">
+              <span class="tX__year">2018</span>
+              <div class="tX__body">
+                <h3>Рост</h3>
+                <p>
+                  Расширили портфель объектов и усилили инженерный контроль.
+                </p>
+              </div>
+            </div>
+
+            <div class="tX">
+              <span class="tX__year">2021</span>
+              <div class="tX__body">
+                <h3>Стандарты</h3>
+                <p>
+                  Внедрили внутренние регламенты качества и этапные проверки.
+                </p>
+              </div>
+            </div>
+
+            <div class="tX">
+              <span class="tX__year">2024</span>
+              <div class="tX__body">
+                <h3>Доверие</h3>
+                <p>5000+ довольных клиентов и стабильная репутация на рынке.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROCESS -->
+      <section class="aboutSectionX aboutSectionX--dark">
+        <div class="containerX">
+          <div class="headX">
+            <h2>Как мы строим</h2>
+            <p>
+              Понятный процесс — без хаоса. Вы всегда понимаете следующий шаг.
+            </p>
+          </div>
+
+          <div class="stepsX">
+            <div class="stepX">
+              <span>1</span>
+              <p>Консультация и подбор решения</p>
+            </div>
+            <div class="stepX">
+              <span>2</span>
+              <p>Прозрачные условия и договор</p>
+            </div>
+            <div class="stepX">
+              <span>3</span>
+              <p>План-график и контроль этапов</p>
+            </div>
+            <div class="stepX">
+              <span>4</span>
+              <p>Сдача объекта и поддержка</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <div class="touchIn">
+        <h1>
+          Свяжитесь с нами <br />
+          Мы готовы ответить на все <br />
+          ваши вопросы
+        </h1>
+
+        <form class="contactForm" id="contactForm">
+          <div class="formRow">
+            <input type="text" name="name" placeholder="Ваше имя" required />
+            <input type="tel" name="phone" placeholder="Телефон" required />
+          </div>
+
+          <input
+            type="email"
+            name="email"
+            placeholder="Email (необязательно)"
+          />
+
+          <textarea
+            name="message"
+            rows="4"
+            placeholder="Ваш вопрос или сообщение"
+          ></textarea>
+
+          <button type="submit">Отправить заявку</button>
+
+          <p class="formNote">
+            Нажимая кнопку, вы соглашаетесь с обработкой персональных данных
+          </p>
+
+          <p class="formStatus" id="formStatus"></p>
+        </form>
+      </div>
+    </main>
+
+    <footer>
+      <div class="footer" id="footer">
+        <div class="head">
+          <h1>
+            Жилые и коммерческие<br />
+            проекты с душой и точностью
+          </h1>
+          <img src="{% static '/assets/images/logo.svg' %}" loading="lazy" alt="logo" />
+        </div>
+        <div class="info">
+          <div class="left">
+            <a href="">info@elnasip.kg</a>
+            <p>
+              Мы создаём не просто здания — мы строим доверие,<br />
+              комфорт и уверенность в завтрашнем дне
+            </p>
+          </div>
+          <div class="right">
+            <a href=""> +996 999 999 999 </a>
+            <p>Адрес: г. Ош, ул. Заводская 18</p>
+
+            <div class="workTime">
+              <p>
+                <span>Пн-Пт</span>
+                9:00 - 18:00
+              </p>
+              <p>
+                <span>Сб</span>
+                10:00 - 16:00
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="fabWrapper">
+        <div class="fabMenu" id="fabMenu">
+          <a href="https://wa.me/996999999999" target="_blank" class="fabItem">
+            <img src="{% static '/assets/icons/WhatsApp.svg' %}" alt="">
+            <span>WhatsApp</span>
+          </a>
+
+          <a href="https://t.me/username" target="_blank" class="fabItem">
+            <img src="{% static '/assets/icons/Telegram.svg' %}" alt="">
+            <span>Telegram</span>
+          </a>
+
+          <a href="tel:+996999999999" class="fabItem">
+            <img src="{% static '/assets/icons/phone.svg' %}" alt="">
+            <span>Позвонить</span>
+          </a>
+        </div>
+
+        <button class="fabMain" id="fabMain">
+          <img src="{% static '/assets/icons/phone.svg' %}" alt="">
+        </button>
+      </div>
+      
+    </footer>
+
+    <script src="{% static '/js/script.js' %}"></script>
+    <script>
+      const fabMain = document.getElementById("fabMain");
+      const fabMenu = document.getElementById("fabMenu");
+
+      if (fabMain && fabMenu) {
+        fabMain.addEventListener("click", () => {
+          fabMenu.classList.toggle("active");
+        });
+
+        document.addEventListener("click", (e) => {
+          if (!fabMain.contains(e.target) && !fabMenu.contains(e.target)) {
+            fabMenu.classList.remove("active");
+          }
+        });
+      }
+    </script>
+  </body>
+</html>

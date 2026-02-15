@@ -1,0 +1,267 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Эко Парк — Эл Насип</title>
+    <meta
+      name="description"
+      content="ЖК Эко Парк от Эл Насип. Планировки, цены, условия рассрочки и актуальные предложения по квартирам."
+    />
+
+    <link rel="stylesheet" href="{% static '/css/style.css' %}" />
+    <link rel="preload" as="image" href="{% static '/assets/images/banner.jpg' %}" />
+  </head>
+
+  <body>
+    <header>
+      <div class="navbar">
+        <div class="logo">
+          <a href="{% url 'public_site:home' %}">
+            <img src="{% static '/assets/images/logo.svg' %}" loading="lazy" alt="logo" />
+          </a>
+        </div>
+
+        <ul class="list">
+          <li><a href="/index.html">Главная</a></li>
+          <li><a href="#aboutProject">О проекте</a></li>
+          <li><a href="#flats">Квартиры</a></li>
+          <li><a href="#installment">Рассрочка</a></li>
+          <li><a href="#contactForm">Контакты</a></li>
+        </ul>
+
+        {% comment %} <button onclick="window.location.href = '/index.html#contact'"> {% endcomment %}
+          <button>
+          Связаться с нами
+        </button>
+
+        <div class="burger"><span></span><span></span><span></span></div>
+      </div>
+    </header>
+
+    <div class="nav-overlay"></div>
+
+    <main>
+      <!-- HERO -->
+      <section class="projectHero">
+        <div class="projectHero__overlay"></div>
+
+        <div class="projectHero__content">
+          <p class="projectBadge">Жилой комплекс</p>
+          <h1>Эко Парк</h1>
+          <p class="projectMeta">Адрес: Мамырова 10 • Статус: Строящиеся</p>
+
+          <div class="projectHero__actions">
+            <a href="#flats"
+              ><button class="projectBtn">Смотреть квартиры</button></a
+            >
+            <a href="#installment" class="projectLink">Рассрочка →</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ABOUT -->
+      <section class="projectSection" id="aboutProject">
+        <div class="projectContainer">
+          <div class="projectHead">
+            <h2>О проекте</h2>
+            <p>
+              Эко Парк — комплекс с акцентом на комфорт: удобные планировки,
+              инфраструктура рядом и спокойная атмосфера для жизни.
+            </p>
+          </div>
+
+          <div class="projectFacts">
+            <div class="factCard"><b>Срок сдачи</b><span>2026</span></div>
+            <div class="factCard"><b>Материал</b><span>Монолит</span></div>
+            <div class="factCard"><b>Этажность</b><span>9–12</span></div>
+            <div class="factCard"><b>Паркинг</b><span>Есть</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FLATS -->
+      <section class="projectSection projectSectionDark" id="flats">
+        <div class="projectContainer">
+          <div class="projectHead">
+            <h2>Квартиры и цены</h2>
+            <p>Примерный прайс. Для точной цены выбираем секцию и этаж.</p>
+          </div>
+
+          <div class="flatsGrid">
+            <div class="flatCard">
+              <img src="{% static '/assets/images/banner.jpg' %}" alt="apartment">
+              <h3>1-комнатная</h3>
+              <p>Площадь: 42 м²</p>
+              <p>Цена: 3 200 000 сом</p>
+              <a href="../apartments/eco-park (1 room).html">
+                <button class="flatBtn" onclick="scrollToCalc('eco')">
+                  Подробнее
+                </button>
+              </a>
+            </div>
+
+            <div class="flatCard">
+              <img src="{% static '/assets/images/banner.jpg' %}" alt="apartment">
+              <h3>2-комнатная</h3>
+              <p>Площадь: 68 м²</p>
+              <p>Цена: 4 900 000 сом</p>
+              <button class="flatBtn" onclick="scrollToCalc('eco')">
+                Подробнее
+              </button>
+            </div>
+
+            <div class="flatCard">
+              <img src="{% static '/assets/images/banner.jpg' %}" alt="apartment">
+              <h3>3-комнатная</h3>
+              <p>Площадь: 92 м²</p>
+              <p>Цена: 6 800 000 сом</p>
+              <button class="flatBtn" onclick="scrollToCalc('eco')">
+                Подробнее
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- INSTALLMENT (переносим твой калькулятор сюда или даём условия + кнопка на главную) -->
+      <section class="projectSection" id="installment">
+        <div class="projectContainer">
+          <div class="projectHead">
+            <h2>Условия рассрочки</h2>
+            <p>Для ЖК «Эко Парк» действуют следующие условия.</p>
+          </div>
+
+          <div class="installmentRules">
+            <div class="rule"><b>Взнос</b><span>от 20%</span></div>
+            <div class="rule"><b>Срок</b><span>до 24 мес.</span></div>
+            <div class="rule"><b>Наценка</b><span>10%</span></div>
+            <div class="rule"><b>Комиссия</b><span>0 сом</span></div>
+          </div>
+
+          <button
+            class="projectBtn"
+            onclick="window.location.href = '/index.html#installment'"
+          >
+            Открыть калькулятор на главной
+          </button>
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <div class="touchIn">
+        <h1>
+          Свяжитесь с нами <br />
+          Мы готовы ответить на все <br />
+          ваши вопросы
+        </h1>
+
+        <form class="contactForm" id="contactForm">
+          <div class="formRow">
+            <input type="text" name="name" placeholder="Ваше имя" required />
+            <input type="tel" name="phone" placeholder="Телефон" required />
+          </div>
+
+          <input
+            type="email"
+            name="email"
+            placeholder="Email (необязательно)"
+          />
+
+          <textarea
+            name="message"
+            rows="4"
+            placeholder="Ваш вопрос или сообщение"
+          ></textarea>
+
+          <button type="submit">Отправить заявку</button>
+
+          <p class="formNote">
+            Нажимая кнопку, вы соглашаетесь с обработкой персональных данных
+          </p>
+
+          <p class="formStatus" id="formStatus"></p>
+        </form>
+      </div>
+    </main>
+
+    <footer>
+      <div class="footer" id="footer">
+        <div class="head">
+          <h1>
+            Жилые и коммерческие<br />
+            проекты с душой и точностью
+          </h1>
+          <img src="{% static '/assets/images/logo.svg' %}" loading="lazy" alt="logo" />
+        </div>
+        <div class="info">
+          <div class="left">
+            <a href="">info@elnasip.kg</a>
+            <p>
+              Мы создаём не просто здания — мы строим доверие,<br />
+              комфорт и уверенность в завтрашнем дне
+            </p>
+          </div>
+          <div class="right">
+            <a href=""> +996 999 999 999 </a>
+            <p>Адрес: г. Ош, ул. Заводская 18</p>
+
+            <div class="workTime">
+              <p>
+                <span>Пн-Пт</span>
+                9:00 - 18:00
+              </p>
+              <p>
+                <span>Сб</span>
+                10:00 - 16:00
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="fabWrapper">
+        <div class="fabMenu" id="fabMenu">
+          <a href="https://wa.me/996999999999" target="_blank" class="fabItem">
+            <img src="{% static '/assets/icons/WhatsApp.svg' %}" alt="">
+            <span>WhatsApp</span>
+          </a>
+
+          <a href="https://t.me/username" target="_blank" class="fabItem">
+            <img src="{% static '/assets/icons/Telegram.svg' %}" alt="">
+            <span>Telegram</span>
+          </a>
+
+          <a href="tel:+996999999999" class="fabItem">
+            <img src="{ static '/assets/icons/phone.svg' %}" alt="">
+            <span>Позвонить</span>
+          </a>
+        </div>
+
+        <button class="fabMain" id="fabMain">
+          <img src="{% static '/assets/icons/phone.svg' %}" alt="">
+        </button>
+      </div>
+    </footer>
+
+    <script src="{% static '/js/script.js' %}"></script>
+    <script>
+      const fabMain = document.getElementById("fabMain");
+      const fabMenu = document.getElementById("fabMenu");
+
+      if (fabMain && fabMenu) {
+        fabMain.addEventListener("click", () => {
+          fabMenu.classList.toggle("active");
+        });
+
+        document.addEventListener("click", (e) => {
+          if (!fabMain.contains(e.target) && !fabMenu.contains(e.target)) {
+            fabMenu.classList.remove("active");
+          }
+        });
+      }
+
+    </script>
+  </body>
+</html>

@@ -1,0 +1,470 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="{% static 'css/style.css' %}" />
+    <link rel="icon" href="{% static '/assets/images/logo.svg' %}" />
+    <link rel="preload" as="image" href="{% static './assets/images/banner.jpg' %}" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "RealEstateDeveloper",
+        "name": "Эл Насип",
+        "url": "https://elnasip.kg",
+        "logo": "https://elnasip.kg/assets/images/logo.svg",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Ош",
+          "streetAddress": "ул. Заводская 18",
+          "addressCountry": "KG"
+        },
+        "telephone": "+996999999999",
+        "areaServed": "Kyrgyzstan",
+        "sameAs": []
+      }
+    </script>
+
+    <title>Эл насип - строительная компания</title>
+  </head>
+  <body>
+    <div class="preloader" id="preloader" aria-hidden="true">
+      <div class="preloader__inner">
+        <img
+          class="preloader__logo"
+          src="{% static '/assets/images/logo.svg' %}"
+          alt="Эл Насип"
+        />
+      </div>
+    </div>
+
+    <header>
+      <div class="navbar">
+        <div class="logo">
+          <a href="/index.html">
+            <img src="{% static '/assets/images/logo.svg' %}" loading="lazy" alt="logo" />
+          </a>
+        </div>
+
+        <ul class="list">
+          <li>
+            <a href=""> Главная </a>
+          </li>
+          <li>
+            <a href="{% url 'public_site:about_company' %}"> О нас </a>
+          </li>
+          <li>
+            <a href="#buildings"> Объекты </a>
+          </li>
+          <li>
+            <a href="#installment"> Рассрочка </a>
+          </li>
+        </ul>
+
+        <a href="#footer">
+          <button>Связаться с нами</button>
+        </a>
+
+        <div class="burger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </div>
+    </header>
+
+    <div class="nav-overlay"></div>
+
+    <main>
+      <div class="banner">
+        <div class="info">
+          <h1>Эко Парк — современный жилой комплекс</h1>
+          <p>
+            Пространство для комфортной жизни в гармонии с природой. Продуманная
+            архитектура, качественные материалы и удобная инфраструктура — всё
+            для вашего спокойствия и уверенности в завтрашнем дне.
+          </p>
+
+          <a href="#aboutUs">
+            <button>Подробнее</button>
+          </a>
+        </div>
+      </div>
+
+      <div class="aboutUs" id="aboutUs">
+        <h1>
+          <span>Для нас строительство — это</span> <br />
+          искусство создавать надёжные, <br />
+          функциональные и <br />
+          вдохновляющие пространства
+        </h1>
+
+        <div class="aboutText">
+          <img
+            src="{% static '/assets/images/aboutUs.jpg' %}"
+            loading="lazy"
+            alt="eco park"
+          />
+          <h2>
+            <span>Эл насип</span> - строительная компания, которая сдает свои
+            <br />
+            объекты в эксплуатацию в обещанные сроки. Наши объекты строятся в
+            5-минутной ходьбе от <br />
+            парково-прогулочных зон, основных объектов соцбыта <br />
+            с удобной транспортной развязкой.
+          </h2>
+        </div>
+      </div>
+
+      <div class="buildings" id="buildings">
+        <h1>Фильтруйте. Сравнивайте. Выбирайте.</h1>
+        <div class="choices">
+          <button class="active">24 объектов</button>
+          <button>22 жилых домов</button>
+        </div>
+
+        <div class="filter">
+          <div class="categories">
+            <button class="active">Все</button>
+            <button>Строящиеся</button>
+            <button>Завершенные</button>
+            <button>На стадии завершения</button>
+          </div>
+
+          <div class="cards">
+            <a href="{% url 'public_site:eco_park' %}" class="card">
+              <h1>Эко Парк </h1>
+              <div class="info">
+                <span>Строящиеся</span>
+
+                <p>
+                  <img
+                    src="{% static '/assets/icons/location.svg' %}"
+                    loading="lazy"
+                    alt="location"
+                  />
+                  Мамырова 10
+                </p>
+              </div>
+              <img
+                src="{% static '/assets/images/banner.jpg' %}"
+                loading="lazy"
+                alt="photo"
+              />
+            </a>
+            {% comment %} <a href="./pages/buildings/eco-park.html" class="card">
+              <h1>Эко Парк</h1>
+              <div class="info">
+                <span>Строящиеся </span>
+
+                <p>
+                  <img
+                    src="./assets/icons/location.svg"
+                    loading="lazy"
+                    alt="location"
+                  />
+                  Мамырова 10
+                </p>
+              </div>
+              <img
+                src="./assets/images/banner.jpg"
+                loading="lazy"
+                alt="photo"
+              />
+            </a> {% endcomment %}
+            {% comment %} <a href="{% static '/pages/buildings/eco-park.html' %}" class="card">
+              <h1>Эко Парк</h1>
+              <div class="info">
+                <span>Завершенные</span>
+
+                <p>
+                  <img
+                    src="{% static '/assets/icons/location.svg' %}"
+                    loading="lazy"
+                    alt="location"
+                  />
+                  Мамырова 10
+                </p>
+              </div>
+              <img
+                src="{% static '/assets/images/banner.jpg' %}"
+                loading="lazy"
+                alt="photo"
+              />
+            </a> {% endcomment %}
+          </div>
+        </div>
+      </div>
+
+      <div class="counts">
+        <h1>
+          Эл насип - строительная компания, которой доверяют. <br />
+          Строим с качеством, на которое <br />
+          можно опереться
+        </h1>
+
+        <div class="countSums">
+          <div>
+            <h1>3000+</h1>
+            <p>Рабочих мест создано</p>
+          </div>
+          <div>
+            <h1>3</h1>
+            <p>Объекта</p>
+          </div>
+          <div>
+            <h1>10</h1>
+            <p>лет на рынке</p>
+          </div>
+          <div>
+            <h1>5000+</h1>
+            <p>довольных клиентов</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="view360">
+        <h1>Откройте пространство Эко Парк в 360°</h1>
+        <button class="view360btn">Смотреть 360</button>
+      </div>
+
+      <!-- Installment Calculator -->
+      <div class="installment" id="installment">
+        <h1>Калькулятор рассрочки</h1>
+
+        <div class="installmentBox">
+          <div class="fields">
+            <label>
+              Выберите жилой комплекс
+              <select id="calcProject">
+                <option value="eco">Эко Парк</option>
+                <option value="city">City Life</option>
+                <option value="premium">Premium Residence</option>
+              </select>
+            </label>
+            <label>
+              Цена объекта
+              <input
+                type="number"
+                id="calcPrice"
+                placeholder="Например: 3500000"
+                min="0"
+              />
+            </label>
+
+            <label>
+              Первоначальный взнос
+              <input
+                type="number"
+                id="calcDown"
+                placeholder="Например: 500000"
+                min="0"
+              />
+            </label>
+
+            <div class="row">
+              <label>
+                Срок (мес.)
+                <input
+                  type="number"
+                  id="calcMonths"
+                  placeholder="Например: 24"
+                  min="1"
+                  value="24"
+                />
+              </label>
+
+              <label>
+                Наценка (%)
+                <input
+                  type="number"
+                  id="calcMarkup"
+                  placeholder="Например: 10"
+                  min="0"
+                  value="10"
+                  step="0.1"
+                />
+              </label>
+            </div>
+
+            <div class="row">
+              <label>
+                Комиссия (сом)
+                <input
+                  type="number"
+                  id="calcFee"
+                  placeholder="0"
+                  min="0"
+                  value="0"
+                />
+              </label>
+
+              <label class="check">
+                <input type="checkbox" id="calcMarkupOnRest" checked />
+                Наценка только на остаток
+              </label>
+            </div>
+
+            <button class="calcBtn" id="calcBtn">Рассчитать</button>
+            <p class="calcHint">
+              * Расчёт ориентировочный, точные условия уточняйте у менеджера.
+            </p>
+          </div>
+
+          <div class="results">
+            <h2>Результаты</h2>
+
+            <div class="resGrid">
+              <div class="resItem">
+                <span>Остаток после взноса</span>
+                <b id="resRest">—</b>
+              </div>
+
+              <div class="resItem">
+                <span>Сумма наценки</span>
+                <b id="resMarkupSum">—</b>
+              </div>
+
+              <div class="resItem">
+                <span>Итоговая цена</span>
+                <b id="resTotal">—</b>
+              </div>
+
+              <div class="resItem">
+                <span>Ежемесячный платеж</span>
+                <b id="resMonthly">—</b>
+              </div>
+
+              <div class="resItem">
+                <span>Процент наценки (от цены)</span>
+                <b id="resMarkupPctOfPrice">—</b>
+              </div>
+
+              <div class="resItem">
+                <span>Переплата (итого)</span>
+                <b id="resOverpay">—</b>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="touchIn">
+        <h1>
+          Свяжитесь с нами <br />
+          Мы готовы ответить на все <br />
+          ваши вопросы
+        </h1>
+
+        <form class="contactForm" id="contactForm">
+          <div class="formRow">
+            <input type="text" name="name" placeholder="Ваше имя" required />
+            <input type="tel" name="phone" placeholder="Телефон" required />
+          </div>
+
+          <input
+            type="email"
+            name="email"
+            placeholder="Email (необязательно)"
+          />
+
+          <textarea
+            name="message"
+            rows="4"
+            placeholder="Ваш вопрос или сообщение"
+          ></textarea>
+
+          <button type="submit">Отправить заявку</button>
+
+          <p class="formNote">
+            Нажимая кнопку, вы соглашаетесь с обработкой персональных данных
+          </p>
+
+          <p class="formStatus" id="formStatus"></p>
+        </form>
+      </div>
+    </main>
+
+    <footer>
+      <div class="footer" id="footer">
+        <div class="head">
+          <h1>
+            Жилые и коммерческие<br />
+            проекты с душой и точностью
+          </h1>
+          <img src="{% static '/assets/images/logo.svg' %}" loading="lazy" alt="logo" />
+        </div>
+        <div class="info">
+          <div class="left">
+            <a href="">info@elnasip.kg</a>
+            <p>
+              Мы создаём не просто здания — мы строим доверие,<br />
+              комфорт и уверенность в завтрашнем дне
+            </p>
+          </div>
+          <div class="right">
+            <a href=""> +996 999 999 999 </a>
+            <p>Адрес: г. Ош, ул. Заводская 18</p>
+
+            <div class="workTime">
+              <p>
+                <span>Пн-Пт</span>
+                9:00 - 18:00
+              </p>
+              <p>
+                <span>Сб</span>
+                10:00 - 16:00
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="fabWrapper">
+        <div class="fabMenu" id="fabMenu">
+          <a href="https://wa.me/996999999999" target="_blank" class="fabItem">
+            <img src="{% static '/assets/icons/WhatsApp.svg' %}" alt="">
+            <span>WhatsApp</span>
+          </a>
+
+          <a href="https://t.me/username" target="_blank" class="fabItem">
+            <img src="{% static '/assets/icons/Telegram.svg' %}" alt="">
+            <span>Telegram</span>
+          </a>
+
+          <a href="tel:+996999999999" class="fabItem">
+            <img src="{% static '/assets/icons/phone.svg' %}" alt="">
+            <span>Позвонить</span>
+          </a>
+        </div>
+
+        <button class="fabMain" id="fabMain">
+          <img src="{% static '/assets/icons/phone.svg' %}" alt="">
+        </button>
+      </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js"></script>
+
+    <script src="{% static 'js/script.js' %}"></script>
+    <script>
+
+      const fabMain = document.getElementById("fabMain");
+      const fabMenu = document.getElementById("fabMenu");
+
+      if (fabMain && fabMenu) {
+        fabMain.addEventListener("click", () => {
+          fabMenu.classList.toggle("active");
+        });
+
+        document.addEventListener("click", (e) => {
+          if (!fabMain.contains(e.target) && !fabMenu.contains(e.target)) {
+            fabMenu.classList.remove("active");
+          }
+        });
+      }
+
+    </script>
+  </body>
+</html>
