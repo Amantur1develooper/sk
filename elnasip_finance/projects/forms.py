@@ -5,7 +5,7 @@ from django import forms
 from django import forms
 
 class BlockApartmentsImportForm(forms.Form):
-    file = forms.FileField(label="Excel файл (.xlsx)")
+    file = forms.FileField(label="Excel файл (.xlsx или .xls)")
     update_existing = forms.BooleanField(label="Обновлять существующие", required=False, initial=True)
     create_missing = forms.BooleanField(label="Создавать отсутствующие", required=False, initial=True)
 

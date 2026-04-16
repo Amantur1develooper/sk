@@ -1,0 +1,459 @@
+
+{% load static %}
+{% load i18n %}
+
+{% trans "Эл Насип — строительная компания" %}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}" />
+<link rel="preload" as="image" href="{% static 'assets/images/banner.jpg' %}" />
+{% endblock %}
+
+{% block content %}
+
+<!-- ======================== PRELOADER ======================== -->
+<div class="preloader" id="preloader" aria-hidden="true">
+  <div class="preloader__inner">
+    <img
+      class="preloader__logo"
+      src="{% static 'assets/images/logo.svg' %}"
+      alt="{% trans 'Эл Насип' %}"
+    />
+  </div>
+</div>
+
+<!-- ======================== HEADER / NAVBAR ======================== -->
+<header>
+  <div class="navbar">
+    <div class="logo">
+      <a href="{% url 'public_site:home' %}">
+        <img
+          src="{% static 'assets/images/logo.svg' %}"
+          loading="lazy"
+          alt="{% trans 'Логотип Эл Насип' %}"
+        />
+      </a>
+    </div>
+
+    <ul class="list">
+      <li><a href="{% url 'public_site:home' %}">{% trans "Главная" %}</a></li>
+      {% comment %} <li><a href="{% url 'public_site:about' %}">{% trans "О нас" %}</a></li> {% endcomment %}
+      <li><a href="#buildings">{% trans "Объекты" %}</a></li>
+      <li><a href="#installment">{% trans "Рассрочка" %}</a></li>
+    </ul>
+
+    <a href="#footer">
+      <button>{% trans "Связаться с нами" %}</button>
+    </a>
+
+    <div class="burger">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </div>
+</header>
+
+<div class="nav-overlay"></div>
+
+<!-- ======================== MAIN ======================== -->
+<main>
+
+  <!-- -------- BANNER -------- -->
+  <div class="banner">
+    <div class="info">
+      <h1>{{ hero.title|default:_("Эко Парк — современный жилой комплекс") }}</h1>
+      <p>{{ hero.subtitle|default:_("Пространство для комфортной жизни в гармонии с природой. Продуманная архитектура, качественные материалы и удобная инфраструктура — всё для вашего спокойствия и уверенности в завтрашнем дне.") }}</p>
+      <a href="#aboutUs">
+        <button>{% trans "Подробнее" %}</button>
+      </a>
+    </div>
+  </div>
+
+  <!-- -------- ABOUT US -------- -->
+  <div class="aboutUs" id="aboutUs">
+    <h1>
+      <span>{% trans "Для нас строительство — это" %}</span> <br />
+      {% trans "искусство создавать надёжные," %} <br />
+      {% trans "функциональные и" %} <br />
+      {% trans "вдохновляющие пространства" %}
+    </h1>
+
+    <div class="aboutText">
+      <img
+        src="{% static 'assets/images/aboutUs.jpg' %}"
+        loading="lazy"
+        alt="{% trans 'Эко Парк' %}"
+      />
+      <h2>
+        <span>{% trans "Эл Насип" %}</span>
+        {% trans "— строительная компания, которая сдаёт свои объекты в эксплуатацию в обещанные сроки. Наши объекты строятся в 5-минутной ходьбе от парково-прогулочных зон, основных объектов соцбыта с удобной транспортной развязкой." %}
+      </h2>
+    </div>
+  </div>
+
+  <!-- -------- ANCHOR (scroll offset) -------- -->
+  <h1 id="buildings">ㅤ</h1>
+  <h1></h1>
+  <h1></h1>
+  <h1></h1>
+  <h1></h1>
+
+  <!-- -------- BUILDINGS -------- -->
+  <div class="buildings">
+    <h1>{% trans "Фильтруйте. Сравнивайте. Выбирайте." %}</h1>
+
+    <div class="choices">
+      <button class="active">
+        {% blocktrans with count=buildings_total %}{{ count }} объектов{% endblocktrans %}
+      </button>
+      <button>
+        {% blocktrans with count=residential_total %}{{ count }} жилых домов{% endblocktrans %}
+      </button>
+    </div>
+
+    <div class="filter">
+      <div class="categories">
+        <button class="active" data-filter="all">{% trans "Все" %}</button>
+        <button data-filter="under_construction">{% trans "Строящиеся" %}</button>
+        <button data-filter="completed">{% trans "Завершенные" %}</button>
+        <button data-filter="near_completion">{% trans "На стадии завершения" %}</button>
+      </div>
+
+      <div class="cards">
+        {% for building in buildings %}
+          <a href="{% url 'building_detail' building.slug %}" class="card" data-status="{{ building.status_key }}">
+            <h1>{{ building.name }}</h1>
+            <div class="info">
+              <span>{{ building.status_display }}</span>
+              <p>
+                <img
+                  src="{% static 'assets/icons/location.svg' %}"
+                  loading="lazy"
+                  alt="{% trans 'Адрес' %}"
+                />
+                {{ building.address }}
+              </p>
+            </div>
+            <img
+              src="{{ building.thumbnail.url }}"
+              loading="lazy"
+              alt="{{ building.name }}"
+            />
+          </a>
+        {% empty %}
+          <p class="no-results">{% trans "Объекты не найдены." %}</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- -------- COUNTS -------- -->
+  <div class="counts">
+    <h1>
+      {% trans "Эл Насип — строительная компания, которой доверяют." %} <br />
+      {% trans "Строим с качеством, на которое" %} <br />
+      {% trans "можно опереться" %}
+    </h1>
+
+    <div class="countSums">
+      {% for stat in stats %}
+        <div>
+          <h1>{{ stat.value }}</h1>
+          <p>{{ stat.label }}</p>
+        </div>
+      {% empty %}
+        <div><h1>3000+</h1><p>{% trans "Рабочих мест создано" %}</p></div>
+        <div><h1>3</h1><p>{% trans "Объекта" %}</p></div>
+        <div><h1>10</h1><p>{% trans "лет на рынке" %}</p></div>
+        <div><h1>5000+</h1><p>{% trans "довольных клиентов" %}</p></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- -------- 360 VIEW -------- -->
+  <div class="view360">
+    <h1>{% trans "Откройте пространство Эко Парк в 360°" %}</h1>
+    <button class="view360btn">{% trans "Смотреть 360" %}</button>
+  </div>
+
+  <!-- -------- INSTALLMENT CALCULATOR -------- -->
+  <div class="installment" id="installment">
+    <h1>{% trans "Калькулятор рассрочки" %}</h1>
+
+    <div class="installmentBox">
+      <div class="fields">
+
+        <label>
+          {% trans "Выберите ЖК" %}
+          <select id="calcProject">
+            {% for project in calc_projects %}
+              <option value="{{ project.key }}">{{ project.name }}</option>
+            {% empty %}
+              <option value="eco">{% trans "Эко Парк" %}</option>
+              <option value="nasip">{% trans "Эл Насип" %}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label>
+          {% trans "Тип квартиры" %}
+          <select id="calcRoom">
+            <option value="1">{% trans "1 комната" %}</option>
+            <option value="2">{% trans "2 комнаты" %}</option>
+            <option value="3">{% trans "3 комнаты" %}</option>
+            <option value="4">{% trans "4+ комнаты" %}</option>
+          </select>
+        </label>
+
+        <label>
+          {% trans "Сколько кв/м" %}
+          <input
+            type="number"
+            id="calcArea"
+            placeholder="{% trans 'Например: 30' %}"
+            min="1"
+          />
+        </label>
+
+        <label>
+          {% trans "Первоначальный взнос (от 30%)" %}
+          <input
+            type="number"
+            id="calcDown"
+            placeholder="{% trans 'Например: 1050000' %}"
+            min="0"
+          />
+          <small class="calcSmall" id="downHint"></small>
+        </label>
+
+        <label>
+          {% trans "Срок (мес.)" %}
+          <input
+            type="number"
+            id="calcMonths"
+            placeholder="{% trans 'Например: 30' %}"
+            min="30"
+            max="40"
+            value="30"
+          />
+          <small class="calcSmall" id="monthsHint"></small>
+        </label>
+
+        <button class="calcBtn" id="calcBtn">{% trans "Рассчитать" %}</button>
+        <button class="touchInBtn" id="touchInBtn">{% trans "Обсудить с менеджером" %}</button>
+
+        <p class="calcHint">
+          * {% trans "Условия рассрочки могут меняться. Точные условия уточняйте у менеджера." %}
+          <br />
+          * {% trans "Обычно требуется паспорт и возраст 18+." %}
+        </p>
+      </div>
+
+      <div class="results">
+        <h2>{% trans "Результаты" %}</h2>
+
+        <div class="resGrid">
+          <div class="resItem">
+            <span>{% trans "Общая стоимость" %}</span>
+            <b id="resTotal">—</b>
+          </div>
+          <div class="resItem">
+            <span>{% trans "Первоначальный взнос" %}</span>
+            <b id="resDownPct">—</b>
+          </div>
+          <div class="resItem">
+            <span>{% trans "Остаток после взноса" %}</span>
+            <b id="resRest">—</b>
+          </div>
+          <div class="resItem">
+            <span>{% trans "Цена за м²" %}</span>
+            <b id="resPriceM2">—</b>
+          </div>
+          <div class="resItem">
+            <span>{% trans "Ежемесячный платеж" %}</span>
+            <b id="resMonthly">—</b>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- -------- CONTACT FORM -------- -->
+  <div class="touchIn">
+    <h1>
+      {% trans "Свяжитесь с нами" %} <br />
+      {% trans "Мы готовы ответить на все" %} <br />
+      {% trans "ваши вопросы" %}
+    </h1>
+
+    <form class="contactForm" id="contactForm" method="post" action="{% url 'public_site:contacts' %}">
+      {% csrf_token %}
+
+      <div class="formRow">
+        <input
+          type="text"
+          name="name"
+          placeholder="{% trans 'Ваше имя' %}"
+          required
+        />
+        <input
+          type="tel"
+          name="phone"
+          placeholder="{% trans 'Телефон' %}"
+          required
+        />
+      </div>
+
+      <input
+        type="email"
+        name="email"
+        placeholder="{% trans 'Email (необязательно)' %}"
+      />
+
+      <textarea
+        name="message"
+        rows="4"
+        placeholder="{% trans 'Ваш вопрос или сообщение' %}"
+      ></textarea>
+
+      <button type="submit">{% trans "Отправить заявку" %}</button>
+
+      <p class="formNote">
+        {% trans "Нажимая кнопку, вы соглашаетесь с обработкой персональных данных" %}
+      </p>
+
+      <p class="formStatus" id="formStatus">
+        {% if messages %}
+          {% for message in messages %}
+            <span class="{{ message.tags }}">{{ message }}</span>
+          {% endfor %}
+        {% endif %}
+      </p>
+    </form>
+  </div>
+
+</main>
+
+<!-- ======================== FOOTER ======================== -->
+<footer>
+  <div class="footer" id="footer">
+    <div class="head">
+      <h1>
+        {% trans "Жилые и коммерческие" %}<br />
+        {% trans "проекты с душой и точностью" %}
+      </h1>
+      <img
+        src="{% static 'assets/images/logo.svg' %}"
+        loading="lazy"
+        alt="{% trans 'Логотип' %}"
+      />
+    </div>
+
+    <div class="info">
+      <div class="left">
+        <a href="mailto:info@elnasip.kg">info@elnasip.kg</a>
+        <p>
+          {% trans "Мы создаём не просто здания — мы строим доверие," %}<br />
+          {% trans "комфорт и уверенность в завтрашнем дне" %}
+        </p>
+      </div>
+      <div class="right">
+        <a href="tel:+996999999999">+996 999 999 999</a>
+        <p>{% trans "Адрес: г. Ош, ул. Заводская 18" %}</p>
+
+        <div class="workTime">
+          <p>
+            <span>{% trans "Пн-Пт" %}</span>
+            9:00 – 18:00
+          </p>
+          <p>
+            <span>{% trans "Сб" %}</span>
+            10:00 – 16:00
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- -------- FAB (floating action button) -------- -->
+  <div class="fabWrapper">
+    <div class="fabMenu" id="fabMenu">
+      <a
+        href="https://wa.me/{{ settings.WHATSAPP_NUMBER }}"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="fabItem"
+      >
+        <img src="{% static 'assets/icons/WhatsApp.svg' %}" alt="WhatsApp" />
+        <span>WhatsApp</span>
+      </a>
+
+      <a
+        href="https://t.me/{{ settings.TELEGRAM_USERNAME }}"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="fabItem"
+      >
+        <img src="{% static 'assets/icons/Telegram.svg' %}" alt="Telegram" />
+        <span>Telegram</span>
+      </a>
+
+      <a href="tel:+996999999999" class="fabItem">
+        <img src="{% static 'assets/icons/phone.svg' %}" alt="{% trans 'Позвонить' %}" />
+        <span>{% trans "Позвонить" %}</span>
+      </a>
+    </div>
+
+    <button class="fabMain" id="fabMain" aria-label="{% trans 'Контакты' %}">
+      <img src="{% static 'assets/icons/phone.svg' %}" alt="" />
+    </button>
+  </div>
+</footer>
+
+<!-- ======================== MODAL ======================== -->
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="modal__overlay" data-close="1"></div>
+
+  <div
+    class="modal__card"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="modalTitle"
+  >
+    <div class="modal__head">
+      <h3 class="modal__title" id="modalTitle">{% trans "Сообщение" %}</h3>
+      <button class="modal__close" type="button" data-close="1">×</button>
+    </div>
+    <div class="modal__body" id="modalBody"></div>
+    <div class="modal__actions">
+      <button class="modal__btn modal__btn--primary" type="button" id="modalOk">
+        {% trans "Ок" %}
+      </button>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js"></script>
+<script src="{% static 'js/script.js' %}"></script>
+<script>
+  const fabMain = document.getElementById("fabMain");
+  const fabMenu = document.getElementById("fabMenu");
+
+  if (fabMain && fabMenu) {
+    fabMain.addEventListener("click", () => {
+      fabMenu.classList.toggle("active");
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!fabMain.contains(e.target) && !fabMenu.contains(e.target)) {
+        fabMenu.classList.remove("active");
+      }
+    });
+  }
+</script>
+{% endblock %}

@@ -10,10 +10,74 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 
 from openpyxl import load_workbook
+import xlrd
 
 from .models import Block, Apartment, DealPayment, ApartmentComment
 from .forms import BlockApartmentsImportForm
 from finances.models import CommonCash, CashFlow, Sale
+
+
+class _XlsSheet:
+    """Обёртка над xlrd.Sheet, имитирующая нужный интерфейс openpyxl-листа."""
+
+    def __init__(self, sheet):
+        self._sheet = sheet
+
+    @property
+    def max_column(self):
+        return self._sheet.ncols
+
+    @property
+    def max_row(self):
+        return self._sheet.nrows
+
+    def cell(self, row, column):
+        return _XlsCell(self._sheet, row - 1, column - 1)
+
+
+class _XlsCell:
+    """Обёртка над значением ячейки xlrd, имитирующая openpyxl Cell."""
+
+    def __init__(self, sheet, row0, col0):
+        self._sheet = sheet
+        self._row0 = row0
+        self._col0 = col0
+
+    @property
+    def value(self):
+        if self._row0 >= self._sheet.nrows or self._col0 >= self._sheet.ncols:
+            return None
+        cell = self._sheet.cell(self._row0, self._col0)
+        ctype = cell.ctype
+        val = cell.value
+        # xlrd.XL_CELL_DATE -> конвертируем в datetime
+        if ctype == xlrd.XL_CELL_DATE:
+            try:
+                tup = xlrd.xldate_as_tuple(val, self._sheet.book.datemode)
+                return datetime(*tup) if tup[0] else None
+            except Exception:
+                return val
+        # пустая ячейка
+        if ctype == xlrd.XL_CELL_EMPTY:
+            return None
+        # число — оставляем как есть (float/int)
+        return val
+
+
+def _load_sheet(file_obj, filename):
+    """Возвращает объект листа (openpyxl или _XlsSheet) в зависимости от расширения."""
+    name_lower = filename.lower()
+    if name_lower.endswith(".xlsx"):
+        wb = load_workbook(file_obj, data_only=True)
+        return wb.active
+    elif name_lower.endswith(".xls"):
+        data = file_obj.read()
+        wb = xlrd.open_workbook(file_contents=data)
+        sheet = wb.sheet_by_index(0)
+        sheet.book = wb  # нужно для datemode в _XlsCell
+        return _XlsSheet(sheet)
+    else:
+        return None
 
 
 def _to_decimal(val):
@@ -116,12 +180,10 @@ def import_block_apartments_excel(request, block_id):
     update_existing = form.cleaned_data.get("update_existing", True)
     create_missing = form.cleaned_data.get("create_missing", True)
 
-    if not xlsx.name.lower().endswith(".xlsx"):
-        messages.error(request, "Загрузи файл именно .xlsx (новый Excel).")
+    ws = _load_sheet(xlsx, xlsx.name)
+    if ws is None:
+        messages.error(request, "Поддерживаются только файлы .xlsx и .xls.")
         return render(request, "projects/block_apartments_import.html", {"block": block, "form": form})
-
-    wb = load_workbook(xlsx, data_only=True)
-    ws = wb.active
 
     headers = {}
     for c in range(1, ws.max_column + 1):
