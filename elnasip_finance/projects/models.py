@@ -131,23 +131,24 @@ class DealPayment(models.Model):
     def save(self, *args, **kwargs):
         # Сначала сохраняем сам платеж
         super().save(*args, **kwargs)
-    
+
         apartment = self.apartment
-        total_paid = apartment.payments.aggregate(Sum('amount'))['amount__sum'] or 0
+        total_paid = apartment.payments.aggregate(Sum('amount'))['amount__sum'] or Decimal('0')
 
-        # Безопасное значение deal_amount
-        deal_amount = apartment.deal_amount or 0
+        # Поступление по сделке = сумма всех платежей
+        apartment.deal_amount = total_paid
 
-        if apartment.fact_price_per_m2 and apartment.planned_price_per_m2 > 0:
-            # Рассчитываем проданную площадь
-            apartment.sold_area = total_paid / apartment.fact_price_per_m2
-            apartment.sold_area = min(apartment.sold_area, apartment.area)  # не больше общей площади
+        # Остаток = Факт сделки − Поступление (не меньше 0)
+        fakt = apartment.deal_Fakt_deal_amount or Decimal('0')
+        apartment.remaining_deal_amount = max(fakt - total_paid, Decimal('0'))
 
-        # Определяем статус "продана"
-        if deal_amount > 0:
+        # Проданная площадь по факт. цене
+        if apartment.fact_price_per_m2 and apartment.fact_price_per_m2 > 0:
+            apartment.sold_area = min(total_paid / apartment.fact_price_per_m2, apartment.area or Decimal('0'))
+
+        # Статус "продана" — только ставим True, никогда не сбрасываем
+        if total_paid > 0 or fakt > 0:
             apartment.is_sold = True
-        else:
-            apartment.is_sold = False
 
         apartment.save()
 

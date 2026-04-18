@@ -633,9 +633,7 @@ from django.contrib import messages
 
 @login_required
 def add_payment(request, apartment_id):
-    apartment = Apartment.objects.get( id=apartment_id)
-    # apartment.planned_deal_amount = 0
-    apartment.save()
+    apartment = Apartment.objects.get(id=apartment_id)
     if request.method == 'POST':
         form = DealPaymentForm(request.POST)
         if form.is_valid():
