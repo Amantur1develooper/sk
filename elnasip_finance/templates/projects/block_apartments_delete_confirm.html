@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Удаление квартир — {{ block }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 600px;">
+
+  <div class="card border-danger">
+    <div class="card-header bg-danger text-white">
+      <h5 class="mb-0">Удалить все квартиры блока</h5>
+    </div>
+    <div class="card-body">
+      <p class="mb-1"><strong>Блок:</strong> {{ block }}</p>
+      <p class="mb-3"><strong>Количество квартир:</strong> {{ block.apartments.count }}</p>
+
+      <div class="alert alert-danger">
+        <strong>Внимание!</strong> Это действие необратимо.<br>
+        Будут удалены <strong>все квартиры</strong> блока «{{ block.name }}» вместе с:
+        <ul class="mb-0 mt-1">
+          <li>всеми платежами по сделкам</li>
+          <li>всеми платежами по аренде</li>
+          <li>всеми комментариями к квартирам</li>
+        </ul>
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="confirm" value="yes">
+        <a href="{% url 'projects:block_detail' block.id %}" class="btn btn-secondary me-2">Отмена</a>
+        <button type="submit" class="btn btn-danger">Да, удалить все квартиры</button>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

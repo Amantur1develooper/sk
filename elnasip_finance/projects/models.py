@@ -32,6 +32,7 @@ class Apartment(models.Model):
     planned_deal_amount = models.DecimalField(max_digits=15, default=0, decimal_places=2, blank=True, null=True, verbose_name="Планируемая сделка")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    is_barter = models.BooleanField(default=False, verbose_name="Бартер")
     is_rented = models.BooleanField(default=False, verbose_name="Сдана в аренду")
     rent_price_per_month = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, blank=True, null=True,

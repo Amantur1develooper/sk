@@ -159,9 +159,12 @@ def _parse_contract_date(val):
     return dt
 
 
-def _detect_reserved(text1, text2):
-    txt = f"{text1 or ''} {text2 or ''}".lower()
-    return "брон" in txt
+def _deal_type_flags(raw_type):
+    """Определяет is_barter, is_reserved по колонке 'Тип сделки'."""
+    s = str(raw_type or "").strip().lower()
+    is_barter = "бартер" in s
+    is_reserved = ("брон" in s) and not is_barter
+    return is_barter, is_reserved
 
 
 @login_required
@@ -176,147 +179,154 @@ def import_block_apartments_excel(request, block_id):
     if not form.is_valid():
         return render(request, "projects/block_apartments_import.html", {"block": block, "form": form})
 
-    xlsx = form.cleaned_data["file"]
+    uploaded = form.cleaned_data["file"]
     update_existing = form.cleaned_data.get("update_existing", True)
     create_missing = form.cleaned_data.get("create_missing", True)
 
-    ws = _load_sheet(xlsx, xlsx.name)
+    ws = _load_sheet(uploaded, uploaded.name)
     if ws is None:
         messages.error(request, "Поддерживаются только файлы .xlsx и .xls.")
         return render(request, "projects/block_apartments_import.html", {"block": block, "form": form})
 
+    # --- читаем заголовки ---
     headers = {}
     for c in range(1, ws.max_column + 1):
         v = ws.cell(row=1, column=c).value
         if v:
             headers[str(v).strip()] = c
 
-    required = ["Предварительный номер", "Количество комнат", "Общая площадь ориентировочно", "Оплачено"]
+    required = ["Предварительный номер", "Количество комнат", "Общая площадь ориентировочно"]
     miss = [h for h in required if h not in headers]
     if miss:
         messages.error(request, f"В файле не хватает колонок: {', '.join(miss)}")
         return render(request, "projects/block_apartments_import.html", {"block": block, "form": form})
 
-    common_cash = CommonCash.objects.first()
+    def col(name):
+        """Возвращает значение ячейки по имени колонки или None."""
+        if name not in headers:
+            return None
+        return ws.cell(row=row, column=headers[name]).value
 
     created_cnt = 0
     updated_cnt = 0
     skipped_cnt = 0
-    payments_created = 0
-    cashflows_created = 0
+    returns_cnt = 0      # квартира была продана, в Excel — пустая (возврат)
+    resales_cnt = 0      # квартира продана другому клиенту (перепродажа)
+    barter_cnt = 0       # бартерные сделки
     errors = []
+    event_log = []       # детальный лог изменений
 
     for row in range(2, ws.max_row + 1):
         try:
-            raw_num = ws.cell(row=row, column=headers["Предварительный номер"]).value
+            raw_num = col("Предварительный номер")
             apt_number = _clean_apartment_number(raw_num)
             if not apt_number:
+                skipped_cnt += 1
                 continue
 
+            # --- читаем все поля из Excel ---
+            fio = _normalize_name(col("Ф.И.О."))
+            note_raw = col("Примечание") or ""
+            phone_raw = col("Телефон")
+            phone = str(phone_raw).strip() if phone_raw else ""
+
+            deal_type_raw = col("Тип сделки") or ""
+            is_barter, is_reserved_from_type = _deal_type_flags(deal_type_raw)
+
+            paid_cell = col("Оплачено")
+            paid = _to_decimal(paid_cell) or Decimal("0")
+
+            sum_contract = _to_decimal(col("Сумма договора")) or Decimal("0")
+            remaining_excel = _to_decimal(col("Остаток на оплату"))
+            if remaining_excel is None:
+                remaining_excel = max(sum_contract - paid, Decimal("0"))
+
+            price_m2 = _to_decimal(col("Цена за 1 м.кв."))
+            floor = _to_int(col("Этаж"), default=1)
+            rooms = _to_int(col("Количество комнат"), default=0)
+            area = _to_decimal(col("Общая площадь ориентировочно")) or Decimal("0")
+            contract_dt = _parse_contract_date(col("Дата договора"))
+
+            # --- определяем статус из Excel ---
+            excel_has_client = bool(fio)
+            # Продана если: есть ФИО, или оплачено > 0, или бартер с суммой договора
+            excel_is_sold = excel_has_client or paid > 0 or (is_barter and sum_contract > 0)
+            # Только бронь (не продана)
+            is_reserved = is_reserved_from_type and not excel_is_sold
+
+            # --- ищем в БД ---
             apt_existing = Apartment.objects.filter(block=block, apartment_number=apt_number).first()
             exists = apt_existing is not None
 
             if exists and not update_existing:
                 skipped_cnt += 1
                 continue
-            if (not exists) and not create_missing:
+            if not exists and not create_missing:
                 skipped_cnt += 1
                 continue
 
-            # --- читаем минимум для определения "свободна/не свободна" ---
-            fio_raw = ws.cell(row=row, column=headers.get("Ф.И.О.", 0)).value if "Ф.И.О." in headers else None
-            fio = _normalize_name(fio_raw)
+            # --- детектим особые случаи ---
+            event_comment = None
+            event_tag = None
 
-            note = ws.cell(row=row, column=headers.get("Примечание", 0)).value if "Примечание" in headers else None
-            excel_reserved = _detect_reserved(raw_num, note)
+            if exists and apt_existing.is_sold:
+                db_client = (apt_existing.client_name or "").strip()
 
-            paid_cell = ws.cell(row=row, column=headers["Оплачено"]).value
-            paid_total_file = _to_decimal(paid_cell)  # может быть None если пусто/мусор
+                if not excel_is_sold and not is_reserved:
+                    # ВОЗВРАТ: в Excel пусто, в БД — продана
+                    event_tag = "ВОЗВРАТ"
+                    event_comment = f"[Импорт] Возврат: ранее продана клиенту «{db_client}». Excel показывает квартиру свободной."
+                    returns_cnt += 1
 
-            # ✅ ТИХИЙ ПРОПУСК: квартира свободна в БД и свободна в Excel → ничего не показываем
-            if exists:
-                db_free = (not apt_existing.is_sold) and (not apt_existing.is_reserved)
-                excel_paid_zero_or_empty = _is_empty_cell(paid_cell) or (paid_total_file == Decimal("0"))
-                excel_free = (not fio) and (not excel_reserved) and excel_paid_zero_or_empty
-                if db_free and excel_free:
-                    skipped_cnt += 1
-                    continue
+                elif excel_has_client and db_client:
+                    norm_db = re.sub(r"\s+", " ", db_client).lower()
+                    norm_xl = re.sub(r"\s+", " ", fio).lower()
+                    if norm_db != norm_xl:
+                        # ПЕРЕПРОДАЖА: клиент изменился
+                        event_tag = "ПЕРЕПРОДАЖА"
+                        event_comment = f"[Импорт] Перепродажа: «{db_client}» → «{fio}»."
+                        resales_cnt += 1
 
-            # если квартира уже есть и "оплачено" пусто -> НЕ меняем и НЕ создаём платежи
-            if exists and _is_empty_cell(paid_cell):
-                errors.append(f"Строка {row} ({apt_number}): 'Оплачено' пусто — пропущено, данные квартиры НЕ менял.")
-                skipped_cnt += 1
-                continue
+            if is_barter:
+                barter_cnt += 1
+                if event_tag is None:
+                    event_tag = "БАРТЕР"
 
-            # если квартира уже есть и "оплачено" не число -> тоже НЕ трогаем
-            if exists and (paid_total_file is None):
-                errors.append(f"Строка {row} ({apt_number}): 'Оплачено' не число — пропущено, данные квартиры НЕ менял.")
-                skipped_cnt += 1
-                continue
-
-            # для новой квартиры: если пусто/не число, считаем 0
-            if paid_total_file is None:
-                paid_total_file = Decimal("0")
-
-            # если Excel меньше, чем уже в платежах -> НЕ МЕНЯЕМ КВАРТИРУ, показываем человеку
-            if exists:
-                paid_total_db_before = apt_existing.payments.aggregate(total=Sum("amount"))["total"] or Decimal("0")
-                if paid_total_file < paid_total_db_before:
-                    errors.append(
-                        f"Строка {row} ({apt_number}): в Excel оплачено меньше, чем уже есть в платежах. "
-                        f"(Excel={paid_total_file}, DB={paid_total_db_before}) — пропущено, данные квартиры НЕ менял."
-                    )
-                    skipped_cnt += 1
-                    continue
-
-            # --- дальше обычный импорт (если не пропустили) ---
-            floor = _to_int(ws.cell(row=row, column=headers["Этаж"]).value, default=1) if "Этаж" in headers else 1
-            rooms = _to_int(ws.cell(row=row, column=headers["Количество комнат"]).value, default=0)
-            area = _to_decimal(ws.cell(row=row, column=headers["Общая площадь ориентировочно"]).value) or Decimal("0")
-
-            phone = ws.cell(row=row, column=headers.get("Телефон", 0)).value if "Телефон" in headers else None
-            price_m2 = _to_decimal(ws.cell(row=row, column=headers.get("Цена за 1 м.кв.", 0)).value) if "Цена за 1 м.кв." in headers else None
-            sum_contract = _to_decimal(ws.cell(row=row, column=headers.get("Сумма договора", 0)).value) if "Сумма договора" in headers else None
-
-            remaining = _to_decimal(ws.cell(row=row, column=headers.get("Остаток на оплату", 0)).value) if "Остаток на оплату" in headers else None
-            if sum_contract is not None and remaining is None:
-                remaining = sum_contract - paid_total_file
-
-            contract_dt = _parse_contract_date(ws.cell(row=row, column=headers.get("Дата договора", 0)).value) if "Дата договора" in headers else timezone.now()
-
-            has_fio = bool(fio)
-            is_sold = (paid_total_file > 0) or has_fio
-
-            is_reserved = False
-            if not is_sold:
-                is_reserved = excel_reserved
-
+            # --- формируем defaults для update_or_create ---
             defaults = {
                 "floor": floor,
                 "rooms": rooms,
                 "area": area,
-                "is_sold": is_sold,
-                "is_reserved": (False if is_sold else is_reserved),
-                "deal_amount": paid_total_file,
+                "is_sold": excel_is_sold,
+                "is_reserved": is_reserved,
+                "is_barter": is_barter,
+                "sold_area": Decimal("0"),  # не пересчитываем — суммы идут из Excel
             }
 
-            defaults["client_name"] = fio if fio else None
+            if excel_has_client:
+                defaults["client_name"] = fio
+            elif event_tag == "ВОЗВРАТ":
+                defaults["client_name"] = None
+                defaults["is_sold"] = False
+                defaults["is_reserved"] = False
 
             if price_m2 is not None:
-                defaults["planned_price_per_m2"] = price_m2
                 defaults["fact_price_per_m2"] = price_m2
-
-            if sum_contract is not None:
-                defaults["deal_Fakt_deal_amount"] = sum_contract
-
-            if remaining is not None:
-                defaults["remaining_deal_amount"] = remaining
+                defaults["planned_price_per_m2"] = price_m2
 
             with transaction.atomic():
                 apt, created_flag = Apartment.objects.update_or_create(
                     block=block,
                     apartment_number=apt_number,
-                    defaults=defaults
+                    defaults=defaults,
+                )
+
+                # --- финансовые поля напрямую (обходим auto-recalc в save()) ---
+                Apartment.objects.filter(id=apt.id).update(
+                    deal_Fakt_deal_amount=sum_contract,
+                    deal_amount=paid,
+                    remaining_deal_amount=remaining_excel,
+                    planned_deal_amount=Decimal("0") if excel_is_sold else (area * price_m2 if price_m2 and area else Decimal("0")),
                 )
 
                 if created_flag:
@@ -324,58 +334,38 @@ def import_block_apartments_excel(request, block_id):
                 else:
                     updated_cnt += 1
 
+                # --- комментарий к квартире ---
                 comment_parts = []
-                if note:
-                    comment_parts.append(str(note).strip())
+                if event_comment:
+                    comment_parts.append(event_comment)
+                note_str = str(note_raw).strip() if note_raw else ""
+                if note_str:
+                    comment_parts.append(f"Примечание: {note_str[:300]}")
                 if phone:
                     comment_parts.append(f"Телефон: {phone}")
+                if is_barter and "бартер" not in note_str.lower():
+                    comment_parts.append(f"Тип сделки: Бартер ({str(deal_type_raw).strip()})")
+
                 if comment_parts:
-                    ApartmentComment.objects.get_or_create(
-                        apartment=apt,
-                        text="[Импорт Excel] " + " | ".join(comment_parts),
-                        defaults={"author": request.user.get_username()},
-                    )
-
-                paid_total_db = apt.payments.aggregate(total=Sum("amount"))["total"] or Decimal("0")
-                delta = paid_total_file - paid_total_db
-
-                if delta > 0:
-                    DealPayment.objects.create(
-                        apartment=apt,
-                        amount=delta,
-                        payment_date=contract_dt,
-                        comment="Импорт из Excel (добавлено по разнице)",
-                        created_by=request.user,
-                    )
-                    payments_created += 1
-
-                    if common_cash:
-                        CashFlow.objects.create(
-                            common_cash=common_cash,
-                            flow_type="income",
-                            amount=delta,
-                            description=f"Импорт Excel: оплата кв. {apt.apartment_number} ({block})",
-                            block=block,
-                            created_by=request.user
+                    full_text = "[Импорт Excel] " + " | ".join(comment_parts)
+                    # Не дублируем комментарии
+                    if not ApartmentComment.objects.filter(apartment=apt, text=full_text).exists():
+                        ApartmentComment.objects.create(
+                            apartment=apt,
+                            text=full_text,
+                            author=request.user.get_username(),
                         )
-                        cashflows_created += 1
 
-                    Sale.objects.create(
-                        block=block,
-                        area=0,
-                        apartment=apt,
-                        amount=delta,
-                        client_info=f"{apt.client_name or ''}",
-                        created_by=request.user
-                    )
+                if event_tag:
+                    event_log.append(f"{apt_number}: {event_tag}" + (f" ({fio or 'свободна'})" if event_tag != "БАРТЕР" else ""))
 
         except Exception as e:
-            errors.append(f"Строка {row}: {e}")
+            errors.append(f"Строка {row} ({apt_number if apt_number else '?'}): {e}")
 
     messages.success(
         request,
-        f"Импорт завершён. Создано: {created_cnt}, обновлено: {updated_cnt}, пропущено: {skipped_cnt}. "
-        f"Новых платежей: {payments_created}, транзакций в кассу: {cashflows_created}."
+        f"Импорт завершён. Создано: {created_cnt}, обновлено: {updated_cnt}, "
+        f"пропущено: {skipped_cnt}. Возвратов: {returns_cnt}, перепродаж: {resales_cnt}, бартеров: {barter_cnt}."
     )
 
     return render(request, "projects/block_apartments_import.html", {
@@ -384,8 +374,10 @@ def import_block_apartments_excel(request, block_id):
         "created": created_cnt,
         "updated": updated_cnt,
         "skipped": skipped_cnt,
-        "payments_created": payments_created,
-        "cashflows_created": cashflows_created,
+        "returns": returns_cnt,
+        "resales": resales_cnt,
+        "barters": barter_cnt,
+        "event_log": event_log,
         "errors": errors,
     })
 

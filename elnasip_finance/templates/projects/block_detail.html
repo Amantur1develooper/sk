@@ -20,6 +20,11 @@
    href="{% url 'projects:block_apartments_export' current_block.id %}?{{ request.GET.urlencode }}">
   Экспорт в Excel
 </a>
+<a class="btn btn-danger"
+   href="{% url 'projects:delete_block_apartments' current_block.id %}"
+   title="Удалить все квартиры блока">
+  Удалить все квартиры
+</a>
 
     </div>
 </div>

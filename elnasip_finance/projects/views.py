@@ -764,6 +764,22 @@ def apartment_add(request, block_id):
                                                            'blocks':blocks})
 
 
+@login_required
+def delete_block_apartments(request, block_id):
+    block = get_object_or_404(Block, id=block_id)
+
+    if request.method == "POST":
+        confirm = request.POST.get("confirm")
+        if confirm == "yes":
+            deleted_count, _ = block.apartments.all().delete()
+            messages.success(request, f"Удалено {deleted_count} квартир (и все связанные данные) из блока «{block.name}».")
+        else:
+            messages.warning(request, "Удаление отменено.")
+        return redirect("projects:block_detail", block_id=block.id)
+
+    return render(request, "projects/block_apartments_delete_confirm.html", {"block": block})
+
+
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Block, EstimateItem
 from .forms import EstimateItemForm
