@@ -157,6 +157,116 @@
 
 </div>
 
+{# ══════════════════════════════════════════════════════════════════════ #}
+{# ── ГЛУБОКИЙ АНАЛИЗ РАСХОДОВ ── #}
+{# ══════════════════════════════════════════════════════════════════════ #}
+<div class="d-flex align-items-center gap-2 mb-3 mt-2">
+    <span class="fw-bold fs-5">Анализ расходов</span>
+    <span class="badge bg-danger bg-opacity-10 text-danger">Детально</span>
+</div>
+
+<div class="row g-3 mb-4">
+
+    {# План vs Факт по категориям — горизонтальный grouped bar #}
+    <div class="col-12 col-lg-7">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-layers me-1"></i> План vs Факт по категориям сметы
+            </div>
+            <div class="card-body">
+                <canvas id="chartCatPlanFakt" height="250"></canvas>
+            </div>
+        </div>
+    </div>
+
+    {# Расходы по ЖК donut #}
+    <div class="col-12 col-md-6 col-lg-5">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-pie-chart-fill me-1"></i> Расходы по ЖК (выделения)
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <canvas id="chartProjExp" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+
+    {# Динамика расходов по месяцам: смета vs прямые #}
+    <div class="col-12 col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-calendar-week me-1"></i> Динамика расходов по месяцам
+                <small class="text-muted ms-2">смета vs прямые расходы</small>
+            </div>
+            <div class="card-body">
+                <canvas id="chartExpMonthly" height="110"></canvas>
+            </div>
+        </div>
+    </div>
+
+    {# Прямые расходы из кассы #}
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-cash-stack me-1"></i> Прямые расходы из кассы
+            </div>
+            <div class="card-body">
+                <canvas id="chartDirectExp" height="190"></canvas>
+            </div>
+        </div>
+    </div>
+
+    {# Расходы по блокам — горизонт. bar #}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-building me-1"></i> Расходы по блокам (выделения из сметы)
+            </div>
+            <div class="card-body">
+                <canvas id="chartBlkExp" height="90"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# Топ-10 позиций сметы по выделениям #}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-trophy me-1"></i> Топ-10 позиций сметы по расходам</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th>
+                    <th>Позиция</th>
+                    <th>Категория</th>
+                    <th>Блок</th>
+                    <th class="text-end">Выделено, сом</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in top_items %}
+                <tr>
+                    <td class="text-muted">{{ forloop.counter }}</td>
+                    <td>{{ item.name }}</td>
+                    <td><span class="badge bg-light text-dark">{{ item.category }}</span></td>
+                    <td class="text-muted small">{{ item.block }}</td>
+                    <td class="text-end fw-semibold text-danger">
+                        {{ item.total|floatformat:0 }} &#8199;
+                        <div class="progress mt-1" style="height:3px;">
+                            <div class="progress-bar bg-danger"
+                                 style="width:{{ item.total|floatformat:0 }}px;max-width:100%"></div>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
 {# ── Проекты + последние операции ── #}
 <div class="row g-3">
     <div class="col-12 col-md-5">
@@ -287,7 +397,7 @@ new Chart(document.getElementById('chartProjects'), {
     }
 });
 
-// ── Приход по блокам ─────────────────────────────────────────────────
+// ── Приход по блокам ──────────────────────────────────────────────────
 new Chart(document.getElementById('chartBlocks'), {
     type: 'bar',
     data: {
@@ -303,6 +413,142 @@ new Chart(document.getElementById('chartBlocks'), {
         indexAxis: 'y',
         responsive: true,
         plugins: { legend: { display: false } },
+        scales: {
+            x: { ticks: { callback: v => (v/1e6).toFixed(1) + 'М' } }
+        }
+    }
+});
+
+// ════════════════════════════════════════════════════════════════════
+// ГЛУБОКИЙ АНАЛИЗ РАСХОДОВ
+// ════════════════════════════════════════════════════════════════════
+
+// ── План vs Факт по категориям ────────────────────────────────────────
+new Chart(document.getElementById('chartCatPlanFakt'), {
+    type: 'bar',
+    data: {
+        labels: {{ cat_labels|safe }},
+        datasets: [
+            {
+                label: 'План',
+                data: {{ cat_plan_data|safe }},
+                backgroundColor: 'rgba(37,99,235,.7)',
+                borderRadius: 4,
+            },
+            {
+                label: 'Факт (выделено)',
+                data: {{ cat_fakt_data|safe }},
+                backgroundColor: 'rgba(239,68,68,.75)',
+                borderRadius: 4,
+            }
+        ]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+            legend: { position: 'top' },
+            tooltip: { callbacks: { label: ctx => ' ' + Number(ctx.raw).toLocaleString('ru-RU') + ' сом' } }
+        },
+        scales: {
+            x: { ticks: { callback: v => (v/1e6).toFixed(1) + 'М' } }
+        }
+    }
+});
+
+// ── Расходы по ЖК ────────────────────────────────────────────────────
+new Chart(document.getElementById('chartProjExp'), {
+    type: 'doughnut',
+    data: {
+        labels: {{ proj_exp_labels|safe }},
+        datasets: [{ data: {{ proj_exp_data|safe }}, backgroundColor: COLORS }]
+    },
+    options: {
+        cutout: '60%',
+        plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+            tooltip: { callbacks: { label: ctx => ' ' + Number(ctx.raw).toLocaleString('ru-RU') + ' сом' } }
+        }
+    }
+});
+
+// ── Динамика расходов по месяцам ─────────────────────────────────────
+new Chart(document.getElementById('chartExpMonthly'), {
+    type: 'bar',
+    data: {
+        labels: {{ exp_months_labels|safe }},
+        datasets: [
+            {
+                label: 'Смета/выделения',
+                data: {{ exp_smeta_data|safe }},
+                backgroundColor: 'rgba(239,68,68,.75)',
+                borderRadius: 4,
+                stack: 'exp'
+            },
+            {
+                label: 'Прямые расходы',
+                data: {{ exp_direct_data|safe }},
+                backgroundColor: 'rgba(245,158,11,.75)',
+                borderRadius: 4,
+                stack: 'exp'
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'top' },
+            tooltip: { callbacks: { label: ctx => ' ' + Number(ctx.raw).toLocaleString('ru-RU') + ' сом' } }
+        },
+        scales: {
+            y: { stacked: true, ticks: { callback: v => (v/1e6).toFixed(1) + 'М' } },
+            x: { stacked: true }
+        }
+    }
+});
+
+// ── Прямые расходы из кассы ───────────────────────────────────────────
+new Chart(document.getElementById('chartDirectExp'), {
+    type: 'bar',
+    data: {
+        labels: {{ direct_exp_labels|safe }},
+        datasets: [{
+            label: 'Сумма',
+            data: {{ direct_exp_data|safe }},
+            backgroundColor: COLORS.map(c => c + 'cc'),
+            borderRadius: 5
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ' ' + Number(ctx.raw).toLocaleString('ru-RU') + ' сом' } }
+        },
+        scales: {
+            x: { ticks: { callback: v => (v/1e6).toFixed(1) + 'М' } }
+        }
+    }
+});
+
+// ── Расходы по блокам ─────────────────────────────────────────────────
+new Chart(document.getElementById('chartBlkExp'), {
+    type: 'bar',
+    data: {
+        labels: {{ blk_exp_labels|safe }},
+        datasets: [{
+            label: 'Выделено (сом)',
+            data: {{ blk_exp_data|safe }},
+            backgroundColor: COLORS,
+            borderRadius: 5
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ' ' + Number(ctx.raw).toLocaleString('ru-RU') + ' сом' } }
+        },
         scales: {
             x: { ticks: { callback: v => (v/1e6).toFixed(1) + 'М' } }
         }

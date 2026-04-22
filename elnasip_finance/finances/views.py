@@ -3,9 +3,8 @@ from django.shortcuts import render, get_object_or_404
 from .models import CommonCash, CashFlow, Allocation, Expense, Sale
 from projects.models import Project, Block, EstimateItem
 from employees.models import Employee, SalaryPayment
-from django.db.models import Sum
-from django.db.models import Sum, Q
-from django.db.models import Q
+from django.db.models import Sum, Q, F, ExpressionWrapper, DecimalField
+from django.db.models.functions import TruncMonth
 from django.utils.dateparse import parse_date
 from django.http import JsonResponse
 from django.db.models import Q
@@ -134,7 +133,6 @@ def common_cash_detail2(request):
 @login_required
 def dashboard(request):
     import json
-    from django.db.models import Sum, Q
     from projects.models import Project, Block, Apartment
 
     common_cash = CommonCash.objects.first()
@@ -205,7 +203,6 @@ def dashboard(request):
     expense_data   = list(expense_map.values())
 
     # ── Динамика приход/расход по месяцам (последние 12) ─────────────────
-    from django.db.models.functions import TruncMonth
     monthly = (
         CashFlow.objects
         .annotate(month=TruncMonth('date'))
@@ -231,6 +228,114 @@ def dashboard(request):
     apt_reserved = Apartment.objects.filter(is_reserved=True, is_sold=False).count()
     apt_barter   = Apartment.objects.filter(is_barter=True).count()
     apt_free     = Apartment.objects.filter(is_sold=False, is_reserved=False, is_barter=False).count()
+
+    # ── ГЛУБОКИЙ АНАЛИЗ РАСХОДОВ ──────────────────────────────────────────
+    from projects.models import EstimateCategory, EstimateItem
+    from finances.models import Allocation
+
+    # 1. План vs Факт по категориям сметы
+    categories = EstimateCategory.objects.all()
+    cat_plan_map  = {}
+    cat_fakt_map  = {}
+    for cat in categories:
+        plan = EstimateItem.objects.filter(category=cat).aggregate(
+            s=Sum(
+                ExpressionWrapper(F('quantity') * F('unit_price'),
+                output_field=DecimalField(max_digits=15, decimal_places=2))
+            )
+        )['s'] or 0
+        fakt = Allocation.objects.filter(estimate_item__category=cat).aggregate(s=Sum('amount'))['s'] or 0
+        if plan or fakt:
+            cat_plan_map[cat.name] = float(plan)
+            cat_fakt_map[cat.name] = float(fakt)
+
+    cat_labels    = list(cat_plan_map.keys())
+    cat_plan_data = [cat_plan_map[k] for k in cat_labels]
+    cat_fakt_data = [cat_fakt_map.get(k, 0) for k in cat_labels]
+
+    # 2. Расходы по блокам (выделения через Allocation)
+    block_expense_qs = (
+        Allocation.objects
+        .values('estimate_item__block__name', 'estimate_item__block__project__name')
+        .annotate(s=Sum('amount'))
+        .order_by('-s')[:12]
+    )
+    blk_exp_labels = [
+        f"{r['estimate_item__block__project__name']} / {r['estimate_item__block__name']}"
+        for r in block_expense_qs
+    ]
+    blk_exp_data = [float(r['s']) for r in block_expense_qs]
+
+    # 3. Расходы по ЖК (выделения)
+    proj_expense_qs = (
+        Allocation.objects
+        .values('estimate_item__block__project__name')
+        .annotate(s=Sum('amount'))
+        .order_by('-s')
+    )
+    proj_exp_labels = [r['estimate_item__block__project__name'] or 'Без ЖК' for r in proj_expense_qs]
+    proj_exp_data   = [float(r['s']) for r in proj_expense_qs]
+
+    # 4. Топ-10 позиций сметы по выделениям
+    top_items_qs = (
+        Allocation.objects
+        .values('estimate_item__name', 'estimate_item__category__name', 'estimate_item__block__name')
+        .annotate(total=Sum('amount'))
+        .order_by('-total')[:10]
+    )
+    top_items = [
+        {
+            'name':     r['estimate_item__name'] or '—',
+            'category': r['estimate_item__category__name'] or '—',
+            'block':    r['estimate_item__block__name'] or '—',
+            'total':    float(r['total']),
+        }
+        for r in top_items_qs
+    ]
+
+    # 5. Прямые расходы из CashFlow (не через Allocation) — зарплата, займы, прочее
+    direct_exp_qs = (
+        CashFlow.objects
+        .filter(flow_type='expense')
+        .exclude(description__startswith='Выделение средств')
+        .exclude(description__startswith='ВОЗВРАТ')
+        .values('description')
+        .annotate(s=Sum('amount'))
+        .order_by('-s')[:8]
+    )
+    direct_exp_labels = [r['description'][:40] for r in direct_exp_qs]
+    direct_exp_data   = [float(r['s']) for r in direct_exp_qs]
+
+    # 6. Динамика расходов по месяцам разбитая по типу
+    alloc_monthly = (
+        Allocation.objects
+        .annotate(month=TruncMonth('date'))
+        .values('month')
+        .annotate(s=Sum('amount'))
+        .order_by('month')
+    )
+    direct_monthly = (
+        CashFlow.objects
+        .filter(flow_type='expense')
+        .exclude(description__startswith='Выделение средств')
+        .annotate(month=TruncMonth('date'))
+        .values('month')
+        .annotate(s=Sum('amount'))
+        .order_by('month')
+    )
+    exp_months = {}
+    for r in alloc_monthly:
+        if r['month']:
+            k = r['month'].strftime('%b %Y')
+            exp_months.setdefault(k, {'smeta': 0, 'direct': 0})['smeta'] = float(r['s'])
+    for r in direct_monthly:
+        if r['month']:
+            k = r['month'].strftime('%b %Y')
+            exp_months.setdefault(k, {'smeta': 0, 'direct': 0})['direct'] = float(r['s'])
+    exp_months_all   = list(exp_months.items())[-12:]
+    exp_months_labels = [k for k, _ in exp_months_all]
+    exp_smeta_data    = [v['smeta']  for _, v in exp_months_all]
+    exp_direct_data   = [v['direct'] for _, v in exp_months_all]
 
     context = {
         'common_cash': common_cash,
@@ -260,6 +365,20 @@ def dashboard(request):
         'monthly_labels':        json.dumps(monthly_labels, ensure_ascii=False),
         'monthly_income':        json.dumps(monthly_income),
         'monthly_expense':       json.dumps(monthly_expense),
+        # глубокий анализ расходов
+        'cat_labels':            json.dumps(cat_labels, ensure_ascii=False),
+        'cat_plan_data':         json.dumps(cat_plan_data),
+        'cat_fakt_data':         json.dumps(cat_fakt_data),
+        'blk_exp_labels':        json.dumps(blk_exp_labels, ensure_ascii=False),
+        'blk_exp_data':          json.dumps(blk_exp_data),
+        'proj_exp_labels':       json.dumps(proj_exp_labels, ensure_ascii=False),
+        'proj_exp_data':         json.dumps(proj_exp_data),
+        'top_items':             top_items,
+        'direct_exp_labels':     json.dumps(direct_exp_labels, ensure_ascii=False),
+        'direct_exp_data':       json.dumps(direct_exp_data),
+        'exp_months_labels':     json.dumps(exp_months_labels, ensure_ascii=False),
+        'exp_smeta_data':        json.dumps(exp_smeta_data),
+        'exp_direct_data':       json.dumps(exp_direct_data),
     }
     return render(request, 'finances/dashboard.html', context)
 import datetime
