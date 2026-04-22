@@ -133,47 +133,133 @@ def common_cash_detail2(request):
 
 @login_required
 def dashboard(request):
-    # Получаем данные для дашборда
+    import json
+    from django.db.models import Sum, Q
+    from projects.models import Project, Block, Apartment
+
     common_cash = CommonCash.objects.first()
-    projects = Project.objects.all()
+    projects = Project.objects.prefetch_related('blocks').all()
     total_projects = projects.count()
     total_blocks = Block.objects.count()
-    
-    # Считаем общие показатели
-    total_income = CashFlow.objects.filter(flow_type='income').aggregate(Sum('amount'))['amount__sum'] or 0
-    total_expense = CashFlow.objects.filter(flow_type='expense').aggregate(Sum('amount'))['amount__sum'] or 0
+
+    total_income  = CashFlow.objects.filter(flow_type='income').aggregate(s=Sum('amount'))['s'] or 0
+    total_expense = CashFlow.objects.filter(flow_type='expense').aggregate(s=Sum('amount'))['s'] or 0
     margin = total_income - total_expense
-    
 
-    refund_total = CashFlow.objects.filter(
-    description__startswith="ВОЗВРАТ:"
-    ).aggregate(total=Sum('amount'))['total'] or 0
-    refund_total2 = CashFlow.objects.filter(
-    description__startswith="УДАЛЕНИЕ:"
-    ).aggregate(total=Sum('amount'))['total'] or 0
-
-#     refund_flows = CashFlow.objects.filter(
-#     description__startswith="ВОЗВРАТ:"
-# )
-    # print('ggggfdfdfdfdfdfdfdfdfdddf',refund_total2)
-    # Получаем последние операции
-    recent_operations = CashFlow.objects.all().order_by('-date')[:10]
-    total_income2 = total_income-refund_total
-    total_expense2 = total_expense-refund_total2
+    refund_total  = CashFlow.objects.filter(description__startswith="ВОЗВРАТ:").aggregate(s=Sum('amount'))['s'] or 0
+    refund_total2 = CashFlow.objects.filter(description__startswith="УДАЛЕНИЕ:").aggregate(s=Sum('amount'))['s'] or 0
+    total_income2  = total_income  - refund_total
+    total_expense2 = total_expense - refund_total2
     margin_mini = total_income2 - total_expense2
+
+    recent_operations = CashFlow.objects.select_related('block__project').order_by('-date')[:15]
+
+    # ── Приход по ЖК ──────────────────────────────────────────────────────
+    income_by_project = []
+    for proj in projects:
+        amt = CashFlow.objects.filter(
+            flow_type='income', block__project=proj
+        ).aggregate(s=Sum('amount'))['s'] or 0
+        # также прямые платежи без block (например, импорт) через Apartment
+        if amt:
+            income_by_project.append({'name': proj.name, 'amount': float(amt)})
+
+    # fallback — если block не привязан, считаем через Apartment.deal_amount
+    project_income_labels = [p['name'] for p in income_by_project]
+    project_income_data   = [p['amount'] for p in income_by_project]
+
+    # ── Приход по блокам (топ-15) ─────────────────────────────────────────
+    blocks_income_qs = (
+        CashFlow.objects
+        .filter(flow_type='income', block__isnull=False)
+        .values('block__name', 'block__project__name')
+        .annotate(s=Sum('amount'))
+        .order_by('-s')[:15]
+    )
+    block_income_labels = [f"{r['block__project__name']} / {r['block__name']}" for r in blocks_income_qs]
+    block_income_data   = [float(r['s']) for r in blocks_income_qs]
+
+    # ── Куда уходят деньги (расходы по описанию — первые слова) ──────────
+    expense_rows = (
+        CashFlow.objects
+        .filter(flow_type='expense')
+        .values('description')
+        .annotate(s=Sum('amount'))
+    )
+    expense_map = {}
+    for row in expense_rows:
+        desc = row['description'] or ''
+        # первые 2 слова как категория
+        key = ' '.join(desc.split()[:2]) or 'Прочее'
+        # группируем по смысловым блокам
+        if 'Выделение' in key or 'выдел' in desc.lower():
+            cat = 'Смета/выделения'
+        elif any(w in desc for w in ('Зарплата', 'Аванс', 'Бонус', 'Премия')):
+            cat = 'Зарплата и бонусы'
+        elif 'займ' in desc.lower() or 'Займ' in desc:
+            cat = 'Займы'
+        else:
+            cat = 'Прочие расходы'
+        expense_map[cat] = expense_map.get(cat, 0) + float(row['s'])
+    expense_labels = list(expense_map.keys())
+    expense_data   = list(expense_map.values())
+
+    # ── Динамика приход/расход по месяцам (последние 12) ─────────────────
+    from django.db.models.functions import TruncMonth
+    monthly = (
+        CashFlow.objects
+        .annotate(month=TruncMonth('date'))
+        .values('month', 'flow_type')
+        .annotate(s=Sum('amount'))
+        .order_by('month')
+    )
+    months_map = {}
+    for row in monthly:
+        m = row['month'].strftime('%b %Y') if row['month'] else '?'
+        if m not in months_map:
+            months_map[m] = {'income': 0, 'expense': 0}
+        months_map[m][row['flow_type']] = float(row['s'])
+    # последние 12
+    all_months = list(months_map.items())[-12:]
+    monthly_labels  = [m for m, _ in all_months]
+    monthly_income  = [v['income']  for _, v in all_months]
+    monthly_expense = [v['expense'] for _, v in all_months]
+
+    # ── Статистика квартир ─────────────────────────────────────────────────
+    apt_total    = Apartment.objects.count()
+    apt_sold     = Apartment.objects.filter(is_sold=True).count()
+    apt_reserved = Apartment.objects.filter(is_reserved=True, is_sold=False).count()
+    apt_barter   = Apartment.objects.filter(is_barter=True).count()
+    apt_free     = Apartment.objects.filter(is_sold=False, is_reserved=False, is_barter=False).count()
+
     context = {
         'common_cash': common_cash,
         'projects': projects,
         'total_projects': total_projects,
         'total_blocks': total_blocks,
-        
-        'total_income2': total_income2,
         'total_income': total_income,
-        'total_expense2': total_expense2,
+        'total_income2': total_income2,
         'total_expense': total_expense,
+        'total_expense2': total_expense2,
         'margin': margin,
-        "margin_mini":margin_mini,
+        'margin_mini': margin_mini,
         'recent_operations': recent_operations,
+        # квартиры
+        'apt_total': apt_total,
+        'apt_sold': apt_sold,
+        'apt_reserved': apt_reserved,
+        'apt_barter': apt_barter,
+        'apt_free': apt_free,
+        # графики (JSON)
+        'project_income_labels': json.dumps(project_income_labels, ensure_ascii=False),
+        'project_income_data':   json.dumps(project_income_data),
+        'block_income_labels':   json.dumps(block_income_labels, ensure_ascii=False),
+        'block_income_data':     json.dumps(block_income_data),
+        'expense_labels':        json.dumps(expense_labels, ensure_ascii=False),
+        'expense_data':          json.dumps(expense_data),
+        'monthly_labels':        json.dumps(monthly_labels, ensure_ascii=False),
+        'monthly_income':        json.dumps(monthly_income),
+        'monthly_expense':       json.dumps(monthly_expense),
     }
     return render(request, 'finances/dashboard.html', context)
 import datetime

@@ -3,92 +3,310 @@
 {% block page_title %}Дашборд{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-3">
-        <div class="card text-white bg-primary mb-3">
+
+{# ── KPI карточки ── #}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card h-100">
             <div class="card-body">
-                <h5 class="card-title">Баланс Общага</h5>
-                <h2 class="card-text">{{ common_cash.balance|floatformat:0|intcomma}} сом</h2>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="rounded-circle d-flex align-items-center justify-content-center"
+                          style="width:36px;height:36px;background:#dbeafe;">
+                        <i class="bi bi-safe2 text-primary"></i>
+                    </span>
+                    <small class="text-muted">Баланс Казан</small>
+                </div>
+                <div class="fw-bold fs-5">{{ common_cash.balance|floatformat:0|intcomma }}</div>
+                <small class="text-muted">сом</small>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-success mb-3">
+    <div class="col-6 col-md-3">
+        <div class="card h-100">
             <div class="card-body">
-                <h5 class="card-title">Общий приход</h5>
-                <h2 class="card-text">{{ total_income|floatformat:0|intcomma }} сом</h2>
-                <h6>{{total_income2|floatformat:0|intcomma}} сом</h6>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="rounded-circle d-flex align-items-center justify-content-center"
+                          style="width:36px;height:36px;background:#dcfce7;">
+                        <i class="bi bi-arrow-down-circle text-success"></i>
+                    </span>
+                    <small class="text-muted">Общий приход</small>
+                </div>
+                <div class="fw-bold fs-5 text-success">{{ total_income2|floatformat:0|intcomma }}</div>
+                <small class="text-muted">сом (чистый)</small>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-danger mb-3">
+    <div class="col-6 col-md-3">
+        <div class="card h-100">
             <div class="card-body">
-                <h5 class="card-title">Общий расход</h5>
-                <h2 class="card-text">{{ total_expense|floatformat:0|intcomma }} сом</h2>
-                <h6>{{total_expense2|floatformat:0|intcomma}} сом</h6>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="rounded-circle d-flex align-items-center justify-content-center"
+                          style="width:36px;height:36px;background:#fee2e2;">
+                        <i class="bi bi-arrow-up-circle text-danger"></i>
+                    </span>
+                    <small class="text-muted">Общий расход</small>
+                </div>
+                <div class="fw-bold fs-5 text-danger">{{ total_expense2|floatformat:0|intcomma }}</div>
+                <small class="text-muted">сом (чистый)</small>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card text-white bg-info mb-3">
+    <div class="col-6 col-md-3">
+        <div class="card h-100">
             <div class="card-body">
-                <h5 class="card-title">Остаток</h5>
-                <h2 class="card-text">{{ margin|floatformat:0|intcomma }} сом</h2>
-                <h6>{{margin_mini|floatformat:0|intcomma}} сом</h6>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="rounded-circle d-flex align-items-center justify-content-center"
+                          style="width:36px;height:36px;background:#fef9c3;">
+                        <i class="bi bi-graph-up text-warning"></i>
+                    </span>
+                    <small class="text-muted">Маржа</small>
+                </div>
+                <div class="fw-bold fs-5 {% if margin_mini >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ margin_mini|floatformat:0|intcomma }}
+                </div>
+                <small class="text-muted">сом</small>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-6">
-        <div class="card mb-4">
+{# ── Квартиры сводка ── #}
+<div class="row g-2 mb-4">
+    <div class="col-4 col-md">
+        <div class="card text-center py-2">
+            <div class="fw-bold fs-5">{{ apt_total }}</div>
+            <small class="text-muted">Всего кв.</small>
+        </div>
+    </div>
+    <div class="col-4 col-md">
+        <div class="card text-center py-2" style="border-left:3px solid #22c55e;">
+            <div class="fw-bold fs-5 text-success">{{ apt_sold }}</div>
+            <small class="text-muted">Продано</small>
+        </div>
+    </div>
+    <div class="col-4 col-md">
+        <div class="card text-center py-2" style="border-left:3px solid #f59e0b;">
+            <div class="fw-bold fs-5 text-warning">{{ apt_reserved }}</div>
+            <small class="text-muted">Бронь</small>
+        </div>
+    </div>
+    <div class="col-4 col-md">
+        <div class="card text-center py-2" style="border-left:3px solid #06b6d4;">
+            <div class="fw-bold fs-5 text-info">{{ apt_barter }}</div>
+            <small class="text-muted">Бартер</small>
+        </div>
+    </div>
+    <div class="col-4 col-md">
+        <div class="card text-center py-2" style="border-left:3px solid #6b7280;">
+            <div class="fw-bold fs-5 text-secondary">{{ apt_free }}</div>
+            <small class="text-muted">Свободно</small>
+        </div>
+    </div>
+</div>
+
+{# ── Графики ── #}
+<div class="row g-3 mb-4">
+
+    {# Динамика по месяцам #}
+    <div class="col-12 col-lg-8">
+        <div class="card h-100">
             <div class="card-header">
-                <h5>Проекты ({{ total_projects }})</h5>
+                <i class="bi bi-calendar3 me-1"></i> Динамика приход / расход по месяцам
             </div>
             <div class="card-body">
-                <div class="list-group">
-                    {% for project in projects %}
-                    <a href="{% url 'projects:project_detail' project.id %}" class="list-group-item list-group-item-action">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">{{ project.name }}</h6>
-                            <small>{{ project.blocks.count }} блоков</small>
-                        </div>
-                        <p class="mb-1">Общая площадь: {{ project.total_area|intcomma }} м²</p>
-                    </a>
-                    {% endfor %}
-                </div>
+                <canvas id="chartMonthly" height="110"></canvas>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-6">
+
+    {# Куда уходят деньги #}
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="bi bi-pie-chart me-1"></i> Куда уходят деньги
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <canvas id="chartExpense" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    {# Приход по ЖК #}
+    <div class="col-12 col-md-6">
         <div class="card">
             <div class="card-header">
-                <h5>Последние операции</h5>
+                <i class="bi bi-buildings me-1"></i> Приход по ЖК
             </div>
             <div class="card-body">
-                <div class="list-group">
-                    {% for operation in recent_operations %}
-                    <div class="list-group-item">
-                        <div class="d-flex w-100 justify-content-between">
-                            <h6 class="mb-1">
-                                {% if operation.flow_type == 'income' %}
+                <canvas id="chartProjects" height="160"></canvas>
+            </div>
+        </div>
+    </div>
 
-                                <span class="text-success">+{{ operation.amount|intcomma }} сом</span>
-                                {% else %}
-                                <span class="text-danger">-{{ operation.amount|intcomma }} сом</span>
-                                {% endif %}
-                            </h6>
-                            <small>{{ operation.date|date:"d.m.Y H:i" }}</small>
-                        </div>
-                        <p class="mb-1">{{ operation }}</p>
+    {# Приход по блокам #}
+    <div class="col-12 col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-bar-chart me-1"></i> Приход по блокам (топ)
+            </div>
+            <div class="card-body">
+                <canvas id="chartBlocks" height="160"></canvas>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+{# ── Проекты + последние операции ── #}
+<div class="row g-3">
+    <div class="col-12 col-md-5">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-buildings me-1"></i> Проекты ({{ total_projects }})
+            </div>
+            <div class="list-group list-group-flush">
+                {% for project in projects %}
+                <a href="{% url 'projects:project_detail' project.id %}"
+                   class="list-group-item list-group-item-action px-3 py-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-semibold">{{ project.name }}</span>
+                        <small class="text-muted">{{ project.blocks.count }} бл.</small>
                     </div>
-                    {% endfor %}
+                    <small class="text-muted">Площадь: {{ project.calc_total_area|floatformat:0|intcomma }} м²</small>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-7">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-clock-history me-1"></i> Последние операции
+            </div>
+            <div class="list-group list-group-flush" style="max-height:420px;overflow-y:auto;">
+                {% for op in recent_operations %}
+                <div class="list-group-item px-3 py-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="fw-semibold {% if op.flow_type == 'income' %}text-success{% else %}text-danger{% endif %}">
+                            {% if op.flow_type == 'income' %}+{% else %}−{% endif %}{{ op.amount|floatformat:0|intcomma }} сом
+                        </span>
+                        <small class="text-muted ms-2 text-nowrap">{{ op.date|date:"d.m.Y" }}</small>
+                    </div>
+                    <div class="text-muted small text-truncate" style="max-width:100%;">
+                        {{ op.description|truncatechars:80 }}
+                        {% if op.block %}<span class="badge bg-light text-dark ms-1">{{ op.block.name }}</span>{% endif %}
+                    </div>
                 </div>
+                {% endfor %}
             </div>
         </div>
     </div>
 </div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+const COLORS = [
+    '#2563eb','#22c55e','#f59e0b','#ef4444','#8b5cf6',
+    '#06b6d4','#ec4899','#84cc16','#f97316','#14b8a6',
+    '#a855f7','#64748b','#0ea5e9','#d97706','#dc2626'
+];
+
+// ── Динамика по месяцам ──────────────────────────────────────────────
+new Chart(document.getElementById('chartMonthly'), {
+    type: 'line',
+    data: {
+        labels: {{ monthly_labels|safe }},
+        datasets: [
+            {
+                label: 'Приход',
+                data: {{ monthly_income|safe }},
+                borderColor: '#22c55e',
+                backgroundColor: 'rgba(34,197,94,.1)',
+                fill: true, tension: .35, pointRadius: 3
+            },
+            {
+                label: 'Расход',
+                data: {{ monthly_expense|safe }},
+                borderColor: '#ef4444',
+                backgroundColor: 'rgba(239,68,68,.08)',
+                fill: true, tension: .35, pointRadius: 3
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { position: 'top' } },
+        scales: {
+            y: { ticks: { callback: v => (v/1e6).toFixed(1) + 'М' } }
+        }
+    }
+});
+
+// ── Куда уходят деньги ───────────────────────────────────────────────
+new Chart(document.getElementById('chartExpense'), {
+    type: 'doughnut',
+    data: {
+        labels: {{ expense_labels|safe }},
+        datasets: [{ data: {{ expense_data|safe }}, backgroundColor: COLORS }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+            tooltip: {
+                callbacks: {
+                    label: ctx => ' ' + Number(ctx.raw).toLocaleString('ru-RU') + ' сом'
+                }
+            }
+        }
+    }
+});
+
+// ── Приход по ЖК ─────────────────────────────────────────────────────
+new Chart(document.getElementById('chartProjects'), {
+    type: 'bar',
+    data: {
+        labels: {{ project_income_labels|safe }},
+        datasets: [{
+            label: 'Приход (сом)',
+            data: {{ project_income_data|safe }},
+            backgroundColor: COLORS,
+            borderRadius: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { ticks: { callback: v => (v/1e6).toFixed(1) + 'М' } }
+        }
+    }
+});
+
+// ── Приход по блокам ─────────────────────────────────────────────────
+new Chart(document.getElementById('chartBlocks'), {
+    type: 'bar',
+    data: {
+        labels: {{ block_income_labels|safe }},
+        datasets: [{
+            label: 'Приход (сом)',
+            data: {{ block_income_data|safe }},
+            backgroundColor: COLORS,
+            borderRadius: 6
+        }]
+    },
+    options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { ticks: { callback: v => (v/1e6).toFixed(1) + 'М' } }
+        }
+    }
+});
+</script>
 {% endblock %}
