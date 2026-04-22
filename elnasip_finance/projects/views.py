@@ -797,14 +797,20 @@ def set_block_price(request, block_id):
     if request.method == "POST":
         form = BlockPriceForm(request.POST, instance=block)
         if form.is_valid():
+            from django.db.models import F, ExpressionWrapper
+            from django.db.models import DecimalField as DecF
             price = form.cleaned_data['planned_price_per_m2']
             form.save()
-            # Обновляем цену на все свободные квартиры блока
+            # Обновляем цену и пересчитываем планируемую сделку для свободных квартир
             updated = block.apartments.filter(
                 is_sold=False, is_reserved=False
             ).update(
                 planned_price_per_m2=price,
                 fact_price_per_m2=price,
+                planned_deal_amount=ExpressionWrapper(
+                    F('area') * price,
+                    output_field=DecF(max_digits=15, decimal_places=2)
+                ),
             )
             messages.success(
                 request,
