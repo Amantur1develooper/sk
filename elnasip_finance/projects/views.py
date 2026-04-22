@@ -7,7 +7,7 @@ from django.utils import timezone
 from projects.forms import ApartmentForm, DealPaymentForm
 from finances.models import Allocation, CashFlow, CommonCash, Sale
 from .models import Apartment, DealPayment, Project, Block, EstimateItem, EstimateCategory, RentPayment
-from django.db.models import Sum
+from django.db.models import Sum, Avg
 
 @login_required
 def projects_list(request):
@@ -59,13 +59,20 @@ def block_detail(request, block_id):
     apartments = block.apartments.all()
 
     # --- ПРОДАЖИ ---
-    plan_prodaj = apartments.filter(is_sold=False).aggregate(
-        Sum('planned_deal_amount')
-    )['planned_deal_amount__sum'] or 0
-
     fakt_prodaj = apartments.filter(is_sold=True).aggregate(
         Sum('deal_Fakt_deal_amount')
     )['deal_Fakt_deal_amount__sum'] or 0
+
+    # Средняя цена м² по проданным квартирам (запасная для свободных без цены)
+    avg_price_m2 = apartments.filter(
+        is_sold=True, planned_price_per_m2__gt=0
+    ).aggregate(avg=Avg('planned_price_per_m2'))['avg'] or 0
+
+    free_apts_data = apartments.filter(is_sold=False).values('area', 'planned_price_per_m2')
+    plan_prodaj = sum(
+        (a['area'] or 0) * (a['planned_price_per_m2'] if a['planned_price_per_m2'] else avg_price_m2)
+        for a in free_apts_data
+    )
 
     postupillo = block.received_amount
 
@@ -526,7 +533,19 @@ def apartment_list(request, block_id):
     reserved_apartments_count = block.apartments.filter(is_reserved=True, is_sold=False).count()
     unsold_apartments_count = block.apartments.filter(is_sold=False, is_reserved=False).aggregate(total=Sum('area'))['total'] or 0
     unsold_apartments_count2 = block.apartments.filter(is_sold=False, is_reserved=False).count() or 0
-    planned_deals_total = apartments.filter(block=block, is_reserved=False, is_sold=False).aggregate(Sum('planned_deal_amount'))['planned_deal_amount__sum'] or 0
+    # Средняя цена м² по проданным квартирам блока (запасная, если у свободной нет цены)
+    avg_price_m2 = apartments.filter(
+        is_sold=True, planned_price_per_m2__gt=0
+    ).aggregate(avg=Avg('planned_price_per_m2'))['avg'] or 0
+
+    free_apts_data = apartments.filter(
+        is_sold=False, is_reserved=False
+    ).values('area', 'planned_price_per_m2')
+
+    planned_deals_total = sum(
+        (a['area'] or 0) * (a['planned_price_per_m2'] if a['planned_price_per_m2'] else avg_price_m2)
+        for a in free_apts_data
+    )
     remaining_deals_total = block.apartments.aggregate(Sum('remaining_deal_amount'))['remaining_deal_amount__sum']
     postipillo =  block.apartments.aggregate(total=Sum("deal_amount"))["total"] or 0
     context = {
@@ -777,7 +796,7 @@ def delete_block_apartments(request, block_id):
             messages.warning(request, "Удаление отменено.")
         return redirect("projects:block_detail", block_id=block.id)
 
-    return render(request, "projects/block_apartments_delete_confirm.html", {"block": block})
+    return render(request, "projects/block_apartments_delete_confirm.html", {"apt_block": block})
 
 
 from django.shortcuts import render, redirect, get_object_or_404

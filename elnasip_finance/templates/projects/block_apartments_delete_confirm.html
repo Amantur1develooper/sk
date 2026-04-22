@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Удаление квартир — {{ block }}{% endblock %}
+{% block title %}Удаление квартир — {{ apt_block }}{% endblock %}
 
 {% block content %}
 <div class="container mt-4" style="max-width: 600px;">
@@ -10,12 +10,12 @@
       <h5 class="mb-0">Удалить все квартиры блока</h5>
     </div>
     <div class="card-body">
-      <p class="mb-1"><strong>Блок:</strong> {{ block }}</p>
-      <p class="mb-3"><strong>Количество квартир:</strong> {{ block.apartments.count }}</p>
+      <p class="mb-1"><strong>Блок:</strong> {{ apt_block }}</p>
+      <p class="mb-3"><strong>Количество квартир:</strong> {{ apt_block.apartments.count }}</p>
 
       <div class="alert alert-danger">
         <strong>Внимание!</strong> Это действие необратимо.<br>
-        Будут удалены <strong>все квартиры</strong> блока «{{ block.name }}» вместе с:
+        Будут удалены <strong>все квартиры</strong> блока «{{ apt_block.name }}» вместе с:
         <ul class="mb-0 mt-1">
           <li>всеми платежами по сделкам</li>
           <li>всеми платежами по аренде</li>
@@ -26,7 +26,7 @@
       <form method="post">
         {% csrf_token %}
         <input type="hidden" name="confirm" value="yes">
-        <a href="{% url 'projects:block_detail' block.id %}" class="btn btn-secondary me-2">Отмена</a>
+        <a href="{% url 'projects:block_detail' block_id=apt_block.id %}" class="btn btn-secondary me-2">Отмена</a>
         <button type="submit" class="btn btn-danger">Да, удалить все квартиры</button>
       </form>
     </div>
