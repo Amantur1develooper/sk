@@ -218,6 +218,10 @@ class Block(models.Model):
     floors = models.IntegerField(verbose_name="Количество этажей")
     total_area = models.DecimalField(max_digits=10, default=100, decimal_places=2, verbose_name="Общая площадь блока")
     sold_area = models.DecimalField(max_digits=10, default=1, decimal_places=2, verbose_name="Проданная площадь")
+    planned_price_per_m2 = models.DecimalField(
+        max_digits=12, decimal_places=2, default=0, blank=True,
+        verbose_name="Плановая цена за м² по блоку"
+    )
     
     
     def __str__(self):

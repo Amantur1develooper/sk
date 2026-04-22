@@ -79,8 +79,15 @@
         <div class="card">
             <div class="card-body text-center">
                 <h5>Планируемые продажи</h5>
-   
                 <h4>{{plan_prodaj|floatformat:0|intcomma }} сом</h4>
+                <form method="post" action="{% url 'projects:set_block_price' current_block.id %}" class="mt-2 d-flex gap-1">
+                    {% csrf_token %}
+                    {{ price_form.planned_price_per_m2 }}
+                    <button type="submit" class="btn btn-sm btn-outline-primary">сом/м²</button>
+                </form>
+                {% if current_block.planned_price_per_m2 %}
+                <div class="text-muted small mt-1">{{ current_block.planned_price_per_m2|intcomma }} сом/м²</div>
+                {% endif %}
             </div>
         </div>
     </div>

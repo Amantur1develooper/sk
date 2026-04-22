@@ -40,4 +40,5 @@ urlpatterns = [
     ),
     path("blocks/<int:block_id>/apartments/export/", export_block_apartments_excel, name="block_apartments_export"),
     path("blocks/<int:block_id>/apartments/delete-all/", views.delete_block_apartments, name="delete_block_apartments"),
+    path("blocks/<int:block_id>/set-price/", views.set_block_price, name="set_block_price"),
 ]

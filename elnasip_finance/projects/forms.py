@@ -1,8 +1,18 @@
 from django import forms
-from .models import Apartment, DealPayment, RentPayment
-from django import forms
+from .models import Apartment, Block, DealPayment, RentPayment
 
-from django import forms
+class BlockPriceForm(forms.ModelForm):
+    class Meta:
+        model = Block
+        fields = ['planned_price_per_m2']
+        labels = {'planned_price_per_m2': 'Цена за м²'}
+        widgets = {
+            'planned_price_per_m2': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': '0',
+                'step': '100',
+            })
+        }
 
 class BlockApartmentsImportForm(forms.Form):
     file = forms.FileField(label="Excel файл (.xlsx или .xls)")

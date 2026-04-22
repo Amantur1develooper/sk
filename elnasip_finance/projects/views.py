@@ -63,14 +63,16 @@ def block_detail(request, block_id):
         Sum('deal_Fakt_deal_amount')
     )['deal_Fakt_deal_amount__sum'] or 0
 
-    # Средняя цена м² по проданным квартирам (запасная для свободных без цены)
-    avg_price_m2 = apartments.filter(
-        is_sold=True, planned_price_per_m2__gt=0
-    ).aggregate(avg=Avg('planned_price_per_m2'))['avg'] or 0
+    # Fallback цена: сначала поле блока, потом средняя по проданным
+    block_price = block.planned_price_per_m2 or 0
+    if not block_price:
+        block_price = apartments.filter(
+            is_sold=True, planned_price_per_m2__gt=0
+        ).aggregate(avg=Avg('planned_price_per_m2'))['avg'] or 0
 
     free_apts_data = apartments.filter(is_sold=False).values('area', 'planned_price_per_m2')
     plan_prodaj = sum(
-        (a['area'] or 0) * (a['planned_price_per_m2'] if a['planned_price_per_m2'] else avg_price_m2)
+        (a['area'] or 0) * (a['planned_price_per_m2'] if a['planned_price_per_m2'] else block_price)
         for a in free_apts_data
     )
 
@@ -184,11 +186,15 @@ def block_detail(request, block_id):
     table_total_allocated = sum(i.get_allocated_sum() or 0 for i in estimate_items)
     table_total_margin = sum(i.margin for i in estimate_items)
 
+    from .forms import BlockPriceForm
+    price_form = BlockPriceForm(instance=block)
+
     context = {
         "normal_allocated": normal_allocated,
         "over_allocated": over_allocated,
         'current_block': block,
         'estimate_items': estimate_items,
+        'price_form': price_form,
 
         'total_planned': total_planned,      # для карточки "План по смете"
         'total_allocated': total_allocated,  # для карточки "Факт расходов"
@@ -781,6 +787,34 @@ def apartment_add(request, block_id):
     return render(request, "projects/apartment_add.html", {"form": form,
                                                            "block": block,
                                                            'blocks':blocks})
+
+
+@login_required
+def set_block_price(request, block_id):
+    from .forms import BlockPriceForm
+    block = get_object_or_404(Block, id=block_id)
+
+    if request.method == "POST":
+        form = BlockPriceForm(request.POST, instance=block)
+        if form.is_valid():
+            price = form.cleaned_data['planned_price_per_m2']
+            form.save()
+            # Обновляем цену на все свободные квартиры блока
+            updated = block.apartments.filter(
+                is_sold=False, is_reserved=False
+            ).update(
+                planned_price_per_m2=price,
+                fact_price_per_m2=price,
+            )
+            messages.success(
+                request,
+                f"Цена {price:,.0f} сом/м² сохранена. "
+                f"Обновлено {updated} свободных квартир."
+            )
+        else:
+            messages.error(request, "Ошибка при сохранении цены.")
+
+    return redirect("projects:block_detail", block_id=block.id)
 
 
 @login_required
