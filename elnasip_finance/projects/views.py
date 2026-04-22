@@ -70,7 +70,10 @@ def block_detail(request, block_id):
             is_sold=True, planned_price_per_m2__gt=0
         ).aggregate(avg=Avg('planned_price_per_m2'))['avg'] or 0
 
-    free_apts_data = apartments.filter(is_sold=False).values('area', 'planned_price_per_m2')
+    # Свободные = не продана, не бронь, не бартер
+    free_apts_data = apartments.filter(
+        is_sold=False, is_reserved=False, is_barter=False
+    ).values('area', 'planned_price_per_m2')
     plan_prodaj = sum(
         (a['area'] or 0) * (a['planned_price_per_m2'] if a['planned_price_per_m2'] else block_price)
         for a in free_apts_data
@@ -537,19 +540,22 @@ def apartment_list(request, block_id):
         # return result if result else 0
     free_area = block.total_area - block.sold_area
     reserved_apartments_count = block.apartments.filter(is_reserved=True, is_sold=False).count()
-    unsold_apartments_count = block.apartments.filter(is_sold=False, is_reserved=False).aggregate(total=Sum('area'))['total'] or 0
-    unsold_apartments_count2 = block.apartments.filter(is_sold=False, is_reserved=False).count() or 0
-    # Средняя цена м² по проданным квартирам блока (запасная, если у свободной нет цены)
-    avg_price_m2 = apartments.filter(
-        is_sold=True, planned_price_per_m2__gt=0
-    ).aggregate(avg=Avg('planned_price_per_m2'))['avg'] or 0
 
-    free_apts_data = apartments.filter(
-        is_sold=False, is_reserved=False
-    ).values('area', 'planned_price_per_m2')
+    # Свободные = не продана, не бронь, не бартер
+    free_qs = block.apartments.filter(is_sold=False, is_reserved=False, is_barter=False)
+    unsold_apartments_count = free_qs.aggregate(total=Sum('area'))['total'] or 0
+    unsold_apartments_count2 = free_qs.count()
 
+    # Fallback цена: поле блока → средняя по проданным
+    block_price = block.planned_price_per_m2 or 0
+    if not block_price:
+        block_price = apartments.filter(
+            is_sold=True, planned_price_per_m2__gt=0
+        ).aggregate(avg=Avg('planned_price_per_m2'))['avg'] or 0
+
+    free_apts_data = free_qs.values('area', 'planned_price_per_m2')
     planned_deals_total = sum(
-        (a['area'] or 0) * (a['planned_price_per_m2'] if a['planned_price_per_m2'] else avg_price_m2)
+        (a['area'] or 0) * (a['planned_price_per_m2'] if a['planned_price_per_m2'] else block_price)
         for a in free_apts_data
     )
     remaining_deals_total = block.apartments.aggregate(Sum('remaining_deal_amount'))['remaining_deal_amount__sum']

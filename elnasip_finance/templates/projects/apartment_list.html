@@ -155,11 +155,14 @@
                         <td>{{ apartment.fact_price_per_m2|intcomma  }} сом</td>
                         <td>
                             {% if apartment.is_sold %}
-                            <span class="badge bg-success">Продано</span>
+                                <span class="badge bg-success">Продано</span>
+                                {% if apartment.is_barter %}<span class="badge bg-info">Бартер</span>{% endif %}
                             {% elif apartment.is_reserved %}
-                            <span class="badge bg-warning">Бронь</span>
+                                <span class="badge bg-warning text-dark">Бронь</span>
+                            {% elif apartment.is_barter %}
+                                <span class="badge bg-info">Бартер</span>
                             {% else %}
-                            <span class="badge bg-secondary">Свободно</span>
+                                <span class="badge bg-secondary">Свободно</span>
                             {% endif %}
                         </td>
                         <td>{{ apartment.deal_Fakt_deal_amount|intcomma  }} сом</td>
