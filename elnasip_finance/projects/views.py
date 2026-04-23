@@ -70,9 +70,9 @@ def block_detail(request, block_id):
             is_sold=True, planned_price_per_m2__gt=0
         ).aggregate(avg=Avg('planned_price_per_m2'))['avg'] or 0
 
-    # Свободные = не продана, не бронь, не бартер
+    # Для аналитики бронь считается как свободная (не бартер = потенциальная продажа)
     free_apts_data = apartments.filter(
-        is_sold=False, is_reserved=False, is_barter=False
+        is_sold=False, is_barter=False
     ).values('area', 'planned_price_per_m2')
     plan_prodaj = sum(
         (a['area'] or 0) * (a['planned_price_per_m2'] if a['planned_price_per_m2'] else block_price)
@@ -541,8 +541,8 @@ def apartment_list(request, block_id):
     free_area = block.total_area - block.sold_area
     reserved_apartments_count = block.apartments.filter(is_reserved=True, is_sold=False).count()
 
-    # Свободные = не продана, не бронь, не бартер
-    free_qs = block.apartments.filter(is_sold=False, is_reserved=False, is_barter=False)
+    # Для аналитики бронь = свободная (не бартер = потенциальная продажа)
+    free_qs = block.apartments.filter(is_sold=False, is_barter=False)
     unsold_apartments_count = free_qs.aggregate(total=Sum('area'))['total'] or 0
     unsold_apartments_count2 = free_qs.count()
 
@@ -807,9 +807,9 @@ def set_block_price(request, block_id):
             from django.db.models import DecimalField as DecF
             price = form.cleaned_data['planned_price_per_m2']
             form.save()
-            # Обновляем цену и пересчитываем планируемую сделку для свободных квартир
+            # Обновляем цену для свободных + забронированных (бронь = потенц. продажа)
             updated = block.apartments.filter(
-                is_sold=False, is_reserved=False
+                is_sold=False, is_barter=False
             ).update(
                 planned_price_per_m2=price,
                 fact_price_per_m2=price,

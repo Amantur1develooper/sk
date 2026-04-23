@@ -251,9 +251,9 @@ class Block(models.Model):
         return self.apartments.filter(is_sold=True).aggregate(total=Sum('area'))['total'] or 0
     @property
     def not_sold_area_sum(self):
-        """Площадь свободных квартир (не продана, не бронь, не бартер)"""
+        """Площадь доступных квартир (не продана, не бартер; бронь считается свободной)"""
         return self.apartments.filter(
-            is_sold=False, is_reserved=False, is_barter=False
+            is_sold=False, is_barter=False
         ).aggregate(total=Sum('area'))['total'] or 0
 
     def get_allocated_sum(self):
