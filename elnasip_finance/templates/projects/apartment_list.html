@@ -84,34 +84,34 @@
     </div>
 </div>
 
-<div class="row mb-4">
-    
-   
+<!-- Финансы по проданным -->
+<div class="row mb-2">
+    <div class="col-12"><h6 class="text-muted mb-2">Продажи</h6></div>
     <div class="col-md-3">
-        <div class="card">
+        <div class="card border-success">
             <div class="card-body text-center">
-                <h5>Фактические сделки</h5>
-                <h3>{{actual_deals_total|floatformat:0|intcomma }} сом</h3>
-            </div>
-        </div>
-    </div>
-     <div class="col-md-3">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5>Поступило</h5>
-                <h3>{{postipillo|floatformat:0|intcomma}} сом</h3>
+                <h5>Сумма договоров</h5>
+                <h3 class="text-success">{{actual_deals_total|floatformat:0|intcomma }} сом</h3>
             </div>
         </div>
     </div>
     <div class="col-md-3">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <h5>Поступило (от проданных)</h5>
+                <h3 class="text-success">{{postipillo|floatformat:0|intcomma}} сом</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
         <div class="card">
             <div class="card-body text-center">
-                <h5>Остаток поступлений</h5>
+                <h5>Остаток по сделкам</h5>
                 <h3>{{remaining_deals_total|floatformat:0|intcomma }} сом</h3>
             </div>
         </div>
     </div>
-     <div class="col-md-3">
+    <div class="col-md-3">
         <div class="card">
             <div class="card-body text-center">
                 <h5>Планируемые сделки</h5>
@@ -120,6 +120,46 @@
         </div>
     </div>
 </div>
+
+<!-- Финансы по брони -->
+{% if reserved_apartments_count %}
+<div class="row mb-4">
+    <div class="col-12"><h6 class="text-muted mb-2">Бронь (задатки)</h6></div>
+    <div class="col-md-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <h5>Кол-во забронированных</h5>
+                <h3 class="text-warning">{{ reserved_apartments_count }}</h3>
+                <small class="text-muted">{{ reserved_area|floatformat:0|intcomma }} м²</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <h5>Сумма договоров (бронь)</h5>
+                <h3 class="text-warning">{{ reserved_fakt|floatformat:0|intcomma }} сом</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <h5>Задаток получен</h5>
+                <h3 class="text-warning">{{ reserved_deposit|floatformat:0|intcomma }} сом</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <h5>Остаток по брони</h5>
+                <h3 class="text-warning">{{ reserved_remaining|floatformat:0|intcomma }} сом</h3>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 <a href="{% url 'projects:apartment_add' blocks.id %}"><button>добавить квартиру</button></a>
 <!-- Таблица с квартирами -->
 <div class="card">
@@ -159,6 +199,9 @@
                                 {% if apartment.is_barter %}<span class="badge bg-info">Бартер</span>{% endif %}
                             {% elif apartment.is_reserved %}
                                 <span class="badge bg-warning text-dark">Бронь</span>
+                                {% if apartment.deal_amount %}
+                                    <span class="badge bg-warning text-dark">+задаток</span>
+                                {% endif %}
                             {% elif apartment.is_barter %}
                                 <span class="badge bg-info">Бартер</span>
                             {% else %}
@@ -166,7 +209,7 @@
                             {% endif %}
                         </td>
                         <td>{{ apartment.deal_Fakt_deal_amount|intcomma  }} сом</td>
-                            <td>{{ apartment.deal_amount|intcomma  }} сом</td>
+                            <td>{% if apartment.deal_amount %}<strong>{{ apartment.deal_amount|intcomma }} сом</strong>{% else %}—{% endif %}</td>
                                 <td>{{ apartment.remaining_deal_amount|intcomma  }} сом</td>
                             
                         <td>{{ apartment.client_name|default:"-" }}</td>

@@ -249,10 +249,18 @@ def import_block_apartments_excel(request, block_id):
 
             # --- определяем статус из Excel ---
             excel_has_client = bool(fio)
-            # Продана если: есть ФИО, или оплачено > 0, или бартер с суммой договора
-            excel_is_sold = excel_has_client or paid > 0 or (is_barter and sum_contract > 0)
-            # Только бронь (не продана)
-            is_reserved = is_reserved_from_type and not excel_is_sold
+            # Если тип = Бронь, квартира остаётся забронированной даже при наличии оплаты
+            # Бартер всегда = продана
+            if is_barter:
+                excel_is_sold = True
+                is_reserved = False
+            elif is_reserved_from_type:
+                # Бронь: статус is_reserved=True, is_sold=False — но финансы всё равно пишем
+                excel_is_sold = False
+                is_reserved = True
+            else:
+                excel_is_sold = excel_has_client or paid > 0
+                is_reserved = False
 
             # --- ищем в БД ---
             apt_existing = Apartment.objects.filter(block=block, apartment_number=apt_number).first()
@@ -272,8 +280,8 @@ def import_block_apartments_excel(request, block_id):
             if exists and apt_existing.is_sold:
                 db_client = (apt_existing.client_name or "").strip()
 
-                if not excel_is_sold and not is_reserved:
-                    # ВОЗВРАТ: в Excel пусто, в БД — продана
+                if not excel_is_sold and not is_reserved and paid == 0:
+                    # ВОЗВРАТ: в Excel пусто без оплаты, в БД — продана
                     event_tag = "ВОЗВРАТ"
                     event_comment = f"[Импорт] Возврат: ранее продана клиенту «{db_client}». Excel показывает квартиру свободной."
                     returns_cnt += 1
@@ -291,6 +299,10 @@ def import_block_apartments_excel(request, block_id):
                 barter_cnt += 1
                 if event_tag is None:
                     event_tag = "БАРТЕР"
+
+            if is_reserved and paid > 0 and event_tag is None:
+                event_tag = "БРОНЬ+ОПЛАТА"
+                event_comment = (event_comment or "") + f" [Импорт] Бронь с оплатой {paid:,.0f} сом — платёж зачислен."
 
             # --- формируем defaults для update_or_create ---
             defaults = {
@@ -322,11 +334,14 @@ def import_block_apartments_excel(request, block_id):
                 )
 
                 # --- финансовые поля напрямую (обходим auto-recalc в save()) ---
+                # Для брони с оплатой: пишем финансы, но planned_deal_amount = 0 (сделка уже идёт)
+                has_deal = excel_is_sold or (is_reserved and paid > 0)
+                planned = Decimal("0") if has_deal else (area * price_m2 if price_m2 and area else Decimal("0"))
                 Apartment.objects.filter(id=apt.id).update(
                     deal_Fakt_deal_amount=sum_contract,
                     deal_amount=paid,
                     remaining_deal_amount=remaining_excel,
-                    planned_deal_amount=Decimal("0") if excel_is_sold else (area * price_m2 if price_m2 and area else Decimal("0")),
+                    planned_deal_amount=planned,
                 )
 
                 if created_flag:

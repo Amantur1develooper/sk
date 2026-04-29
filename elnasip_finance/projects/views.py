@@ -63,6 +63,13 @@ def block_detail(request, block_id):
         Sum('deal_Fakt_deal_amount')
     )['deal_Fakt_deal_amount__sum'] or 0
 
+    # --- ЗАДАТОК С БРОНИ ---
+    reserved_qs = apartments.filter(is_reserved=True, is_sold=False)
+    reserved_deposit = reserved_qs.aggregate(total=Sum('deal_amount'))['total'] or 0
+    reserved_fakt = reserved_qs.aggregate(total=Sum('deal_Fakt_deal_amount'))['total'] or 0
+    reserved_remaining = reserved_qs.aggregate(total=Sum('remaining_deal_amount'))['total'] or 0
+    reserved_count = reserved_qs.count()
+
     # Fallback цена: сначала поле блока, потом средняя по проданным
     block_price = block.planned_price_per_m2 or 0
     if not block_price:
@@ -224,6 +231,12 @@ def block_detail(request, block_id):
         'table_total_planned': table_total_planned,
         'table_total_allocated': table_total_allocated,
         'table_total_margin': table_total_margin,
+
+        # Задаток с брони
+        'reserved_deposit': reserved_deposit,
+        'reserved_fakt': reserved_fakt,
+        'reserved_remaining': reserved_remaining,
+        'reserved_count': reserved_count,
     }
     return render(request, 'projects/block_detail.html', context)
 
@@ -559,7 +572,15 @@ def apartment_list(request, block_id):
         for a in free_apts_data
     )
     remaining_deals_total = block.apartments.aggregate(Sum('remaining_deal_amount'))['remaining_deal_amount__sum']
-    postipillo =  block.apartments.aggregate(total=Sum("deal_amount"))["total"] or 0
+    postipillo = apartments.filter(is_sold=True).aggregate(total=Sum("deal_amount"))["total"] or 0
+
+    # Задаток с забронированных квартир (is_reserved=True, is_sold=False)
+    reserved_qs = block.apartments.filter(is_reserved=True, is_sold=False)
+    reserved_deposit = reserved_qs.aggregate(total=Sum('deal_amount'))['total'] or 0
+    reserved_fakt = reserved_qs.aggregate(total=Sum('deal_Fakt_deal_amount'))['total'] or 0
+    reserved_remaining = reserved_qs.aggregate(total=Sum('remaining_deal_amount'))['total'] or 0
+    reserved_area = reserved_qs.aggregate(total=Sum('area'))['total'] or 0
+
     context = {
         'block': block,
         'blocks':blocks,
@@ -576,6 +597,10 @@ def apartment_list(request, block_id):
         'planned_deals_total':planned_deals_total,
         'reserved_apartments_count':reserved_apartments_count,
         'unsold_apartments_count': unsold_apartments_count,
+        'reserved_deposit': reserved_deposit,
+        'reserved_fakt': reserved_fakt,
+        'reserved_remaining': reserved_remaining,
+        'reserved_area': reserved_area,
         'blockid':block_id,
         'apartments': apartments,
     }
