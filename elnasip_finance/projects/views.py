@@ -148,18 +148,6 @@ def block_detail(request, block_id):
         - extra_allocated
     ) - over_allocated
 
-    # --- КАТЕГОРИИ ДЛЯ ГРАФИКА ---
-    categories = []
-    for category in EstimateCategory.objects.all():
-        category_total = sum(
-            item.spent_amount for item in estimate_items if item.category == category
-        )
-        if category_total > 0:
-            categories.append({
-                'name': category.name,
-                'total_spent': category_total
-            })
-
     # ------------------------------------------------------------------
     #  ГРУППИРОВКА ПО КАТЕГОРИЯМ СМЕТЫ (EstimateCategory)
     # ------------------------------------------------------------------
@@ -190,6 +178,17 @@ def block_detail(request, block_id):
             'total_allocated': cat_total_allocated,
             'total_margin': cat_total_margin,
         })
+
+    # --- КАТЕГОРИИ ДЛЯ ГРАФИКА (используем allocated — реальные данные) ---
+    categories = []
+    for grp in category_groups:
+        if grp['total_allocated'] > 0 or grp['total_planned'] > 0:
+            categories.append({
+                'name': grp['category'].name,
+                'total_spent': grp['total_allocated'],
+                'total_allocated': grp['total_allocated'],
+                'total_planned': grp['total_planned'],
+            })
 
     # ИТОГИ ПО ВСЕМ СМЕТАМ (НЕ ЗАВИСЯТ ОТ ФИЛЬТРА)
     table_total_planned = sum(i.planned_amount for i in estimate_items)

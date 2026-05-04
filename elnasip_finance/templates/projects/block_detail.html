@@ -1,320 +1,408 @@
 {% extends 'base.html' %}
 {% load project_filters %}
 {% load humanize %}
-{% block page_title %}{{ current_block.name }} - Детали Сметы{% endblock %}
+{% block page_title %}{{ current_block.name }} — Смета{% endblock %}
 
 {% block content %}
-<h2>Смета по блоку: {{ block.name }}</h2>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>{{ current_block}}</h2>
-    <div>
-        {% comment %} <a href="{% url 'projects:project_detail' block.project.id %}" class="btn btn-secondary">← Назад к проекту</a> {% endcomment %}
-        <a href="{% url 'projects:apartment_list' current_block.id %}" class="btn btn-primary">Просмотреть квартиры</a>
-        <a href="{% url 'projects:add_estimate_item' current_block.id %}" class="btn btn-primary">+ Добавить позицию сметы</a>
-        <a class="btn btn-sm btn-primary"
-   href="{% url 'projects:import_block_apartments' current_block.id %}">
-  Импорт квартир из Excel
-</a>
-<a class="btn btn-success"
-   href="{% url 'projects:block_apartments_export' current_block.id %}?{{ request.GET.urlencode }}">
-  Экспорт в Excel
-</a>
-<a class="btn btn-danger"
-   href="{% url 'projects:delete_block_apartments' current_block.id %}"
-   title="Удалить все квартиры блока">
-  Удалить все квартиры
-</a>
-
+<!-- Заголовок + кнопки -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <h4 class="mb-0">{{ current_block }}</h4>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'projects:apartment_list' current_block.id %}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-grid-3x3-gap"></i> Квартиры
+        </a>
+        <a href="{% url 'projects:add_estimate_item' current_block.id %}" class="btn btn-sm btn-outline-success">
+            <i class="bi bi-plus-circle"></i> Добавить позицию
+        </a>
+        <a href="{% url 'projects:import_block_apartments' current_block.id %}" class="btn btn-sm btn-outline-secondary">
+            <i class="bi bi-upload"></i> Импорт
+        </a>
+        <a href="{% url 'projects:block_apartments_export' current_block.id %}?{{ request.GET.urlencode }}" class="btn btn-sm btn-outline-success">
+            <i class="bi bi-download"></i> Экспорт
+        </a>
+        <a href="{% url 'projects:delete_block_apartments' current_block.id %}" class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-trash"></i> Удалить квартиры
+        </a>
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-2">
-        <div class="card">
-       
-
-            <div class="card-body text-center">
-                <h5>Этажи</h5>
-                <h4>{{ current_block.floors|intcomma  }}</h4>
+<!-- KPI карточки — строка 1: площадь + продажи -->
+<div class="row g-3 mb-2">
+    <div class="col-6 col-md-2">
+        <div class="card h-100">
+            <div class="card-body p-3 text-center">
+                <div class="text-muted small">Этажи</div>
+                <div class="fs-4 fw-bold">{{ current_block.floors }}</div>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5>Общая площадь</h5>
-                <h4>{{ current_block.total_area|floatformat:0|intcomma }} м²</h4>
+    <div class="col-6 col-md-2">
+        <div class="card h-100">
+            <div class="card-body p-3 text-center">
+                <div class="text-muted small">Общая площадь</div>
+                <div class="fs-5 fw-bold">{{ current_block.total_area|floatformat:0|intcomma }} м²</div>
             </div>
         </div>
     </div>
-    
-  
-    <div class="col-md-2">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5>Проданная площадь</h5>
-   
-                <h4>{{current_block.sold_area_sum|floatformat:0|intcomma }} м²</h4>
+    <div class="col-6 col-md-2">
+        <div class="card h-100">
+            <div class="card-body p-3 text-center">
+                <div class="text-muted small">Продано м²</div>
+                <div class="fs-5 fw-bold text-success">{{ current_block.sold_area_sum|floatformat:0|intcomma }} м²</div>
             </div>
         </div>
     </div>
-     <div class="col-md-2">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5>Остаток площади</h5>
-                <h4>{{current_block.not_sold_area_sum|floatformat:0|intcomma }} м²</h4>
+    <div class="col-6 col-md-2">
+        <div class="card h-100">
+            <div class="card-body p-3 text-center">
+                <div class="text-muted small">Остаток м²</div>
+                <div class="fs-5 fw-bold">{{ current_block.not_sold_area_sum|floatformat:0|intcomma }} м²</div>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5>Факт сделок</h5>
-                <h4>{{fakt_prodaj|floatformat:0|intcomma }} сом</h4>
+    <div class="col-6 col-md-2">
+        <div class="card h-100 border-success">
+            <div class="card-body p-3 text-center">
+                <div class="text-muted small">Факт сделок</div>
+                <div class="fs-6 fw-bold text-success">{{ fakt_prodaj|floatformat:0|intcomma }}</div>
+                <div class="text-muted" style="font-size:10px">сом</div>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5>Планируемые продажи</h5>
-                <h4>{{plan_prodaj|floatformat:0|intcomma }} сом</h4>
-                <form method="post" action="{% url 'projects:set_block_price' current_block.id %}" class="mt-2 d-flex gap-1">
+    <div class="col-6 col-md-2">
+        <div class="card h-100">
+            <div class="card-body p-3 text-center">
+                <div class="text-muted small">План продаж</div>
+                <div class="fs-6 fw-bold">{{ plan_prodaj|floatformat:0|intcomma }}</div>
+                <div class="text-muted" style="font-size:10px">сом</div>
+                <!-- форма установки цены -->
+                <form method="post" action="{% url 'projects:set_block_price' current_block.id %}" class="mt-1 d-flex gap-1">
                     {% csrf_token %}
                     {{ price_form.planned_price_per_m2 }}
-                    <button type="submit" class="btn btn-sm btn-outline-primary">сом/м²</button>
+                    <button type="submit" class="btn btn-xs btn-outline-primary" style="font-size:11px;padding:2px 6px">сом/м²</button>
                 </form>
                 {% if current_block.planned_price_per_m2 %}
-                <div class="text-muted small mt-1">{{ current_block.planned_price_per_m2|intcomma }} сом/м²</div>
+                <div class="text-muted" style="font-size:10px">{{ current_block.planned_price_per_m2|intcomma }} сом/м²</div>
                 {% endif %}
             </div>
         </div>
     </div>
+</div>
+
+<!-- KPI карточки — строка 2: расходы + маржа -->
+<div class="row g-3 mb-3">
     {% if reserved_count %}
-    <div class="col-md-2">
-        <div class="card border-warning">
-            <div class="card-body text-center">
-                <h5>Бронь (кв-р)</h5>
-                <h4 class="text-warning">{{ reserved_count }}</h4>
-                <small class="text-muted">Задаток: {{ reserved_deposit|floatformat:0|intcomma }} сом</small>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-2">
-        <div class="card border-warning">
-            <div class="card-body text-center">
-                <h5>Остаток по брони</h5>
-                <h4 class="text-warning">{{ reserved_remaining|floatformat:0|intcomma }} сом</h4>
-                <small class="text-muted">Договор: {{ reserved_fakt|floatformat:0|intcomma }} сом</small>
+    <div class="col-6 col-md-2">
+        <div class="card h-100 border-warning">
+            <div class="card-body p-3 text-center">
+                <div class="text-muted small">Бронь</div>
+                <div class="fs-5 fw-bold text-warning">{{ reserved_count }} кв.</div>
+                <div class="text-muted" style="font-size:11px">Задаток: {{ reserved_deposit|floatformat:0|intcomma }} сом</div>
+                <div class="text-muted" style="font-size:11px">Остаток: {{ reserved_remaining|floatformat:0|intcomma }} сом</div>
             </div>
         </div>
     </div>
     {% endif %}
-    <div class="col-md-2">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5>План по смете</h5>
-                    {% comment %} {{total_planned_positive}} {% endcomment %}
-                <h4>{{ total_planned|floatformat:0|intcomma  }} сом</h4>
+    <div class="col-6 col-md-2">
+        <div class="card h-100">
+            <div class="card-body p-3 text-center">
+                <div class="text-muted small">План по смете</div>
+                <div class="fs-6 fw-bold">{{ total_planned|floatformat:0|intcomma }}</div>
+                <div class="text-muted" style="font-size:10px">сом</div>
             </div>
         </div>
     </div>
-    
-    <div class="col-md-2">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5>Факт расходов</h5>
-                {% comment %} <h4>{{ total_spent|floatformat:0 }} сом</h4> {% endcomment %}
-                    <h4>{{normal_allocated|floatformat:0|intcomma  }} сом</h4>
-            </div>
-        </div>
-       
-        
-    </div>
-     <div class="col-md-2">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5>Расходы вне сметы </h5>
-                
-                {% comment %} <h4>{{ total_spent|floatformat:0 }} сом</h4> {% endcomment %}
-                    <h4>{{ extra_allocated|floatformat:0|intcomma  }} сом</h4>
+    <div class="col-6 col-md-2">
+        <div class="card h-100">
+            <div class="card-body p-3 text-center">
+                <div class="text-muted small">Факт расходов</div>
+                <div class="fs-6 fw-bold text-danger">{{ normal_allocated|floatformat:0|intcomma }}</div>
+                <div class="text-muted" style="font-size:10px">сом</div>
             </div>
         </div>
     </div>
-   
-    <div class="col-md-2">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5>Расходы превышающие смету </h5>
-                
-                {% comment %} <h4>{{ total_spent|floatformat:0 }} сом</h4> {% endcomment %}
-                    <h4>{{over_allocated|floatformat:0|intcomma}}сом</h4>
+    <div class="col-6 col-md-2">
+        <div class="card h-100">
+            <div class="card-body p-3 text-center">
+                <div class="text-muted small">Вне сметы</div>
+                <div class="fs-6 fw-bold text-warning">{{ extra_allocated|floatformat:0|intcomma }}</div>
+                <div class="text-muted" style="font-size:10px">сом</div>
             </div>
         </div>
     </div>
-    <div class="col-md-2">
-        <div class="card">
-            <div class="card-body text-center">
-                <h5>МАРЖА</h5>
-                {% comment %} <h4>{{ total_spent|floatformat:0 }} сом</h4> {% endcomment %}
-                    <h4>{{marja|floatformat:0|intcomma  }} СОМ</h4>
+    <div class="col-6 col-md-2">
+        <div class="card h-100">
+            <div class="card-body p-3 text-center">
+                <div class="text-muted small">Перерасход</div>
+                <div class="fs-6 fw-bold {% if over_allocated > 0 %}text-danger{% endif %}">{{ over_allocated|floatformat:0|intcomma }}</div>
+                <div class="text-muted" style="font-size:10px">сом</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card h-100 {% if marja > 0 %}border-success{% else %}border-danger{% endif %}">
+            <div class="card-body p-3 text-center">
+                <div class="text-muted small">МАРЖА</div>
+                <div class="fs-6 fw-bold {% if marja > 0 %}text-success{% else %}text-danger{% endif %}">{{ marja|floatformat:0|intcomma }}</div>
+                <div class="text-muted" style="font-size:10px">сом</div>
             </div>
         </div>
     </div>
 </div>
 
-<h4>Смета блока</h4>
-
-
-<form method="get" class="row g-2 mb-3">
-    <div class="col-auto">
-        <label for="id_category" class="form-label mb-0">Категория сметы:</label>
-        <select name="category" id="id_category" class="form-select form-select-sm">
-            <option value="">Все категории</option>
-            {% for group in category_groups %}
-                <option value="{{ group.category.id }}"
-                        {% if selected_category_id == group.category.id|stringformat:"s" %}selected{% endif %}>
-                    {{ group.category.name }}
-                </option>
-            {% endfor %}
-        </select>
+<!-- СМЕТА -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <span class="fw-bold">Смета блока</span>
+        <form method="get" class="d-flex align-items-center gap-2 mb-0">
+            <select name="category" id="id_category" class="form-select form-select-sm" style="min-width:200px" onchange="this.form.submit()">
+                <option value="">Все категории</option>
+                {% for group in category_groups %}
+                    <option value="{{ group.category.id }}"
+                            {% if selected_category_id == group.category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ group.category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+            {% if selected_category_id %}
+            <a href="?" class="btn btn-sm btn-outline-secondary">✕ Сбросить</a>
+            {% endif %}
+        </form>
     </div>
-    <div class="col-auto d-flex align-items-end">
-        <button type="submit" class="btn btn-sm btn-primary">Применить</button>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-sm mb-0" id="estimate-table">
+                <thead class="table-dark sticky-top">
+                    <tr>
+                        <th style="min-width:180px">Наименование</th>
+                        <th>Ед.</th>
+                        <th class="text-end">Кол-во</th>
+                        <th class="text-end">Факт кол-во</th>
+                        <th class="text-end">Цена/ед.</th>
+                        <th class="text-end">План</th>
+                        <th class="text-end">Выделено</th>
+                        <th style="min-width:130px">Исполнение</th>
+                        <th class="text-end">Остаток</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for group in category_groups %}
+                    {% if not selected_category_id or selected_category_id == group.category.id|stringformat:"s" %}
+                    <!-- Заголовок категории -->
+                    <tr class="table-secondary">
+                        <td colspan="10" class="fw-semibold ps-3" style="font-size:13px">
+                            <i class="bi bi-folder2-open me-1"></i>{{ group.category.name }}
+                            <span class="ms-2 text-muted fw-normal" style="font-size:11px">
+                                план: {{ group.total_planned|floatformat:0|intcomma }} сом
+                                · выделено: {{ group.total_allocated|floatformat:0|intcomma }} сом
+                            </span>
+                        </td>
+                    </tr>
+                    <!-- Строки позиций -->
+                    {% for item in group.items %}
+                    {% with alloc=item.get_allocated_sum planned=item.planned_amount %}
+                    <tr>
+                        <td class="ps-4" style="font-size:13px">{{ item.name }}</td>
+                        <td class="text-muted" style="font-size:12px">{{ item.unit }}</td>
+                        <td class="text-end" style="font-size:13px">{{ item.quantity|floatformat:0|intcomma }}</td>
+                        <td class="text-end" style="font-size:13px">{{ item.fakt_quantity|floatformat:0|intcomma }}</td>
+                        <td class="text-end" style="font-size:13px">{{ item.unit_price|floatformat:0|intcomma }}</td>
+                        <td class="text-end fw-semibold" style="font-size:13px">{{ planned|floatformat:0|intcomma }}</td>
+                        <td class="text-end" style="font-size:13px">{{ alloc|floatformat:0|intcomma }}</td>
+                        <td>
+                            {% if planned > 0 %}
+                            <div class="progress" style="height:6px;margin-top:4px">
+                                <div class="progress-bar {% if alloc > planned %}bg-danger{% else %}bg-success{% endif %}"
+                                     role="progressbar"
+                                     style="width:{% widthratio alloc planned 100 %}%">
+                                </div>
+                            </div>
+                            <div class="text-muted" style="font-size:10px">{% widthratio alloc planned 100 %}%</div>
+                            {% endif %}
+                        </td>
+                        <td class="text-end fw-semibold {% if item.margin < 0 %}text-danger{% elif item.margin > 0 %}text-success{% endif %}" style="font-size:13px">
+                            {{ item.margin|floatformat:0|intcomma }}
+                        </td>
+                        <td>
+                            <a href="{% url 'admin:projects_estimateitem_change' item.id %}"
+                               class="btn btn-xs btn-outline-warning" style="font-size:11px;padding:2px 7px">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endwith %}
+                    {% endfor %}
+                    <!-- Итого по категории -->
+                    <tr class="table-light">
+                        <td colspan="5" class="text-end text-muted ps-3" style="font-size:12px">
+                            Итого: {{ group.category.name }}
+                        </td>
+                        <td class="text-end fw-bold">{{ group.total_planned|floatformat:0|intcomma }}</td>
+                        <td class="text-end fw-bold">{{ group.total_allocated|floatformat:0|intcomma }}</td>
+                        <td>
+                            {% if group.total_planned > 0 %}
+                            <div class="progress" style="height:8px;margin-top:3px">
+                                <div class="progress-bar {% if group.total_allocated > group.total_planned %}bg-danger{% else %}bg-primary{% endif %}"
+                                     role="progressbar"
+                                     style="width:{% widthratio group.total_allocated group.total_planned 100 %}%">
+                                </div>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="text-end fw-bold {% if group.total_margin < 0 %}text-danger{% else %}text-success{% endif %}">
+                            {{ group.total_margin|floatformat:0|intcomma }}
+                        </td>
+                        <td></td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr class="table-primary fw-bold">
+                        <td colspan="5" class="ps-3">Итого по всем категориям</td>
+                        <td class="text-end">{{ table_total_planned|floatformat:0|intcomma }}</td>
+                        <td class="text-end">{{ table_total_allocated|floatformat:0|intcomma }}</td>
+                        <td>
+                            {% if table_total_planned > 0 %}
+                            <div class="progress" style="height:8px;margin-top:3px">
+                                <div class="progress-bar {% if table_total_allocated > table_total_planned %}bg-danger{% else %}bg-primary{% endif %}"
+                                     role="progressbar"
+                                     style="width:{% widthratio table_total_allocated table_total_planned 100 %}%">
+                                </div>
+                            </div>
+                            <div class="text-muted" style="font-size:10px">{% widthratio table_total_allocated table_total_planned 100 %}%</div>
+                            {% endif %}
+                        </td>
+                        <td class="text-end {% if table_total_margin < 0 %}text-danger{% else %}text-success{% endif %}">
+                            {{ table_total_margin|floatformat:0|intcomma }}
+                        </td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
     </div>
-</form>
-
-<div class="table-responsive">
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <th>Категория</th>
-                <th>Наименование</th>
-                <th>Ед. изм.</th>
-                <th>Количество</th>
-                <th>Факт Количествa</th>
-                <th>Цена за ед.</th>
-                <th>Плановая сумма</th>
-                <th>Выделено средств</th>
-                {% comment %} <th>Факт расходов</th> {% endcomment %}
-                <th>Остаток от Плановой суммы</th>
-                <th>Действия</th>
-            </tr>
-        </thead>
-       
-<tbody>
-    {% for group in category_groups %}
-        {# если фильтр не выбран – показываем все; если выбран – только нужную категорию #}
-        {% if not selected_category_id or selected_category_id == group.category.id|stringformat:"s" %}
-            <tr class="table-secondary">
-                <td colspan="10">
-                    <strong>{{ group.category.name }}</strong>
-                </td>
-            </tr>
-
-            {% for item in group.items %}
-                <tr>
-                    <td>{{ item.category.name }}</td>
-                    <td>{{ item.name }}</td>
-                    <td>{{ item.unit|intcomma }}</td>
-                    <td>{{ item.quantity|intcomma }}</td>
-                    <td>{{ item.fakt_quantity|intcomma }}</td>
-                    <td>{{ item.unit_price|intcomma }} сом</td>
-                    <td>{{ item.planned_amount|floatformat:0|intcomma }} сом</td>
-                    <td>{{ item.get_allocated_sum|floatformat:0|intcomma }} сом</td>
-                    <td class="{% if item.margin > 0 %}text-success{% elif item.margin < 0 %}text-danger{% endif %}">
-                        {{ item.margin|floatformat:0|intcomma }} сом
-                    </td>
-                    <td>
-                        <a href="{% url 'admin:projects_estimateitem_change' item.id %}"
-                           class="btn btn-sm btn-warning">
-                            Редактировать
-                        </a>
-                    </td>
-                </tr>
-            {% endfor %}
-
-            <tr class="table-light fw-bold">
-                <td colspan="6" class="text-end">
-                    Итого по категории: {{ group.category.name }}
-                </td>
-                <td>{{ group.total_planned|floatformat:0|intcomma }} сом</td>
-                <td>{{ group.total_allocated|floatformat:0|intcomma }} сом</td>
-                <td class="{% if group.total_margin > 0 %}text-success{% elif group.total_margin < 0 %}text-danger{% endif %}">
-                    {{ group.total_margin|floatformat:0|intcomma }} сом
-                </td>
-                <td></td>
-            </tr>
-        {% endif %}
-    {% endfor %}
-</tbody>
-
-<tfoot>
-    <tr class="table-primary">
-        <th colspan="6">Итого по всем сметам (ВСЕ категории, независимо от фильтра):</th>
-        <th>{{ table_total_planned|floatformat:0|intcomma }} сом</th>
-        <th>{{ table_total_allocated|floatformat:0|intcomma }} сом</th>
-        <th class="{% if table_total_margin > 0 %}text-success{% elif table_total_margin < 0 %}text-danger{% endif %}">
-            {{ table_total_margin|floatformat:0|intcomma }} сом
-        </th>
-        <th></th>
-    </tr>
-</tfoot>
-
-
-    </table>
 </div>
 
-<!-- Круговой график распределения расходов по категориям -->
-<div class="card mt-4">
-    <div class="card-header">
-        <h5>Распределение расходов по категориям</h5>
+<!-- ГРАФИКИ -->
+<div class="row g-3 mt-1">
+    <!-- Горизонтальный бар: план vs выделено по категориям -->
+    <div class="col-md-7">
+        <div class="card h-100">
+            <div class="card-header fw-bold">
+                <i class="bi bi-bar-chart-horizontal me-1"></i>План vs Выделено по категориям
+            </div>
+            <div class="card-body">
+                <canvas id="catBarChart" height="300"></canvas>
+            </div>
+        </div>
     </div>
-    <div class="card-body">
-        <canvas id="categoryChart" width="400" height="200"></canvas>
+    <!-- Пончик: доля расходов -->
+    <div class="col-md-5">
+        <div class="card h-100">
+            <div class="card-header fw-bold">
+                <i class="bi bi-pie-chart me-1"></i>Распределение расходов
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <canvas id="categoryChart" style="max-height:280px"></canvas>
+            </div>
+        </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('categoryChart').getContext('2d');
-        const categoryChart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: [{% for category in categories %}'{{ category.name }}',{% endfor %}],
-                datasets: [{
-                    data: [{% for category in categories %}{{ category.total_spent|default:0 }},{% endfor %}],
-                    backgroundColor: [
-                        'rgba(255, 99, 132, 0.7)',
-                        'rgba(54, 162, 235, 0.7)',
-                        'rgba(255, 206, 86, 0.7)',
-                        'rgba(75, 192, 192, 0.7)',
-                        'rgba(153, 102, 255, 0.7)',
-                        'rgba(255, 159, 64, 0.7)'
-                    ],
-                    borderWidth: 1
-                }]
+const CAT_LABELS   = [{% for c in categories %}"{{ c.name|truncatechars:30 }}",{% endfor %}];
+const CAT_PLANNED  = [{% for c in categories %}{{ c.total_planned|default:0 }},{% endfor %}];
+const CAT_ALLOC    = [{% for c in categories %}{{ c.total_allocated|default:0 }},{% endfor %}];
+
+const fmtSom = v => v.toLocaleString('ru-RU') + ' сом';
+
+// ── Горизонтальный бар ──
+const barCtx = document.getElementById('catBarChart');
+if (barCtx && CAT_LABELS.length) {
+    new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: CAT_LABELS,
+            datasets: [
+                {
+                    label: 'План',
+                    data: CAT_PLANNED,
+                    backgroundColor: 'rgba(59,130,246,0.25)',
+                    borderColor: 'rgba(59,130,246,0.8)',
+                    borderWidth: 1,
+                },
+                {
+                    label: 'Выделено',
+                    data: CAT_ALLOC,
+                    backgroundColor: CAT_ALLOC.map((v,i) =>
+                        v > CAT_PLANNED[i]
+                            ? 'rgba(239,68,68,0.7)'
+                            : 'rgba(34,197,94,0.7)'
+                    ),
+                    borderWidth: 0,
+                }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: {
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: { label: ctx => ctx.dataset.label + ': ' + fmtSom(ctx.raw) }
+                }
             },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return context.label + ': ' + context.raw.toLocaleString('ru-RU') + ' сом';
-                            }
+            scales: {
+                x: { ticks: { callback: v => (v/1e6).toFixed(1)+'М' } }
+            }
+        }
+    });
+}
+
+// ── Пончик ──
+const dCtx = document.getElementById('categoryChart');
+if (dCtx && CAT_ALLOC.some(v => v > 0)) {
+    const COLORS = [
+        '#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6',
+        '#06b6d4','#ec4899','#84cc16','#f97316','#14b8a6',
+        '#a78bfa','#fb923c','#4ade80','#60a5fa','#f472b6',
+    ];
+    new Chart(dCtx, {
+        type: 'doughnut',
+        data: {
+            labels: CAT_LABELS,
+            datasets: [{
+                data: CAT_ALLOC,
+                backgroundColor: COLORS.slice(0, CAT_LABELS.length),
+                borderWidth: 2,
+                borderColor: '#fff',
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { font: { size: 11 }, boxWidth: 12 } },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => {
+                            const total = ctx.dataset.data.reduce((a,b) => a+b, 0);
+                            const pct = total ? (ctx.raw / total * 100).toFixed(1) : 0;
+                            return ctx.label + ': ' + fmtSom(ctx.raw) + ' (' + pct + '%)';
                         }
                     }
                 }
             }
-        });
+        }
     });
+} else if (dCtx) {
+    dCtx.parentElement.innerHTML = '<p class="text-muted text-center py-4">Нет данных о расходах</p>';
+}
 </script>
 {% endblock %}
